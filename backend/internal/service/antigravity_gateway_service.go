@@ -4082,10 +4082,17 @@ func (s *AntigravityGatewayService) extractImageSize(body []byte) string {
 
 // isImageGenerationModel 判断模型是否为图片生成模型
 // 支持的模型：gemini-3.1-flash-image, gemini-3-pro-image, gemini-2.5-flash-image 等
+// OpenAI: gpt-image-2, gpt-image-1, dall-e-3, dall-e-2
 func isImageGenerationModel(model string) bool {
 	modelLower := strings.ToLower(model)
 	// 移除 models/ 前缀
 	modelLower = strings.TrimPrefix(modelLower, "models/")
+
+	// OpenAI 图片生成模型
+	if strings.HasPrefix(modelLower, "gpt-image-") ||
+		strings.HasPrefix(modelLower, "dall-e-") {
+		return true
+	}
 
 	// 精确匹配或前缀匹配
 	return modelLower == "gemini-3.1-flash-image" ||

@@ -1100,3 +1100,108 @@ func parseTestSSEOutput(body string) (responseText, errMsg string) {
 	responseText = strings.Join(texts, "")
 	return
 }
+
+// testOpenAIImageGeneration tests an OpenAI account's image generation capability
+func (s *AccountTestService) testOpenAIImageGeneration(c *gin.Context, ctx context.Context, account *Account, modelID string) error {
+	// Only API Key accounts are supported for image generation testing
+	if account.Type != "apikey" {
+		return s.sendErrorAndEnd(c, "Image generation test is only supported for API Key accounts")
+	}
+
+	authToken := account.GetOpenAIApiKey()
+	if authToken == "" {
+		return s.sendErrorAndEnd(c, "No API key available")
+	}
+
+	baseURL := account.GetOpenAIBaseURL()
+	if baseURL == "" {
+		baseURL = "https://api.openai.com"
+	}
+	normalizedBaseURL, err := s.validateUpstreamBaseURL(baseURL)
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Invalid base URL: %s", err.Error()))
+	}
+	apiURL := strings.TrimSuffix(normalizedBaseURL, "/") + "/images/generations"
+
+	// Set SSE headers
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Flush()
+
+	// Create image generation payload
+	payload := map[string]any{
+		"model":  modelID,
+		"prompt": "a cute orange cat astronaut floating in space, digital art style",
+		"n":      1,
+		"size":   "1024x1024",
+	}
+	payloadBytes, _ := json.Marshal(payload)
+
+	// Send test_start event
+	s.sendEvent(c, TestEvent{Type: "test_start", Model: modelID})
+
+	req, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return s.sendErrorAndEnd(c, "Failed to create request")
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+authToken)
+
+	// Get proxy URL
+	proxyURL := ""
+	if account.ProxyID != nil && account.Proxy != nil {
+		proxyURL = account.Proxy.URL()
+	}
+
+	resp, err := s.httpUpstream.DoWithTLS(req, proxyURL, account.ID, account.Concurrency, s.tlsFPProfileService.ResolveTLSProfile(account))
+	if err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Request failed: %s", err.Error()))
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		// 401 Unauthorized: mark account as permanently error
+		if resp.StatusCode == http.StatusUnauthorized && s.accountRepo != nil {
+			errMsg := fmt.Sprintf("Authentication failed (401): %s", string(body))
+			_ = s.accountRepo.SetError(ctx, account.ID, errMsg)
+		}
+		return s.sendErrorAndEnd(c, fmt.Sprintf("API returned %d: %s", resp.StatusCode, string(body)))
+	}
+
+	// Parse image generation response
+	var result struct {
+		Data []struct {
+			URL           string `json:"url"`
+			B64JSON       string `json:"b64_json"`
+			RevisedPrompt string `json:"revised_prompt"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return s.sendErrorAndEnd(c, fmt.Sprintf("Failed to parse response: %s", err.Error()))
+	}
+
+	if len(result.Data) > 0 {
+		imageURL := result.Data[0].URL
+		if imageURL == "" && result.Data[0].B64JSON != "" {
+			imageURL = fmt.Sprintf("data:image/png;base64,%s", result.Data[0].B64JSON)
+		}
+		if imageURL != "" {
+			s.sendEvent(c, TestEvent{
+				Type:     "image",
+				ImageURL: imageURL,
+				MimeType: "image/png",
+			})
+		}
+		if result.Data[0].RevisedPrompt != "" {
+			s.sendEvent(c, TestEvent{Type: "content", Text: result.Data[0].RevisedPrompt})
+		}
+	}
+
+	s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+	return nil
+}

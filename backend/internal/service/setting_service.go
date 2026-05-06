@@ -34,6 +34,8 @@ var (
 	)
 )
 
+const externalPurchaseURL = "https://pay.ldxp.cn/shop/A3B6EPW1"
+
 type SettingRepository interface {
 	Get(ctx context.Context, key string) (*Setting, error)
 	GetValue(ctx context.Context, key string) (string, error)
@@ -431,6 +433,7 @@ func (s *SettingService) GetFrameSrcOrigins(ctx context.Context) ([]string, erro
 	if settings.PurchaseSubscriptionEnabled {
 		addOrigin(settings.PurchaseSubscriptionURL)
 	}
+	addOrigin(externalPurchaseURL)
 
 	// all custom menu items (including admin-only, since CSP must allow all iframes)
 	for _, item := range parseCustomMenuItemURLs(settings.CustomMenuItems) {

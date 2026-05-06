@@ -217,6 +217,7 @@ const siteName = computed(() => appStore.siteName)
 const siteLogo = computed(() => appStore.siteLogo)
 const siteVersion = computed(() => appStore.siteVersion)
 const settingsLoaded = computed(() => appStore.publicSettingsLoaded)
+const purchaseSubscriptionEnabled = computed(() => appStore.cachedPublicSettings?.purchase_subscription_enabled === true)
 
 // SVG Icon Components
 const DashboardIcon = {
@@ -571,7 +572,7 @@ const userNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
-    ...(appStore.cachedPublicSettings?.payment_enabled
+    ...(purchaseSubscriptionEnabled.value
       ? [
           {
             path: '/purchase',
@@ -609,7 +610,7 @@ const personalNavItems = computed((): NavItem[] => {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
-    ...(appStore.cachedPublicSettings?.payment_enabled
+    ...(purchaseSubscriptionEnabled.value
       ? [
           {
             path: '/purchase',

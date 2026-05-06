@@ -52,6 +52,8 @@ interface MockAuthState {
   isAdmin: boolean
   isSimpleMode: boolean
   backendModeEnabled: boolean
+  paymentEnabled?: boolean
+  purchaseSubscriptionEnabled?: boolean
 }
 
 /**
@@ -93,6 +95,14 @@ function simulateGuard(
   // 需要管理员但不是管理员
   if (requiresAdmin && !authState.isAdmin) {
     return '/dashboard'
+  }
+
+  if (toMeta.requiresPayment && !authState.paymentEnabled) {
+    return authState.isAdmin ? '/admin/dashboard' : '/dashboard'
+  }
+
+  if (toMeta.requiresPurchaseSubscription && !authState.purchaseSubscriptionEnabled) {
+    return authState.isAdmin ? '/admin/dashboard' : '/dashboard'
   }
 
   // 简易模式限制
@@ -291,6 +301,45 @@ describe('路由守卫逻辑', () => {
         backendModeEnabled: false,
       }
       const redirect = simulateGuard('/keys', {}, authState)
+      expect(redirect).toBeNull()
+    })
+  })
+
+  describe('外部购买入口', () => {
+    it('购买入口启用时允许普通用户访问 /purchase', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: false,
+        purchaseSubscriptionEnabled: true,
+      }
+      const redirect = simulateGuard('/purchase', { requiresPurchaseSubscription: true }, authState)
+      expect(redirect).toBeNull()
+    })
+
+    it('购买入口关闭时访问 /purchase 重定向到 /dashboard', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: false,
+        purchaseSubscriptionEnabled: false,
+      }
+      const redirect = simulateGuard('/purchase', { requiresPurchaseSubscription: true }, authState)
+      expect(redirect).toBe('/dashboard')
+    })
+
+    it('内部支付关闭不影响已启用的外部购买入口', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: false,
+        paymentEnabled: false,
+        purchaseSubscriptionEnabled: true,
+      }
+      const redirect = simulateGuard('/purchase', { requiresPurchaseSubscription: true }, authState)
       expect(redirect).toBeNull()
     })
   })
