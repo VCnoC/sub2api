@@ -259,6 +259,14 @@ func (s *SubscriptionService) updateExistingSubscriptionTerm(
 	isExpired bool,
 ) error {
 	return s.withSubscriptionUpdateTx(ctx, func(txCtx context.Context) error {
+		// 方案 A：续期始终重置 daily/weekly/monthly 用量窗口和计数。
+		// 修复 bug：原本"未过期续期"仅叠加天数、保留累计用量，导致用户在
+		// 月度额度耗尽（但日期未过期）后用激活码续期时，付了钱却仍然继续
+		// 报 MONTHLY_LIMIT_EXCEEDED，必须等到原月度窗口自然滚动才能使用。
+		//
+		// 语义差异：
+		//   - 已过期续期：StartsAt 重置为当前时间（重新开始一段订阅）
+		//   - 未过期续期：保留原 StartsAt（订阅的延续，仅刷新用量窗口）
 		if isExpired {
 			renewed := renewedSubscriptionTerm(existingSub, notes, startsAt, newExpiresAt)
 			if err := s.userSubRepo.Update(txCtx, renewed); err != nil {
@@ -267,27 +275,29 @@ func (s *SubscriptionService) updateExistingSubscriptionTerm(
 			return nil
 		}
 
-		// 更新过期时间
-		if err := s.userSubRepo.ExtendExpiry(txCtx, existingSub.ID, newExpiresAt); err != nil {
+		renewed := extendedSubscriptionTermWithUsageReset(existingSub, notes, startsAt, newExpiresAt)
+		if err := s.userSubRepo.Update(txCtx, renewed); err != nil {
 			return fmt.Errorf("extend subscription: %w", err)
 		}
-
-		// 如果订阅被暂停，恢复为 active 状态
-		if existingSub.Status != SubscriptionStatusActive {
-			if err := s.userSubRepo.UpdateStatus(txCtx, existingSub.ID, SubscriptionStatusActive); err != nil {
-				return fmt.Errorf("update subscription status: %w", err)
-			}
-		}
-
-		// 追加备注
-		if notes != "" {
-			if err := s.userSubRepo.UpdateNotes(txCtx, existingSub.ID, appendSubscriptionNotes(existingSub.Notes, notes)); err != nil {
-				return fmt.Errorf("update subscription notes: %w", err)
-			}
-		}
-
 		return nil
 	})
+}
+
+// extendedSubscriptionTermWithUsageReset 为"未过期续期"构造一条新的订阅记录：
+// 保留原 StartsAt 以维持订阅起始日历史，但重置所有用量窗口/计数（方案 A）。
+func extendedSubscriptionTermWithUsageReset(existingSub *UserSubscription, notes string, now, expiresAt time.Time) *UserSubscription {
+	renewed := *existingSub
+	windowStart := startOfDay(now)
+	renewed.ExpiresAt = expiresAt
+	renewed.Status = SubscriptionStatusActive
+	renewed.DailyWindowStart = &windowStart
+	renewed.WeeklyWindowStart = &windowStart
+	renewed.MonthlyWindowStart = &windowStart
+	renewed.DailyUsageUSD = 0
+	renewed.WeeklyUsageUSD = 0
+	renewed.MonthlyUsageUSD = 0
+	renewed.Notes = appendSubscriptionNotes(existingSub.Notes, notes)
+	return &renewed
 }
 
 func (s *SubscriptionService) withSubscriptionUpdateTx(ctx context.Context, fn func(context.Context) error) error {
