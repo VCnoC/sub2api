@@ -250,6 +250,82 @@ func (s *SubscriptionService) AssignOrExtendSubscription(ctx context.Context, in
 	return sub, false, nil // false 表示是新建
 }
 
+// AssignOrResetSubscription 用于管理员"重新分配"语义：
+// - 不存在订阅 → 创建新订阅
+// - 已存在订阅（无论是否过期）→ 完全重置：
+//     * ExpiresAt = now + ValidityDays（原剩余天数作废）
+//     * StartsAt 重置为 now
+//     * 所有用量窗口和计数清零
+//     * Status 恢复为 active
+//
+// 与 AssignOrExtendSubscription 的区别：本方法**不叠加**剩余天数，
+// 而是完全从头开始一段新订阅。适用于：管理员后台"分配套餐"（gift/replace 语义）。
+func (s *SubscriptionService) AssignOrResetSubscription(ctx context.Context, input *AssignSubscriptionInput) (*UserSubscription, bool, error) {
+	group, err := s.groupRepo.GetByID(ctx, input.GroupID)
+	if err != nil {
+		return nil, false, fmt.Errorf("group not found: %w", err)
+	}
+	if !group.IsSubscriptionType() {
+		return nil, false, ErrGroupNotSubscriptionType
+	}
+
+	existingSub, err := s.userSubRepo.GetByUserIDAndGroupID(ctx, input.UserID, input.GroupID)
+	if err != nil {
+		existingSub = nil
+	}
+
+	validityDays := input.ValidityDays
+	if validityDays <= 0 {
+		validityDays = 30
+	}
+	if validityDays > MaxValidityDays {
+		validityDays = MaxValidityDays
+	}
+
+	if existingSub != nil {
+		now := time.Now()
+		newExpiresAt := now.AddDate(0, 0, validityDays)
+		if newExpiresAt.After(MaxExpiresAt) {
+			newExpiresAt = MaxExpiresAt
+		}
+
+		// 已过期分支即可满足"完全重置"语义（StartsAt 重置 + 用量清零）
+		if err := s.updateExistingSubscriptionTerm(ctx, existingSub, input.Notes, now, newExpiresAt, true); err != nil {
+			return nil, false, err
+		}
+
+		s.InvalidateSubCache(input.UserID, input.GroupID)
+		if s.billingCacheService != nil {
+			userID, groupID := input.UserID, input.GroupID
+			go func() {
+				cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				_ = s.billingCacheService.InvalidateSubscription(cacheCtx, userID, groupID)
+			}()
+		}
+
+		sub, err := s.userSubRepo.GetByID(ctx, existingSub.ID)
+		return sub, true, err
+	}
+
+	sub, err := s.createSubscription(ctx, input)
+	if err != nil {
+		return nil, false, err
+	}
+
+	s.InvalidateSubCache(input.UserID, input.GroupID)
+	if s.billingCacheService != nil {
+		userID, groupID := input.UserID, input.GroupID
+		go func() {
+			cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = s.billingCacheService.InvalidateSubscription(cacheCtx, userID, groupID)
+		}()
+	}
+
+	return sub, false, nil
+}
+
 func (s *SubscriptionService) updateExistingSubscriptionTerm(
 	ctx context.Context,
 	existingSub *UserSubscription,
