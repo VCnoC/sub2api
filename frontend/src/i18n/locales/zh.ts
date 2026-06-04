@@ -349,6 +349,7 @@ export default {
     dashboard: '仪表盘',
     announcements: '公告',
     apiKeys: 'API 密钥',
+    playground: '对话广场',
     usage: '使用记录',
     redeem: '兑换',
     affiliate: '邀请返利',
@@ -830,6 +831,89 @@ export default {
       inactive: '已停用',
       quota_exhausted: '额度耗尽',
       expired: '已过期'
+    }
+  },
+
+  // Playground (对话广场)
+  playground: {
+    title: '对话广场',
+    subtitle: '当前分组：{group}',
+    chat: {
+      emptyTitle: '开始你的第一段对话',
+      emptyDesc: '选择分组与模型，输入问题即可流式获得回答。所有用量会按你的账户计费，与外部 API 调用一致。',
+      systemPromptLabel: '系统提示词（已设置）',
+      scrollToBottom: '滚到底部'
+    },
+    input: {
+      placeholder: '输入消息，Enter 发送，Shift+Enter 换行…',
+      send: '发送',
+      stop: '停止',
+      noGroup: '暂无可用分组',
+      noModel: '该分组暂无可用模型',
+      loadingModels: '加载模型中…',
+      hint: '回车发送 · Shift+Enter 换行 · 历史会自动保存在本地'
+    },
+    actions: {
+      systemPrompt: '系统提示词',
+      params: '参数',
+      import: '导入配置',
+      export: '导出配置',
+      clear: '清空对话',
+      confirmClear: '确认清空所有对话历史？此操作无法撤销。',
+      cleared: '已清空对话历史',
+      imported: '配置已导入',
+      importFailed: '配置文件解析失败',
+      exported: '配置已导出'
+    },
+    systemPrompt: {
+      title: '系统提示词',
+      desc: '系统提示词会作为整段对话的隐含背景，模型每轮都会感知到。',
+      placeholder: '例：你是一位资深的中文技术写作助手，回答简洁专业…',
+      saved: '系统提示词已保存'
+    },
+    params: {
+      title: '推理参数',
+      desc: '开关启用即向上游发送该参数；关闭则交由上游默认值。',
+      temperature: '温度（Temperature）',
+      topP: 'Top-P',
+      maxTokens: '最大输出（max_tokens）',
+      frequencyPenalty: '频率惩罚',
+      presencePenalty: '存在惩罚',
+      seed: '随机种子',
+      stream: '流式输出',
+      reset: '恢复默认',
+      resetDone: '参数已恢复默认'
+    },
+    message: {
+      copy: '复制',
+      copied: '已复制到剪贴板',
+      copyFailed: '复制失败',
+      noContent: '当前消息暂无可复制内容',
+      regenerate: '重新生成',
+      edit: '编辑',
+      delete: '删除',
+      confirmDelete: '确认删除该消息？',
+      save: '保存',
+      saveAndSubmit: '保存并提交',
+      cancel: '取消',
+      thinking: '正在思考…',
+      thoughtFor: '推理过程（点击展开）',
+      prevVersion: '上一版本',
+      nextVersion: '下一版本',
+      waitGeneration: '请等待本轮生成完成后再编辑'
+    },
+    error: {
+      authError: '身份认证失败，请重新登录',
+      permissionError: '没有权限访问该分组或模型',
+      invalidRequest: '请求参数有误',
+      insufficientQuota: '账户余额不足',
+      apiError: '请求失败',
+      upstreamError: '上游服务异常，请稍后重试',
+      serverError: '服务器错误，请稍后重试',
+      rateLimitError: '请求过于频繁，请稍后再试',
+      unknown: '未知错误',
+      loadGroupsFailed: '加载可用分组失败',
+      loadModelsFailed: '加载可用模型失败'
     }
   },
 
