@@ -37,6 +37,14 @@ const (
 	OpsClientBusinessLimitedKey                 = "ops_client_business_limited"
 	OpsClientBusinessLimitedReasonKey           = "ops_client_business_limited_reason"
 	OpsClientBusinessLimitedReasonIPRestriction = "api_key_ip_restriction"
+
+	// OpsRequestSourceKey 标记请求来源（如 "playground"），用于审计与统计区分。
+	// 默认空字符串表示常规 API 调用；下游 ops_error_logger / usage 记账可读取该
+	// 字段附加到结构化日志或落库字段，实现按来源拆分流量。
+	OpsRequestSourceKey = "ops_request_source"
+
+	// OpsRequestSourcePlayground 对话广场请求来源标记值。
+	OpsRequestSourcePlayground = "playground"
 )
 
 func SetOpsLatencyMs(c *gin.Context, key string, value int64) {
@@ -54,6 +62,34 @@ func MarkOpsClientBusinessLimited(c *gin.Context, reason string) {
 	if reason = strings.TrimSpace(reason); reason != "" {
 		c.Set(OpsClientBusinessLimitedReasonKey, reason)
 	}
+}
+
+// SetOpsRequestSource 标记请求来源（如对话广场）。
+// 来源信息将随请求生命周期保留在 gin context，便于下游 ops 日志、
+// 用量统计、审计模块按来源拆分流量。空字符串调用为 no-op。
+func SetOpsRequestSource(c *gin.Context, source string) {
+	if c == nil {
+		return
+	}
+	source = strings.TrimSpace(source)
+	if source == "" {
+		return
+	}
+	c.Set(OpsRequestSourceKey, source)
+}
+
+// GetOpsRequestSource 读取当前请求的来源标记。
+// 返回空字符串表示未标记（常规 API 调用）。
+func GetOpsRequestSource(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+	v, ok := c.Get(OpsRequestSourceKey)
+	if !ok {
+		return ""
+	}
+	s, _ := v.(string)
+	return s
 }
 
 func HasOpsClientBusinessLimited(c *gin.Context) bool {
