@@ -1306,7 +1306,10 @@ const loadApiKeys = async () => {
       signal
     })
     if (signal.aborted) return
-    apiKeys.value = response.items
+    // 过滤对话广场专用的内部 APIKey（_playground_internal_）：
+    // 它是 sub2api 为「对话广场」自动创建并复用的隐藏 key，
+    // 用量会出现在「使用记录」页，但不应出现在 API Keys 列表中混淆用户。
+    apiKeys.value = response.items.filter((k) => k.name !== '_playground_internal_')
     pagination.value.total = response.total
     pagination.value.pages = response.pages
 

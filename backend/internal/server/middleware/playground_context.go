@@ -139,20 +139,20 @@ func NewPlaygroundContextMiddleware(
 			return
 		}
 
-		// 构造虚拟 APIKey（ID=0 表示非持久化的临时凭证）
-		// 不设置 Quota / RateLimit*：保持 0=unlimited，让 user 余额与订阅成为唯一限制源
-		virtualKey := &service.APIKey{
-			ID:      0,
-			UserID:  user.ID,
-			Name:    "playground-" + targetGroup.Name,
-			GroupID: &targetGroup.ID,
-			Status:  service.StatusActive,
-			User:    user,
-			Group:   targetGroup,
+		// 获取或创建持久化的对话广场 APIKey。
+		// 必须使用真实持久化 key 才能让 usage_logs.api_key_id 外键约束通过，
+		// 进而让用量记录正确入库 + 在用户「使用记录」页面可见。
+		playgroundKey, err := apiKeyService.GetOrCreatePlaygroundKey(ctx, user.ID, targetGroup.ID)
+		if err != nil {
+			playgroundError(c, http.StatusInternalServerError, "api_error", "Failed to acquire playground key")
+			return
 		}
+		// 回灌完整的 User / Group 引用（防止 service 层未填充时下游 nil 解引用）
+		playgroundKey.User = user
+		playgroundKey.Group = targetGroup
 
 		// 写入 ctx 模拟 APIKeyAuth 中间件的产物
-		c.Set(string(ContextKeyAPIKey), virtualKey)
+		c.Set(string(ContextKeyAPIKey), playgroundKey)
 		c.Set(string(ContextKeyUserRole), user.Role)
 		if subscription != nil {
 			c.Set(string(ContextKeySubscription), subscription)

@@ -793,6 +793,88 @@ func (s *APIKeyService) SearchAPIKeys(ctx context.Context, userID int64, keyword
 	return keys, nil
 }
 
+// PlaygroundInternalKeyName 对话广场专用 APIKey 的固定名称。
+// 下划线前缀表示「系统内部 key」，前端列表会过滤显示。
+const PlaygroundInternalKeyName = "_playground_internal_"
+
+// IsPlaygroundInternalKey 判断给定 APIKey 是否为对话广场专用的内部 key。
+// 前端列表 / 列表 API 可据此过滤展示，保持用户视图整洁。
+func IsPlaygroundInternalKey(name string) bool {
+	return name == PlaygroundInternalKeyName
+}
+
+// GetOrCreatePlaygroundKey 获取或创建用户的对话广场专用 APIKey。
+//
+// 设计：
+//   - 每个用户保留一个名为 PlaygroundInternalKeyName 的隐藏 APIKey
+//   - 该 key 关联到用户当前选择的分组（每次切换分组时同步更新 GroupID）
+//   - 该 key 的用量记录会通过 usage_logs.api_key_id 外键正确入库，
+//     从而出现在用户「使用记录」页面
+//   - 该 key 不计入 APIKey 限流配额（绕过 checkAPIKeyRateLimit）
+//
+// 返回的 APIKey 包含完整的 User + Group 关联，可直接用于中间件 ctx 注入。
+func (s *APIKeyService) GetOrCreatePlaygroundKey(ctx context.Context, userID, groupID int64) (*APIKey, error) {
+	// 1. 取用户对象
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user: %w", err)
+	}
+
+	// 2. 取分组对象
+	group, err := s.groupRepo.GetByID(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("get group: %w", err)
+	}
+
+	// 3. 在用户已有 APIKey 中搜索内部 playground key
+	existing, err := s.apiKeyRepo.SearchAPIKeys(ctx, userID, PlaygroundInternalKeyName, 10)
+	if err != nil {
+		return nil, fmt.Errorf("search playground key: %w", err)
+	}
+
+	for i := range existing {
+		if existing[i].Name == PlaygroundInternalKeyName {
+			// 命中现有 key — 必要时同步 GroupID 后返回
+			key := existing[i]
+			if key.GroupID == nil || *key.GroupID != groupID {
+				key.GroupID = &groupID
+				key.UpdatedAt = time.Now()
+				if err := s.apiKeyRepo.Update(ctx, &key); err != nil {
+					return nil, fmt.Errorf("sync playground key group: %w", err)
+				}
+			}
+			key.User = user
+			key.Group = group
+			return &key, nil
+		}
+	}
+
+	// 4. 不存在 — 创建一个新的（绕过用户级 APIKey 限流，因为是系统创建）
+	keyString, err := s.GenerateKey()
+	if err != nil {
+		return nil, fmt.Errorf("generate playground key: %w", err)
+	}
+
+	now := time.Now()
+	newKey := &APIKey{
+		UserID:    userID,
+		Key:       keyString,
+		Name:      PlaygroundInternalKeyName,
+		GroupID:   &groupID,
+		Status:    StatusAPIKeyActive,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if err := s.apiKeyRepo.Create(ctx, newKey); err != nil {
+		return nil, fmt.Errorf("create playground key: %w", err)
+	}
+
+	// 回灌关联对象
+	newKey.User = user
+	newKey.Group = group
+	return newKey, nil
+}
+
 // GetUserGroupRates 获取用户的专属分组倍率配置
 // 返回 map[groupID]rateMultiplier
 func (s *APIKeyService) GetUserGroupRates(ctx context.Context, userID int64) (map[int64]float64, error) {
