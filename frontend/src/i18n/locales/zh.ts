@@ -888,6 +888,7 @@ export default {
       copy: '复制',
       copied: '已复制到剪贴板',
       copyFailed: '复制失败',
+      codeCopied: '代码已复制',
       noContent: '当前消息暂无可复制内容',
       regenerate: '重新生成',
       edit: '编辑',

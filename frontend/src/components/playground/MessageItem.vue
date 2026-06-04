@@ -139,6 +139,7 @@
           <div
             v-if="message.from === 'assistant'"
             class="markdown-body"
+            @click="onMarkdownClick"
             v-html="renderedHtml"
           />
           <div v-else class="user-content">{{ currentContent }}</div>
@@ -290,7 +291,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { marked } from 'marked'
+import { Marked } from 'marked'
+import type { Tokens } from 'marked'
 import DOMPurify from 'dompurify'
 import { useClipboard } from '@/composables/useClipboard'
 import { useAppStore } from '@/stores/app'
@@ -329,7 +331,40 @@ const { t } = useI18n()
 const { copyToClipboard } = useClipboard()
 const appStore = useAppStore()
 
-marked.setOptions({ breaks: true, gfm: true })
+// 独立的 Marked 实例 — 不污染全局 marked 配置（公告 / 自定义页面共用全局实例）
+// 自定义 code renderer：用 .pg-code-block 包装，加上语言标签与复制按钮
+const markedInstance = new Marked({ breaks: true, gfm: true })
+markedInstance.use({
+  renderer: {
+    code({ text, lang }: Tokens.Code): string {
+      const language = (lang || '').trim().toLowerCase() || 'plaintext'
+      // 转义 HTML 特殊字符（marked 默认不对 code 内容做 escape）
+      const escapedText = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+      // 复制按钮的 SVG（保留 24x24 视框，CSS 控制大小）
+      const copyIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      const checkIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>'
+      return (
+        '<div class="pg-code-block">' +
+        '<div class="pg-code-block-header">' +
+        `<span class="pg-code-block-lang">${language}</span>` +
+        '<button type="button" class="pg-code-block-copy" aria-label="copy">' +
+        `<span class="pg-code-copy-icon">${copyIcon}</span>` +
+        `<span class="pg-code-check-icon">${checkIcon}</span>` +
+        '</button>' +
+        '</div>' +
+        `<pre class="pg-code-block-content"><code class="language-${language}">${escapedText}</code></pre>` +
+        '</div>'
+      )
+    },
+  },
+})
 
 // ==================== 计算属性 ====================
 
@@ -364,9 +399,30 @@ const contentClass = computed(() => ({
 
 const renderedHtml = computed(() => {
   if (!currentContent.value) return ''
-  const raw = marked.parse(currentContent.value) as string
+  const raw = markedInstance.parse(currentContent.value) as string
   return DOMPurify.sanitize(raw)
 })
+
+// 事件委托：捕获代码块内的复制按钮点击 → 取出 code 文本 → 写剪贴板 → 触发反馈动画
+async function onMarkdownClick(e: MouseEvent) {
+  const target = e.target as HTMLElement | null
+  const btn = target?.closest('.pg-code-block-copy') as HTMLElement | null
+  if (!btn) return
+  e.preventDefault()
+  const codeEl = btn
+    .closest('.pg-code-block')
+    ?.querySelector<HTMLElement>('pre code')
+  const text = codeEl?.textContent ?? ''
+  if (!text) {
+    appStore.showInfo(t('playground.message.noContent'))
+    return
+  }
+  const ok = await copyToClipboard(text, t('playground.message.codeCopied'))
+  if (ok) {
+    btn.classList.add('pg-copied')
+    window.setTimeout(() => btn.classList.remove('pg-copied'), 1500)
+  }
+}
 
 // ==================== 编辑 ====================
 
@@ -541,5 +597,95 @@ async function onCopy() {
 .msg-btn-outline {
   @apply border border-gray-200 text-gray-700 hover:bg-gray-50;
   @apply dark:border-dark-600 dark:text-gray-200 dark:hover:bg-dark-700;
+}
+
+/* === Markdown 代码块（v-html 渲染产物，需用 :deep() 突破 scoped） === */
+.markdown-body :deep(.pg-code-block) {
+  @apply my-3 overflow-hidden rounded-xl border border-gray-200 bg-gray-50;
+  @apply dark:border-dark-600 dark:bg-dark-900/60;
+}
+.markdown-body :deep(.pg-code-block-header) {
+  @apply flex items-center justify-between border-b border-gray-200 bg-gray-100 px-3 py-1.5;
+  @apply dark:border-dark-600 dark:bg-dark-800;
+}
+.markdown-body :deep(.pg-code-block-lang) {
+  @apply font-mono text-xs uppercase tracking-wide text-gray-500;
+  @apply dark:text-gray-400;
+}
+.markdown-body :deep(.pg-code-block-copy) {
+  @apply relative inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-gray-500 transition-colors;
+  @apply hover:bg-gray-200 hover:text-gray-900;
+  @apply dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-white;
+}
+.markdown-body :deep(.pg-code-block-copy svg) {
+  width: 14px;
+  height: 14px;
+}
+.markdown-body :deep(.pg-code-copy-icon),
+.markdown-body :deep(.pg-code-check-icon) {
+  @apply inline-flex transition-opacity duration-150;
+}
+.markdown-body :deep(.pg-code-check-icon) {
+  @apply absolute opacity-0;
+}
+.markdown-body :deep(.pg-code-block-copy.pg-copied) {
+  @apply text-green-600 dark:text-green-400;
+}
+.markdown-body :deep(.pg-code-block-copy.pg-copied .pg-code-copy-icon) {
+  @apply opacity-0;
+}
+.markdown-body :deep(.pg-code-block-copy.pg-copied .pg-code-check-icon) {
+  @apply opacity-100;
+}
+.markdown-body :deep(.pg-code-block-content) {
+  @apply m-0 overflow-x-auto bg-transparent px-3.5 py-3 text-sm leading-6;
+}
+.markdown-body :deep(.pg-code-block-content code) {
+  @apply block whitespace-pre font-mono text-gray-900;
+  @apply dark:text-gray-100;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
+}
+
+/* 行内 code（非围栏块） */
+.markdown-body :deep(:not(pre) > code) {
+  @apply rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-[0.875em] text-rose-600;
+  @apply dark:bg-dark-700 dark:text-rose-300;
+}
+
+/* 段落基础排版 */
+.markdown-body :deep(p) {
+  @apply my-2 leading-relaxed first:mt-0 last:mb-0;
+}
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  @apply my-2 ml-6 space-y-1;
+}
+.markdown-body :deep(ul) { list-style: disc; }
+.markdown-body :deep(ol) { list-style: decimal; }
+.markdown-body :deep(blockquote) {
+  @apply my-3 border-l-4 border-gray-300 pl-3 text-gray-600;
+  @apply dark:border-dark-600 dark:text-gray-300;
+}
+.markdown-body :deep(h1) { @apply mt-4 mb-2 text-2xl font-bold; }
+.markdown-body :deep(h2) { @apply mt-4 mb-2 text-xl font-bold; }
+.markdown-body :deep(h3) { @apply mt-3 mb-1.5 text-lg font-semibold; }
+.markdown-body :deep(h4) { @apply mt-3 mb-1 text-base font-semibold; }
+.markdown-body :deep(a) {
+  @apply text-primary-600 underline hover:text-primary-700;
+  @apply dark:text-primary-400 dark:hover:text-primary-300;
+}
+.markdown-body :deep(table) {
+  @apply my-3 w-full border-collapse text-sm;
+}
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  @apply border border-gray-200 px-2.5 py-1.5;
+  @apply dark:border-dark-600;
+}
+.markdown-body :deep(th) {
+  @apply bg-gray-100 font-semibold dark:bg-dark-700;
+}
+.markdown-body :deep(hr) {
+  @apply my-4 border-gray-200 dark:border-dark-600;
 }
 </style>

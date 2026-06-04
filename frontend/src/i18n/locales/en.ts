@@ -885,6 +885,7 @@ export default {
       copy: 'Copy',
       copied: 'Copied to clipboard',
       copyFailed: 'Copy failed',
+      codeCopied: 'Code copied',
       noContent: 'No content to copy',
       regenerate: 'Regenerate',
       edit: 'Edit',
