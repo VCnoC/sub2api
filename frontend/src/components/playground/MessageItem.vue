@@ -637,13 +637,37 @@ async function onCopy() {
 .markdown-body :deep(.pg-code-block-copy.pg-copied .pg-code-check-icon) {
   @apply opacity-100;
 }
-.markdown-body :deep(.pg-code-block-content) {
-  @apply m-0 overflow-x-auto bg-transparent px-3.5 py-3 text-sm leading-6;
+/* 强力重置 <pre>：去掉所有可能来自全局/UA 的边框、圆角、阴影、背景，
+   让外层 .pg-code-block 成为唯一的视觉容器 */
+.markdown-body :deep(.pg-code-block pre),
+.markdown-body :deep(pre.pg-code-block-content) {
+  margin: 0 !important;
+  padding: 14px 18px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: inherit;
+  display: block;
+  width: 100%;
 }
+.markdown-body :deep(.pg-code-block pre code),
 .markdown-body :deep(.pg-code-block-content code) {
-  @apply block whitespace-pre font-mono text-gray-900;
-  @apply dark:text-gray-100;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: inherit;
+  display: block;
+  white-space: pre;
   font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 /* 行内 code（非围栏块） */
