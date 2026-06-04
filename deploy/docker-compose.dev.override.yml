@@ -1,0 +1,29 @@
+# =============================================================================
+# Local Development Override (WSL friendly)
+# =============================================================================
+# Purpose: avoid NTFS permission issues when running PostgreSQL/Redis on top
+# of Windows bind mounts (/mnt/d). Named volumes are stored inside the Docker
+# VM Linux filesystem so initdb's chmod on the data dir works fine.
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml -f docker-compose.dev.override.yml up -d
+#
+# Compose auto-merges this file when its base name matches docker-compose.yml
+# only; with the -f flag set, both files must be passed explicitly.
+# =============================================================================
+
+services:
+  postgres:
+    volumes:
+      # Replace the host bind (./postgres_data) with a named volume that lives
+      # inside Docker's managed storage. Docker Compose merges service-level
+      # `volumes` by replacing, so this entry fully overrides the original.
+      - sub2api_dev_pgdata:/var/lib/postgresql/data
+
+  redis:
+    volumes:
+      - sub2api_dev_redisdata:/data
+
+volumes:
+  sub2api_dev_pgdata:
+  sub2api_dev_redisdata:
