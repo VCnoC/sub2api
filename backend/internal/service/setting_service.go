@@ -1734,6 +1734,14 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 		settings.AffiliateRebatePerInviteeCap = AffiliateRebatePerInviteeCapDefault
 	}
 	updates[SettingKeyAffiliateRebatePerInviteeCap] = strconv.FormatFloat(settings.AffiliateRebatePerInviteeCap, 'f', 8, 64)
+
+	// 邀请注册奖励（双向赠送）
+	settings.AffiliateInviterBonusUSD = clampAffiliateSignupBonus(settings.AffiliateInviterBonusUSD)
+	settings.AffiliateInviteeBonusUSD = clampAffiliateSignupBonus(settings.AffiliateInviteeBonusUSD)
+	updates[SettingKeyAffiliateSignupBonusEnabled] = strconv.FormatBool(settings.AffiliateSignupBonusEnabled)
+	updates[SettingKeyAffiliateInviterBonusUSD] = strconv.FormatFloat(settings.AffiliateInviterBonusUSD, 'f', 8, 64)
+	updates[SettingKeyAffiliateInviteeBonusUSD] = strconv.FormatFloat(settings.AffiliateInviteeBonusUSD, 'f', 8, 64)
+
 	updates[SettingKeyDefaultUserRPMLimit] = strconv.Itoa(settings.DefaultUserRPMLimit)
 	defaultSubsJSON, err := json.Marshal(settings.DefaultSubscriptions)
 	if err != nil {
@@ -2552,6 +2560,9 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyAffiliateRebateFreezeHours:                strconv.Itoa(AffiliateRebateFreezeHoursDefault),
 		SettingKeyAffiliateRebateDurationDays:               strconv.Itoa(AffiliateRebateDurationDaysDefault),
 		SettingKeyAffiliateRebatePerInviteeCap:              strconv.FormatFloat(AffiliateRebatePerInviteeCapDefault, 'f', 2, 64),
+		SettingKeyAffiliateSignupBonusEnabled:               strconv.FormatBool(AffiliateSignupBonusEnabledDefault),
+		SettingKeyAffiliateInviterBonusUSD:                  strconv.FormatFloat(AffiliateInviterBonusUSDDefault, 'f', 2, 64),
+		SettingKeyAffiliateInviteeBonusUSD:                  strconv.FormatFloat(AffiliateInviteeBonusUSDDefault, 'f', 2, 64),
 		SettingKeyDefaultUserRPMLimit:                       "0",
 		SettingKeyDefaultSubscriptions:                      "[]",
 		SettingKeyAuthSourceDefaultEmailBalance:             "0",
@@ -2740,6 +2751,16 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	if perInviteeCap, err := strconv.ParseFloat(settings[SettingKeyAffiliateRebatePerInviteeCap], 64); err == nil && perInviteeCap >= 0 {
 		result.AffiliateRebatePerInviteeCap = perInviteeCap
 	}
+
+	// 邀请注册奖励（双向赠送）
+	result.AffiliateSignupBonusEnabled = settings[SettingKeyAffiliateSignupBonusEnabled] == "true"
+	if inviterBonus, err := strconv.ParseFloat(settings[SettingKeyAffiliateInviterBonusUSD], 64); err == nil {
+		result.AffiliateInviterBonusUSD = clampAffiliateSignupBonus(inviterBonus)
+	}
+	if inviteeBonus, err := strconv.ParseFloat(settings[SettingKeyAffiliateInviteeBonusUSD], 64); err == nil {
+		result.AffiliateInviteeBonusUSD = clampAffiliateSignupBonus(inviteeBonus)
+	}
+
 	result.DefaultSubscriptions = parseDefaultSubscriptions(settings[SettingKeyDefaultSubscriptions])
 
 	// 敏感信息直接返回，方便测试连接时使用
@@ -3196,6 +3217,45 @@ func clampAffiliateRebateRate(value float64) float64 {
 		return AffiliateRebateRateMax
 	}
 	return value
+}
+
+// clampAffiliateSignupBonus 把注册奖励金额夹到合法区间 [Min, Max]，
+// 用于双向赠送（邀请人 / 被邀请人）以及用户专属覆盖值的统一边界保护。
+func clampAffiliateSignupBonus(value float64) float64 {
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return AffiliateBonusUSDMin
+	}
+	if value < AffiliateBonusUSDMin {
+		return AffiliateBonusUSDMin
+	}
+	if value > AffiliateBonusUSDMax {
+		return AffiliateBonusUSDMax
+	}
+	return value
+}
+
+// GetAffiliateSignupBonusSettings 读取注册奖励相关的运行时配置。
+// 返回 (enabled, inviterUSD, inviteeUSD)。
+func (s *SettingService) GetAffiliateSignupBonusSettings(ctx context.Context) (bool, float64, float64) {
+	keys := []string{
+		SettingKeyAffiliateSignupBonusEnabled,
+		SettingKeyAffiliateInviterBonusUSD,
+		SettingKeyAffiliateInviteeBonusUSD,
+	}
+	values, err := s.settingRepo.GetMultiple(ctx, keys)
+	if err != nil {
+		return AffiliateSignupBonusEnabledDefault, AffiliateInviterBonusUSDDefault, AffiliateInviteeBonusUSDDefault
+	}
+	enabled := values[SettingKeyAffiliateSignupBonusEnabled] == "true"
+	inviter := AffiliateInviterBonusUSDDefault
+	if v, err := strconv.ParseFloat(values[SettingKeyAffiliateInviterBonusUSD], 64); err == nil {
+		inviter = clampAffiliateSignupBonus(v)
+	}
+	invitee := AffiliateInviteeBonusUSDDefault
+	if v, err := strconv.ParseFloat(values[SettingKeyAffiliateInviteeBonusUSD], 64); err == nil {
+		invitee = clampAffiliateSignupBonus(v)
+	}
+	return enabled, inviter, invitee
 }
 
 func isFalseSettingValue(value string) bool {

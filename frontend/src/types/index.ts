@@ -144,6 +144,12 @@ export interface UserAffiliateDetail {
   /** 当前用户作为邀请人时实际生效的返利比例（专属覆盖全局）。0-100。 */
   effective_rebate_rate_percent: number
   invitees: AffiliateInvitee[]
+  /** 邀请注册双向奖励是否启用（管理员可在「功能开关 → 邀请返利」里开关） */
+  signup_bonus_enabled?: boolean
+  /** 邀请人成功邀请一人获得的注册奖励金额（USD） */
+  inviter_bonus_usd?: number
+  /** 被邀请人通过链接注册立得的体验金金额（USD） */
+  invitee_bonus_usd?: number
 }
 
 export interface AffiliateTransferResponse {

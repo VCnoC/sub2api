@@ -162,6 +162,89 @@ VALUES ($1, 'accrue', $2, $3, $4, NOW(), NOW())`, inviterID, amount, inviteeUser
 	return applied, nil
 }
 
+// GrantSignupBonusBalances 实现「邀请注册双向奖励」：在单一事务内同时给邀请人与
+// 被邀请人加余额，并写入 user_affiliate_ledger 审计行（action='signup_bonus'）。
+//
+// 去重策略：通过查询 ledger 中是否已有 (user_id=inviterID, action='signup_bonus',
+// source_user_id=inviteeID) 的记录判断是否已发放。若存在，整个事务跳过 (返回 false)。
+//
+// 金额可独立为 0：若 inviterAmount=0 跳过邀请人余额更新但仍写一条 audit；invitee 同理。
+// 仅在两者都 ≤0 时直接返回 false 不开事务。
+func (r *affiliateRepository) GrantSignupBonusBalances(
+	ctx context.Context,
+	inviterID int64,
+	inviterAmount float64,
+	inviteeID int64,
+	inviteeAmount float64,
+) (bool, error) {
+	if inviterID <= 0 || inviteeID <= 0 || inviterID == inviteeID {
+		return false, nil
+	}
+	if inviterAmount <= 0 && inviteeAmount <= 0 {
+		return false, nil
+	}
+
+	var applied bool
+	err := r.withTx(ctx, func(txCtx context.Context, txClient *dbent.Client) error {
+		// 去重：判断该邀请关系是否已发放过 signup_bonus
+		dedupRows, err := txClient.QueryContext(txCtx,
+			`SELECT 1 FROM user_affiliate_ledger
+			 WHERE user_id = $1 AND source_user_id = $2 AND action = 'signup_bonus' LIMIT 1`,
+			inviterID, inviteeID,
+		)
+		if err != nil {
+			return fmt.Errorf("dedup signup_bonus: %w", err)
+		}
+		alreadyGranted := dedupRows.Next()
+		_ = dedupRows.Close()
+		if alreadyGranted {
+			applied = false
+			return nil
+		}
+
+		// 加邀请人余额（金额>0 时）
+		if inviterAmount > 0 {
+			if _, err = txClient.ExecContext(txCtx,
+				`UPDATE users SET balance = balance + $1, updated_at = NOW() WHERE id = $2`,
+				inviterAmount, inviterID,
+			); err != nil {
+				return fmt.Errorf("add inviter balance: %w", err)
+			}
+			if _, err = txClient.ExecContext(txCtx,
+				`INSERT INTO user_affiliate_ledger (user_id, action, amount, source_user_id, created_at, updated_at)
+				 VALUES ($1, 'signup_bonus', $2, $3, NOW(), NOW())`,
+				inviterID, inviterAmount, inviteeID,
+			); err != nil {
+				return fmt.Errorf("insert inviter ledger: %w", err)
+			}
+		}
+
+		// 加被邀请人余额（金额>0 时），ledger 用 user_id=inviteeID, source_user_id=inviterID
+		if inviteeAmount > 0 {
+			if _, err = txClient.ExecContext(txCtx,
+				`UPDATE users SET balance = balance + $1, updated_at = NOW() WHERE id = $2`,
+				inviteeAmount, inviteeID,
+			); err != nil {
+				return fmt.Errorf("add invitee balance: %w", err)
+			}
+			if _, err = txClient.ExecContext(txCtx,
+				`INSERT INTO user_affiliate_ledger (user_id, action, amount, source_user_id, created_at, updated_at)
+				 VALUES ($1, 'signup_bonus', $2, $3, NOW(), NOW())`,
+				inviteeID, inviteeAmount, inviterID,
+			); err != nil {
+				return fmt.Errorf("insert invitee ledger: %w", err)
+			}
+		}
+
+		applied = true
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return applied, nil
+}
+
 func (r *affiliateRepository) GetAccruedRebateFromInvitee(ctx context.Context, inviterID, inviteeUserID int64) (float64, error) {
 	client := clientFromContext(ctx, r.client)
 	rows, err := client.QueryContext(ctx,

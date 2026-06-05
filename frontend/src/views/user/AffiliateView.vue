@@ -72,6 +72,37 @@
             </div>
           </div>
 
+          <!-- 注册双向奖励高亮卡片（仅当管理员启用时显示） -->
+          <div
+            v-if="detail.signup_bonus_enabled && ((detail.inviter_bonus_usd ?? 0) > 0 || (detail.invitee_bonus_usd ?? 0) > 0)"
+            class="mt-5 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 dark:border-emerald-900/40 dark:from-emerald-900/20 dark:to-teal-900/20"
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-base">🎁</span>
+              <p class="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                {{ t('affiliate.signupBonus.title') }}
+              </p>
+            </div>
+            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div v-if="(detail.inviter_bonus_usd ?? 0) > 0" class="rounded-lg bg-white/70 px-3 py-2 dark:bg-emerald-900/20">
+                <p class="text-xs text-gray-500 dark:text-emerald-300/80">
+                  {{ t('affiliate.signupBonus.youGet') }}
+                </p>
+                <p class="mt-0.5 text-lg font-bold text-emerald-700 dark:text-emerald-200">
+                  +${{ formatBonus(detail.inviter_bonus_usd) }}
+                </p>
+              </div>
+              <div v-if="(detail.invitee_bonus_usd ?? 0) > 0" class="rounded-lg bg-white/70 px-3 py-2 dark:bg-emerald-900/20">
+                <p class="text-xs text-gray-500 dark:text-emerald-300/80">
+                  {{ t('affiliate.signupBonus.theyGet') }}
+                </p>
+                <p class="mt-0.5 text-lg font-bold text-emerald-700 dark:text-emerald-200">
+                  +${{ formatBonus(detail.invitee_bonus_usd) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div class="mt-5 rounded-xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-900/40 dark:bg-primary-900/20">
             <p class="text-sm font-medium text-primary-800 dark:text-primary-200">{{ t('affiliate.tips.title') }}</p>
             <ul class="mt-2 space-y-1 text-sm text-primary-700 dark:text-primary-300">
@@ -177,6 +208,11 @@ const formattedRebateRate = computed(() => {
 
 function formatCount(value: number): string {
   return value.toLocaleString()
+}
+
+function formatBonus(value: number | undefined): string {
+  const v = value ?? 0
+  return v.toFixed(2)
 }
 
 async function loadAffiliateDetail(silent = false): Promise<void> {

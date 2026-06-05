@@ -1154,6 +1154,11 @@ export default {
       empty: 'No available rebate quota',
       success: '{amount} has been transferred to your balance'
     },
+    signupBonus: {
+      title: 'Invite a friend — both of you get instant cash',
+      youGet: 'You get',
+      theyGet: 'They get'
+    },
     invitees: {
       title: 'Invited Users',
       empty: 'No invited users yet',
@@ -5332,6 +5337,14 @@ export default {
           durationDaysDesc: 'Rebate relationship expires after this many days since invitee registration. 0 = permanent.',
           perInviteeCap: 'Per-Invitee Rebate Cap',
           perInviteeCapDesc: 'Maximum total rebate from a single invitee. 0 = no limit.',
+          signupBonus: {
+            enabled: 'Enable signup bonus (two-way)',
+            enabledHint: 'When on: both inviter and invitee get an instant cash bonus on successful signup via the invite link (independent from the recurring rebate above).',
+            inviterBonus: 'Inviter bonus',
+            inviterBonusDesc: 'USD credited to the inviter on each successful signup (0 ~ 1000).',
+            inviteeBonus: 'Invitee bonus',
+            inviteeBonusDesc: 'USD instantly granted to the invitee when they register via the link (0 ~ 1000).'
+          },
           customUsers: {
             title: 'Per-User Overrides',
             description: 'Set a custom invite code or exclusive rebate rate for specific users. Lists only users that have an override applied.',

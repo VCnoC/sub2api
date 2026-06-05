@@ -232,6 +232,9 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		AffiliateRebateFreezeHours:             settings.AffiliateRebateFreezeHours,
 		AffiliateRebateDurationDays:            settings.AffiliateRebateDurationDays,
 		AffiliateRebatePerInviteeCap:           settings.AffiliateRebatePerInviteeCap,
+		AffiliateSignupBonusEnabled:            settings.AffiliateSignupBonusEnabled,
+		AffiliateInviterBonusUSD:               settings.AffiliateInviterBonusUSD,
+		AffiliateInviteeBonusUSD:               settings.AffiliateInviteeBonusUSD,
 		DefaultUserRPMLimit:                    settings.DefaultUserRPMLimit,
 		DefaultSubscriptions:                   defaultSubscriptions,
 		EnableModelFallback:                    settings.EnableModelFallback,
@@ -504,6 +507,9 @@ type UpdateSettingsRequest struct {
 	AffiliateRebateFreezeHours                *int                              `json:"affiliate_rebate_freeze_hours"`
 	AffiliateRebateDurationDays               *int                              `json:"affiliate_rebate_duration_days"`
 	AffiliateRebatePerInviteeCap              *float64                          `json:"affiliate_rebate_per_invitee_cap"`
+	AffiliateSignupBonusEnabled               *bool                             `json:"affiliate_signup_bonus_enabled"`
+	AffiliateInviterBonusUSD                  *float64                          `json:"affiliate_inviter_bonus_usd"`
+	AffiliateInviteeBonusUSD                  *float64                          `json:"affiliate_invitee_bonus_usd"`
 	DefaultUserRPMLimit                       int                               `json:"default_user_rpm_limit"`
 	DefaultSubscriptions                      []dto.DefaultSubscriptionSetting  `json:"default_subscriptions"`
 	AuthSourceDefaultEmailBalance             *float64                          `json:"auth_source_default_email_balance"`
@@ -703,6 +709,33 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	if affiliateRebatePerInviteeCap < 0 {
 		affiliateRebatePerInviteeCap = service.AffiliateRebatePerInviteeCapDefault
 	}
+
+	// 邀请注册奖励（双向赠送）：保持「未传字段则继承当前值」语义
+	affiliateSignupBonusEnabled := previousSettings.AffiliateSignupBonusEnabled
+	if req.AffiliateSignupBonusEnabled != nil {
+		affiliateSignupBonusEnabled = *req.AffiliateSignupBonusEnabled
+	}
+	affiliateInviterBonusUSD := previousSettings.AffiliateInviterBonusUSD
+	if req.AffiliateInviterBonusUSD != nil {
+		affiliateInviterBonusUSD = *req.AffiliateInviterBonusUSD
+	}
+	if affiliateInviterBonusUSD < service.AffiliateBonusUSDMin {
+		affiliateInviterBonusUSD = service.AffiliateBonusUSDMin
+	}
+	if affiliateInviterBonusUSD > service.AffiliateBonusUSDMax {
+		affiliateInviterBonusUSD = service.AffiliateBonusUSDMax
+	}
+	affiliateInviteeBonusUSD := previousSettings.AffiliateInviteeBonusUSD
+	if req.AffiliateInviteeBonusUSD != nil {
+		affiliateInviteeBonusUSD = *req.AffiliateInviteeBonusUSD
+	}
+	if affiliateInviteeBonusUSD < service.AffiliateBonusUSDMin {
+		affiliateInviteeBonusUSD = service.AffiliateBonusUSDMin
+	}
+	if affiliateInviteeBonusUSD > service.AffiliateBonusUSDMax {
+		affiliateInviteeBonusUSD = service.AffiliateBonusUSDMax
+	}
+
 	// 通用表格配置：兼容旧客户端未传字段时保留当前值。
 	if req.TableDefaultPageSize <= 0 {
 		req.TableDefaultPageSize = previousSettings.TableDefaultPageSize
@@ -1554,6 +1587,9 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		AffiliateRebateFreezeHours:             affiliateRebateFreezeHours,
 		AffiliateRebateDurationDays:            affiliateRebateDurationDays,
 		AffiliateRebatePerInviteeCap:           affiliateRebatePerInviteeCap,
+		AffiliateSignupBonusEnabled:            affiliateSignupBonusEnabled,
+		AffiliateInviterBonusUSD:               affiliateInviterBonusUSD,
+		AffiliateInviteeBonusUSD:               affiliateInviteeBonusUSD,
 		DefaultUserRPMLimit:                    req.DefaultUserRPMLimit,
 		DefaultSubscriptions:                   defaultSubscriptions,
 		EnableModelFallback:                    req.EnableModelFallback,

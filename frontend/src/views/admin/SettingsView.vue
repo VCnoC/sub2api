@@ -5226,6 +5226,63 @@
                 </p>
               </div>
 
+              <!-- 邀请双向注册奖励 -->
+              <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-600 dark:bg-dark-700/30">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.features.affiliate.signupBonus.enabled') }}
+                    </label>
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      {{ t('admin.settings.features.affiliate.signupBonus.enabledHint') }}
+                    </p>
+                  </div>
+                  <Toggle v-model="form.affiliate_signup_bonus_enabled" />
+                </div>
+                <div v-if="form.affiliate_signup_bonus_enabled" class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label class="input-label">
+                      {{ t('admin.settings.features.affiliate.signupBonus.inviterBonus') }}
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model.number="form.affiliate_inviter_bonus_usd"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1000"
+                        class="input pr-12"
+                        placeholder="5.00"
+                      />
+                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">USD</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-400">
+                      {{ t('admin.settings.features.affiliate.signupBonus.inviterBonusDesc') }}
+                    </p>
+                  </div>
+                  <div>
+                    <label class="input-label">
+                      {{ t('admin.settings.features.affiliate.signupBonus.inviteeBonus') }}
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model.number="form.affiliate_invitee_bonus_usd"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1000"
+                        class="input pr-12"
+                        placeholder="5.00"
+                      />
+                      <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">USD</span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-400">
+                      {{ t('admin.settings.features.affiliate.signupBonus.inviteeBonusDesc') }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <!-- 专属用户管理 -->
               <div class="border-t border-gray-100 pt-6 dark:border-dark-700">
                 <div class="mb-3 flex items-center justify-between">
@@ -6855,6 +6912,9 @@ const form = reactive<SettingsForm>({
   affiliate_rebate_freeze_hours: 0,
   affiliate_rebate_duration_days: 0,
   affiliate_rebate_per_invitee_cap: 0,
+  affiliate_signup_bonus_enabled: false,
+  affiliate_inviter_bonus_usd: 0,
+  affiliate_invitee_bonus_usd: 0,
   default_concurrency: 1,
   default_subscriptions: [],
   force_email_on_third_party_signup: false,
@@ -7997,6 +8057,9 @@ async function saveSettings() {
       affiliate_rebate_freeze_hours: Math.max(0, Math.min(720, Number(form.affiliate_rebate_freeze_hours) || 0)),
       affiliate_rebate_duration_days: Math.max(0, Math.min(3650, Math.floor(Number(form.affiliate_rebate_duration_days) || 0))),
       affiliate_rebate_per_invitee_cap: Math.max(0, Number(form.affiliate_rebate_per_invitee_cap) || 0),
+      affiliate_signup_bonus_enabled: !!form.affiliate_signup_bonus_enabled,
+      affiliate_inviter_bonus_usd: Math.max(0, Math.min(1000, Number(form.affiliate_inviter_bonus_usd) || 0)),
+      affiliate_invitee_bonus_usd: Math.max(0, Math.min(1000, Number(form.affiliate_invitee_bonus_usd) || 0)),
       default_concurrency: form.default_concurrency,
       default_subscriptions: normalizedDefaultSubscriptions,
       force_email_on_third_party_signup: form.force_email_on_third_party_signup,

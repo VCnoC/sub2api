@@ -29,6 +29,13 @@ const (
 	AffiliateRebateDurationDaysDefault  = 0     // 0 = 永久有效
 	AffiliateRebateDurationDaysMax      = 3650  // ~10 年
 	AffiliateRebatePerInviteeCapDefault = 0.0   // 0 = 无上限
+
+	// 邀请注册奖励（一次性赠送，与按比例的充值返利并列）
+	AffiliateSignupBonusEnabledDefault = false
+	AffiliateInviterBonusUSDDefault    = 0.0
+	AffiliateInviteeBonusUSDDefault    = 0.0
+	AffiliateBonusUSDMin               = 0.0
+	AffiliateBonusUSDMax               = 1000.0 // 单次注册奖励上限 $1000，避免误填
 )
 
 // Platform constants
@@ -110,6 +117,9 @@ const (
 	SettingKeyAffiliateRebateFreezeHours       = "affiliate_rebate_freeze_hours"       // 返利冻结期（小时，0=不冻结）
 	SettingKeyAffiliateRebateDurationDays      = "affiliate_rebate_duration_days"      // 返利有效期（天，0=永久）
 	SettingKeyAffiliateRebatePerInviteeCap     = "affiliate_rebate_per_invitee_cap"    // 单人返利上限（0=无上限）
+	SettingKeyAffiliateSignupBonusEnabled      = "affiliate_signup_bonus_enabled"      // 邀请注册奖励子开关（双向赠送余额）
+	SettingKeyAffiliateInviterBonusUSD         = "affiliate_inviter_bonus_usd"         // 邀请人注册奖励金额（USD）
+	SettingKeyAffiliateInviteeBonusUSD         = "affiliate_invitee_bonus_usd"         // 被邀请人注册奖励金额（USD）
 	SettingKeyRiskControlEnabled               = "risk_control_enabled"                // 是否启用风控中心入口与审计链路
 	SettingKeyContentModerationConfig          = "content_moderation_config"           // 内容审计配置（JSON）
 	SettingKeyLoginAgreementEnabled            = "login_agreement_enabled"             // 登录前是否要求同意条款

@@ -150,8 +150,13 @@ type SystemSettings struct {
 	AffiliateRebateFreezeHours   int
 	AffiliateRebateDurationDays  int
 	AffiliateRebatePerInviteeCap float64
-	DefaultUserRPMLimit          int
-	DefaultSubscriptions         []DefaultSubscriptionSetting
+	// 邀请注册奖励（双向赠送，新人体验金）—— 与「充值返利」是两套独立机制：
+	// 这套在注册时一次性赠送固定金额；充值返利则按消费金额按比例累积。
+	AffiliateSignupBonusEnabled bool
+	AffiliateInviterBonusUSD    float64
+	AffiliateInviteeBonusUSD    float64
+	DefaultUserRPMLimit         int
+	DefaultSubscriptions        []DefaultSubscriptionSetting
 
 	// Model fallback configuration
 	EnableModelFallback      bool   `json:"enable_model_fallback"`

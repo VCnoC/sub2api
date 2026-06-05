@@ -92,6 +92,11 @@ type AffiliateDetail struct {
 	// 用于在用户的 /affiliate 页面直观展示「分享后能拿到多少」。
 	EffectiveRebateRatePercent float64            `json:"effective_rebate_rate_percent"`
 	Invitees                   []AffiliateInvitee `json:"invitees"`
+	// 注册双向奖励（与按比例的充值返利并列）—— 用户邀请页用这三个字段展示
+	// 「每邀请一人，您得 X1，对方得 X2」激励文案。
+	SignupBonusEnabled bool    `json:"signup_bonus_enabled"`
+	InviterBonusUSD    float64 `json:"inviter_bonus_usd"`
+	InviteeBonusUSD    float64 `json:"invitee_bonus_usd"`
 }
 
 type AffiliateRepository interface {
@@ -99,6 +104,9 @@ type AffiliateRepository interface {
 	GetAffiliateByCode(ctx context.Context, code string) (*AffiliateSummary, error)
 	BindInviter(ctx context.Context, userID, inviterID int64) (bool, error)
 	AccrueQuota(ctx context.Context, inviterID, inviteeUserID int64, amount float64, freezeHours int, sourceOrderID *int64) (bool, error)
+	// GrantSignupBonusBalances 给邀请人 + 被邀请人各加余额（双向注册奖励）。
+	// 内部基于 user_affiliate_ledger 实现幂等：同一对邀请关系不会重复发放。
+	GrantSignupBonusBalances(ctx context.Context, inviterID int64, inviterAmount float64, inviteeID int64, inviteeAmount float64) (bool, error)
 	GetAccruedRebateFromInvitee(ctx context.Context, inviterID, inviteeUserID int64) (float64, error)
 	ThawFrozenQuota(ctx context.Context, userID int64) (float64, error)
 	TransferQuotaToBalance(ctx context.Context, userID int64) (float64, float64, error)
@@ -202,6 +210,11 @@ type AffiliateUserOverview struct {
 	RebatedInviteeCount int     `json:"rebated_invitee_count"`
 	AvailableQuota      float64 `json:"available_quota"`
 	HistoryQuota        float64 `json:"history_quota"`
+	// 邀请注册奖励（双向赠送）—— 用户邀请返利页面会用这三个字段展示
+	// 「每邀请一人，您得 X1，对方得 X2」的激励文案。
+	SignupBonusEnabled bool    `json:"signup_bonus_enabled"`
+	InviterBonusUSD    float64 `json:"inviter_bonus_usd"`
+	InviteeBonusUSD    float64 `json:"invitee_bonus_usd"`
 }
 
 type AffiliateService struct {
@@ -253,6 +266,12 @@ func (s *AffiliateService) GetAffiliateDetail(ctx context.Context, userID int64)
 	if err != nil {
 		return nil, err
 	}
+	// 注册双向奖励：把全局设置展平到用户视图，便于前端直接渲染
+	bonusEnabled, inviterBonus, inviteeBonus := false, 0.0, 0.0
+	if s != nil && s.settingService != nil {
+		bonusEnabled, inviterBonus, inviteeBonus = s.settingService.GetAffiliateSignupBonusSettings(ctx)
+	}
+
 	return &AffiliateDetail{
 		UserID:                     summary.UserID,
 		AffCode:                    summary.AffCode,
@@ -263,6 +282,9 @@ func (s *AffiliateService) GetAffiliateDetail(ctx context.Context, userID int64)
 		AffHistoryQuota:            summary.AffHistoryQuota,
 		EffectiveRebateRatePercent: s.resolveRebateRatePercent(ctx, summary),
 		Invitees:                   invitees,
+		SignupBonusEnabled:         bonusEnabled,
+		InviterBonusUSD:            inviterBonus,
+		InviteeBonusUSD:            inviteeBonus,
 	}, nil
 }
 
@@ -308,7 +330,33 @@ func (s *AffiliateService) BindInviterByCode(ctx context.Context, userID int64, 
 	if !bound {
 		return ErrAffiliateAlreadyBound
 	}
+
+	// 绑定成功后立即尝试发放「注册双向奖励」。
+	// 失败仅记录日志、绝不阻断 — 余额奖励是增量功能，不能影响注册主流程。
+	s.tryGrantSignupBonus(ctx, inviterSummary.UserID, userID)
+
 	return nil
+}
+
+// tryGrantSignupBonus 在邀请绑定成功后发放双向余额奖励。
+// 读取全局 SignupBonus 设置，根据总开关 + 各自金额（≥0）发放给邀请人与被邀请人。
+// 内部去重在 repo 层（同一对 inviter/invitee 不会重复发放）。
+func (s *AffiliateService) tryGrantSignupBonus(ctx context.Context, inviterID, inviteeID int64) {
+	if s == nil || s.repo == nil || s.settingService == nil {
+		return
+	}
+	enabled, inviterBonus, inviteeBonus := s.settingService.GetAffiliateSignupBonusSettings(ctx)
+	if !enabled {
+		return
+	}
+	if inviterBonus <= 0 && inviteeBonus <= 0 {
+		return
+	}
+	if _, err := s.repo.GrantSignupBonusBalances(ctx, inviterID, inviterBonus, inviteeID, inviteeBonus); err != nil {
+		logger.LegacyPrintf("service.affiliate",
+			"[Affiliate] grant signup bonus failed: inviter=%d invitee=%d X1=%.4f X2=%.4f err=%v",
+			inviterID, inviteeID, inviterBonus, inviteeBonus, err)
+	}
 }
 
 func (s *AffiliateService) AccrueInviteRebate(ctx context.Context, inviteeUserID int64, baseRechargeAmount float64) (float64, error) {

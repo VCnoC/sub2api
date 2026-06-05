@@ -1157,6 +1157,11 @@ export default {
       empty: '当前没有可转入额度',
       success: '已转入余额：{amount}'
     },
+    signupBonus: {
+      title: '邀请一人，双方立得现金奖励',
+      youGet: '您获得',
+      theyGet: '对方获得'
+    },
     invitees: {
       title: '已邀请用户',
       empty: '暂无邀请记录',
@@ -5494,6 +5499,14 @@ export default {
           durationDaysDesc: '被邀请用户注册后多少天内的充值产生返利。0 = 永久有效。',
           perInviteeCap: '单人返利上限',
           perInviteeCapDesc: '每个被邀请用户最多产生的返利总额。0 = 无上限。',
+          signupBonus: {
+            enabled: '启用注册双向奖励',
+            enabledHint: '开启后：被邀请人通过邀请链接注册成功，双方都立即获得一笔现金奖励（与充值返利并存）。',
+            inviterBonus: '邀请人奖励金额',
+            inviterBonusDesc: '邀请人每成功邀请一位新用户获得的金额（USD），范围 0 ~ 1000。',
+            inviteeBonus: '被邀请人奖励金额',
+            inviteeBonusDesc: '被邀请人通过链接注册时立即获得的体验金（USD），范围 0 ~ 1000。'
+          },
           customUsers: {
             title: '专属用户配置',
             description: '为指定用户设置专属邀请码或专属返利比例。仅展示已设置过专属配置的用户。',
