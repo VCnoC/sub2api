@@ -51,6 +51,22 @@ function saveToStorage(key: string, value: unknown): boolean {
   }
 }
 
+function stripAttachmentPayload(messages: Message[]): Message[] {
+  return messages.map((message) => {
+    if (!message.attachments?.length) return message
+    return {
+      ...message,
+      attachments: message.attachments.map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        name: item.name,
+        type: item.type,
+        size: item.size,
+      })),
+    }
+  })
+}
+
 // ==================== 主 composable ====================
 
 export function usePlaygroundState() {
@@ -102,11 +118,11 @@ export function usePlaygroundState() {
       if (val.length > MAX_HISTORY_MESSAGES) {
         toSave = val.slice(val.length - MAX_HISTORY_MESSAGES)
       }
-      const ok = saveToStorage(STORAGE_KEYS.MESSAGES, toSave)
+      const ok = saveToStorage(STORAGE_KEYS.MESSAGES, stripAttachmentPayload(toSave))
       // 配额溢出时进一步截断重试
       if (!ok && toSave.length > 20) {
         const truncated = toSave.slice(-20)
-        saveToStorage(STORAGE_KEYS.MESSAGES, truncated)
+        saveToStorage(STORAGE_KEYS.MESSAGES, stripAttachmentPayload(truncated))
       }
     },
     { deep: true }

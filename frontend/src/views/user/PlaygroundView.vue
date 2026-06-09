@@ -298,7 +298,12 @@ import {
 import { getAvailableModels } from '@/api/playground'
 import { getAvailable as fetchGroups } from '@/api/groups'
 import { useAppStore } from '@/stores/app'
-import type { Message, ModelOption, GroupOption } from '@/types/playground'
+import type {
+  Message,
+  ModelOption,
+  GroupOption,
+  PlaygroundAttachment,
+} from '@/types/playground'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -392,9 +397,9 @@ function onModelChange(value: string) {
 const editingKey = ref<string | null>(null)
 const versionIndexMap = ref<Record<string, number>>({})
 
-function handleSend(text: string) {
-  if (!text.trim()) return
-  const userMsg = createUserMessage(text)
+function handleSend(text: string, attachments: PlaygroundAttachment[] = []) {
+  if (!text.trim() && attachments.length === 0) return
+  const userMsg = createUserMessage(text, attachments)
   const placeholder = createLoadingAssistantMessage()
   const next = [...messages.value, userMsg, placeholder]
   setMessages(next)

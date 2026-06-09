@@ -112,8 +112,46 @@
           <div class="loader-dot"></div>
         </div>
 
+        <div
+          v-if="message.from === 'user' && attachments.length > 0"
+          class="message-attachments"
+        >
+          <div
+            v-for="item in attachments"
+            :key="item.id"
+            class="message-attachment"
+          >
+            <img
+              v-if="item.kind === 'image' && item.dataUrl"
+              :src="item.dataUrl"
+              :alt="item.name"
+              class="message-attachment-thumb"
+            />
+            <span v-else class="message-attachment-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="h-4 w-4"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </span>
+            <span class="message-attachment-text">
+              <span class="message-attachment-name">{{ item.name }}</span>
+              <span class="message-attachment-type">
+                {{ item.kind === 'image' ? t('playground.input.imageAttachment') : t('playground.input.documentAttachment') }}
+              </span>
+            </span>
+          </div>
+        </div>
+
         <!-- 错误消息 -->
-        <div v-else-if="message.status === 'error'" class="message-error">
+        <div v-if="message.status === 'error'" class="message-error">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -376,6 +414,8 @@ const currentContent = computed(
       ?.content || ''
 )
 
+const attachments = computed(() => props.message.attachments || [])
+
 const hasReasoning = computed(
   () =>
     props.message.from === 'assistant' &&
@@ -507,6 +547,38 @@ async function onCopy() {
 
 .user-content {
   @apply whitespace-pre-wrap break-words;
+}
+
+.message-attachments {
+  @apply mb-2 flex flex-wrap gap-2;
+}
+
+.message-attachment {
+  @apply inline-flex max-w-full items-center gap-2 rounded-xl border border-gray-200 bg-white/80 px-2 py-1.5 text-left;
+  @apply dark:border-dark-600 dark:bg-dark-800/80;
+}
+
+.message-attachment-thumb {
+  @apply h-10 w-10 flex-shrink-0 rounded-lg object-cover;
+}
+
+.message-attachment-icon {
+  @apply inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500;
+  @apply dark:bg-dark-700 dark:text-gray-300;
+}
+
+.message-attachment-text {
+  @apply min-w-0;
+}
+
+.message-attachment-name {
+  @apply block max-w-[180px] truncate text-xs font-medium text-gray-800;
+  @apply dark:text-gray-100;
+}
+
+.message-attachment-type {
+  @apply block text-[11px] text-gray-500;
+  @apply dark:text-gray-400;
 }
 
 /* Reasoning */

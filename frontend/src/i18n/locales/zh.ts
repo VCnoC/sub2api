@@ -851,7 +851,19 @@ export default {
       noGroup: '暂无可用分组',
       noModel: '该分组暂无可用模型',
       loadingModels: '加载模型中…',
-      hint: '回车发送 · Shift+Enter 换行 · 历史会自动保存在本地'
+      hint: '回车发送 · Shift+Enter 换行 · 支持图片和文本类文档',
+      attachImage: '上传图片',
+      attachDocument: '上传文档',
+      removeAttachment: '移除附件',
+      imageAttachment: '图片',
+      documentAttachment: '文档',
+      processingAttachment: '正在读取附件…',
+      tooManyAttachments: '最多只能添加 {count} 个附件',
+      fileTooLarge: '{name} 太大，单个文件上限为 {size}',
+      unsupportedImage: '{name} 不是支持的图片格式',
+      unsupportedDocument: '{name} 暂不支持，请上传文本类文档',
+      emptyDocument: '{name} 内容为空',
+      attachmentReadFailed: '读取附件失败'
     },
     actions: {
       systemPrompt: '系统提示词',

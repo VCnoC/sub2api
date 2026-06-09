@@ -27,6 +27,8 @@ import type {
   ChatCompletionRequest,
   ChatCompletionMessage,
   MessageRole,
+  ContentPart,
+  PlaygroundAttachment,
 } from '@/types/playground'
 import { useStreamChat, type StreamUpdateType } from './useStreamChat'
 
@@ -63,10 +65,16 @@ export function useChatHandler(opts: UseChatHandlerOptions) {
       if (msg.status === MESSAGE_STATUS.ERROR) continue
       if (msg.status === MESSAGE_STATUS.LOADING) continue
       const content = msg.versions?.[0]?.content
-      if (!content || !content.trim()) continue
+      const attachments = msg.attachments || []
+      if (
+        (!content || !content.trim()) &&
+        !attachments.some(hasUsableAttachment)
+      ) {
+        continue
+      }
       chatMessages.push({
         role: msg.from,
-        content,
+        content: buildMessageContent(content || '', attachments),
       })
     }
 
@@ -267,12 +275,63 @@ export function useChatHandler(opts: UseChatHandlerOptions) {
 
 // ==================== 工厂函数（消息创建） ====================
 
-export function createUserMessage(text: string): Message {
+function hasUsableAttachment(item: PlaygroundAttachment): boolean {
+  return (
+    (item.kind === 'image' && !!item.dataUrl) ||
+    (item.kind === 'document' && !!item.text?.trim())
+  )
+}
+
+function buildMessageContent(
+  text: string,
+  attachments: PlaygroundAttachment[]
+): string | ContentPart[] {
+  const usableAttachments = attachments.filter(hasUsableAttachment)
+  if (usableAttachments.length === 0) return text
+
+  const documentBlocks = usableAttachments
+    .filter((item) => item.kind === 'document' && item.text)
+    .map(
+      (item) =>
+        `--- ${item.name} (${item.type || 'text/plain'}, ${item.size} bytes) ---\n${item.text}`
+    )
+
+  const textParts = [text.trim()]
+  if (documentBlocks.length > 0) {
+    textParts.push(
+      `Attached documents:\n\n${documentBlocks.join('\n\n')}`
+    )
+  }
+
+  const parts: ContentPart[] = []
+  const mergedText = textParts.filter(Boolean).join('\n\n')
+  if (mergedText) {
+    parts.push({ type: 'text', text: mergedText })
+  }
+
+  for (const item of usableAttachments) {
+    if (item.kind !== 'image' || !item.dataUrl) continue
+    parts.push({
+      type: 'image_url',
+      image_url: { url: item.dataUrl },
+    })
+  }
+
+  return parts.length === 1 && parts[0].type === 'text'
+    ? parts[0].text || ''
+    : parts
+}
+
+export function createUserMessage(
+  text: string,
+  attachments: PlaygroundAttachment[] = []
+): Message {
   return {
     key: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     from: MESSAGE_ROLES.USER,
     versions: [{ id: 'v0', content: text }],
     status: MESSAGE_STATUS.COMPLETE,
+    attachments,
   }
 }
 

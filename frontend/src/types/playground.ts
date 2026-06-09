@@ -29,6 +29,20 @@ export interface MessageSource {
   title: string
 }
 
+export type PlaygroundAttachmentKind = 'image' | 'document'
+
+export interface PlaygroundAttachment {
+  id: string
+  kind: PlaygroundAttachmentKind
+  name: string
+  type: string
+  size: number
+  /** 图片使用 data URL 直传给 OpenAI 兼容 image_url。 */
+  dataUrl?: string
+  /** 文档在浏览器本地读取为纯文本后拼入用户消息。 */
+  text?: string
+}
+
 export interface Message {
   /** 消息唯一 key */
   key: string
@@ -50,6 +64,8 @@ export interface Message {
   status?: MessageStatus
   /** 错误码（用于本地化错误提示） */
   errorCode?: string | null
+  /** 用户上传的图片/文本类文档附件 */
+  attachments?: PlaygroundAttachment[]
 }
 
 // ==================== API 请求/响应 ====================
