@@ -249,6 +249,7 @@ export default {
 
   // Common
   common: {
+    legalDisclaimer: 'This site’s API is for testing and exploration purposes only. Please comply with the laws and regulations of your jurisdiction and do not use it for any illegal activity; the site assumes no legal liability.',
     loading: 'Loading...',
     submitting: 'Submitting...',
     justNow: 'just now',

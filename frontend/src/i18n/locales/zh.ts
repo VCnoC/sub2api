@@ -249,6 +249,7 @@ export default {
 
   // Common
   common: {
+    legalDisclaimer: '本站 API 适用于测试和体验目的，请自觉遵守您当地法律法规，切勿用于非法用途，本站不承担任何法律责任。',
     loading: '加载中...',
     submitting: '提交中...',
     justNow: '刚刚',

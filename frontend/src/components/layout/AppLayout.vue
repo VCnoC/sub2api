@@ -18,6 +18,9 @@
       <main class="p-4 md:p-6 lg:p-8">
         <slot />
       </main>
+
+      <!-- Footer -->
+      <AppFooter />
     </div>
   </div>
 </template>
@@ -31,6 +34,7 @@ import { useOnboardingTour } from '@/composables/useOnboardingTour'
 import { useOnboardingStore } from '@/stores/onboarding'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import AppFooter from './AppFooter.vue'
 
 const appStore = useAppStore()
 const authStore = useAuthStore()

@@ -235,8 +235,8 @@ import type {
 } from '@/types/playground'
 
 const MAX_ATTACHMENTS = 6
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024
-const MAX_DOCUMENT_BYTES = 256 * 1024
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 const DOCUMENT_ACCEPT = [
   '.txt',
   '.md',
