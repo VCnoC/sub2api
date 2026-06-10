@@ -27,6 +27,10 @@ RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# Copy legal documents referenced by LegalDocumentView.vue via ?raw imports
+# (path relative to /app/frontend resolves to /app/docs).
+COPY docs/ ../docs/
+
 # Copy frontend source and build
 COPY frontend/ ./
 RUN pnpm run build
