@@ -346,14 +346,9 @@ const {
   importConfig,
 } = usePlaygroundState()
 
-const { sendChat, stopGeneration, isGenerating } = useChatHandler({
-  config,
-  parameterEnabled,
-  messages,
-  updateMessages,
-})
-
 // ==================== 多会话管理 ====================
+// ⚠️ 以下 composable 均为模块级单例：路由切走后流式生成继续在后台进行，
+// 返回页面时复用同一组状态无缝衔接（详见各 composable 头注释）
 
 const {
   conversations,
@@ -372,11 +367,14 @@ const {
   defaultTitle: () => t('playground.conversations.defaultTitle'),
 })
 
-// 流式回复结束（true → false）后防抖保存当前会话
-watch(isGenerating, (generating, wasGenerating) => {
-  if (wasGenerating && !generating) {
-    scheduleSave()
-  }
+const { sendChat, stopGeneration, isGenerating } = useChatHandler({
+  config,
+  parameterEnabled,
+  messages,
+  updateMessages,
+  // 每轮生成收尾（完成/出错/中断）后防抖保存当前会话。
+  // 不用组件级 watch(isGenerating)：那会随组件卸载销毁，后台完成的生成无法落库
+  onSettled: () => scheduleSave(),
 })
 
 /** 生成中切换/新建前的收尾：停止本轮生成（部分回复定稿）并排入保存队列 */

@@ -40,9 +40,16 @@ function getAuthToken(): string {
   return localStorage.getItem('auth_token') || ''
 }
 
+// ==================== 模块级单例状态 ====================
+// 流式状态与中断控制器提升到模块作用域：SSE 消费循环不依赖组件生命周期，
+// 路由切换（组件卸载）后生成继续在后台进行，重新进入页面时无缝衔接。
+const isStreaming = ref(false)
+let abortController: AbortController | null = null
+
+/** 全局只读流式状态（供布局层显示「生成中」指示用） */
+export const playgroundStreaming = isStreaming
+
 export function useStreamChat() {
-  const isStreaming = ref(false)
-  let abortController: AbortController | null = null
 
   /**
    * 发起 SSE 流式聊天请求

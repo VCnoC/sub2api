@@ -874,6 +874,7 @@ export default {
   // Playground
   playground: {
     title: 'Playground',
+    generatingInBackground: 'Chat is generating in the background',
     subtitle: 'Group: {group}',
     conversations: {
       title: 'Chats',

@@ -878,6 +878,7 @@ export default {
   // Playground (对话广场)
   playground: {
     title: '对话广场',
+    generatingInBackground: '对话正在后台生成中',
     subtitle: '当前分组：{group}',
     conversations: {
       title: '会话',

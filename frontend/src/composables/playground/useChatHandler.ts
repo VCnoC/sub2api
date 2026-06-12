@@ -37,9 +37,30 @@ interface UseChatHandlerOptions {
   parameterEnabled: Ref<ParameterEnabled>
   messages: Ref<Message[]>
   updateMessages: (updater: (prev: Message[]) => Message[]) => void
+  /**
+   * 每轮流式请求收尾后回调（正常完成 / 出错 / 中断均触发）。
+   * 用于触发会话保存——以前由视图层 watch(isGenerating) 实现，
+   * 但组件级 watch 在路由切走后被销毁，后台完成的生成无法落库；
+   * 改为闭包回调后与组件生命周期解耦。
+   */
+  onSettled?: () => void
 }
 
+/**
+ * 模块级单例缓存：首次（组件 setup 中）调用时创建并缓存。
+ * 流式状态机闭包脱离组件生命周期，路由切换后生成继续在后台跑。
+ * 后续调用忽略传入的 opts（所有 opts 均为同一组全局单例的引用）。
+ */
+let _singleton: ReturnType<typeof createChatHandler> | null = null
+
 export function useChatHandler(opts: UseChatHandlerOptions) {
+  if (!_singleton) {
+    _singleton = createChatHandler(opts)
+  }
+  return _singleton
+}
+
+function createChatHandler(opts: UseChatHandlerOptions) {
   const { t, te } = useI18n()
   const { send, stop, isStreaming } = useStreamChat()
 
@@ -213,6 +234,15 @@ export function useChatHandler(opts: UseChatHandlerOptions) {
       messagesIncludingPlaceholder.slice(0, -1)
     )
 
+    try {
+      await doSend(payload)
+    } finally {
+      // 不论完成 / 出错 / 中断，都通知调用方收尾（防抖保存会话）
+      opts.onSettled?.()
+    }
+  }
+
+  async function doSend(payload: ChatCompletionRequest) {
     await send(payload, {
       onUpdate: (type, chunk) => {
         patchLastAssistant((m) => {

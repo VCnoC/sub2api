@@ -11,7 +11,7 @@
  * 适配 Vue 3 Composition API
  */
 
-import { ref, watch } from 'vue'
+import { effectScope, ref, watch } from 'vue'
 import {
   DEFAULT_CONFIG,
   DEFAULT_PARAMETER_ENABLED,
@@ -52,7 +52,24 @@ function saveToStorage(key: string, value: unknown): boolean {
 
 // ==================== 主 composable ====================
 
+/**
+ * 模块级单例缓存：状态脱离组件生命周期。
+ * 路由离开 Playground 时消息列表与流式输出目标保持存活，
+ * 后台生成继续写入同一组 ref，返回页面时直接复用。
+ */
+let _singleton: ReturnType<typeof createPlaygroundState> | null = null
+
 export function usePlaygroundState() {
+  if (!_singleton) {
+    // detached effectScope：watch 不绑定首个调用组件的作用域，
+    // 防止该组件卸载时持久化监听被一并销毁
+    const scope = effectScope(true)
+    _singleton = scope.run(() => createPlaygroundState())!
+  }
+  return _singleton
+}
+
+function createPlaygroundState() {
   // 初始化：localStorage merge defaults
   const config = ref<PlaygroundConfig>({
     ...DEFAULT_CONFIG,

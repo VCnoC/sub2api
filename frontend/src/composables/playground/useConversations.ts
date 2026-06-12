@@ -14,7 +14,7 @@
  *     必须带上 model 与 group_name（见 UpdateConversationRequest 注释）
  */
 
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref } from 'vue'
 import { playgroundAPI } from '@/api/playground'
 import {
   CONVERSATION_SAVE_DEBOUNCE_MS,
@@ -45,7 +45,23 @@ function deriveTitle(messages: Message[]): string | null {
   return chars.slice(0, CONVERSATION_TITLE_MAX_CHARS).join('')
 }
 
+/**
+ * 模块级单例缓存：会话列表 / activeConversationId / 保存链全部脱离组件生命周期。
+ * 关键场景：路由切走后后台生成完成 → onSettled 触发 scheduleSave →
+ * 仍能写回正确的 activeConversationId（而不是新实例的 null 草稿态误建会话）。
+ * 后续调用忽略传入的 options（均为同一组全局单例的引用闭包）。
+ */
+let _singleton: ReturnType<typeof createConversations> | null = null
+
 export function useConversations(options: UseConversationsOptions) {
+  if (!_singleton) {
+    _singleton = createConversations(options)
+  }
+  return _singleton
+}
+
+/** 测试专用工厂：绕过单例缓存，每次创建独立实例 */
+export function createConversations(options: UseConversationsOptions) {
   /** 会话摘要列表（按最后活动时间倒序） */
   const conversations = ref<ConversationSummary[]>([])
   /** 当前激活的会话 ID；null 表示尚未落库的「草稿」状态 */
@@ -242,15 +258,11 @@ export function useConversations(options: UseConversationsOptions) {
     }
   }
 
-  onMounted(() => {
+  // 实例与页面同生命周期（模块级单例），监听器注册一次、不再移除。
+  // 路由切换不再触发 flush：后台生成结束后由 onSettled → scheduleSave 落库
+  if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', onBeforeUnload)
-  })
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('beforeunload', onBeforeUnload)
-    // 组件卸载（路由跳转）时 flush 未保存内容
-    void flushSave()
-  })
+  }
 
   return {
     // State

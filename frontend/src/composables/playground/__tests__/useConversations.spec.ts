@@ -7,7 +7,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { defineComponent } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { useConversations } from '../useConversations'
+import { createConversations } from '../useConversations'
 import { playgroundAPI } from '@/api/playground'
 import { CONVERSATION_SAVE_DEBOUNCE_MS, STORAGE_KEYS } from '@/constants/playground'
 import type { Message } from '@/types/playground'
@@ -47,10 +47,10 @@ describe('useConversations', () => {
   let wrapper: VueWrapper | null = null
 
   function setup() {
-    let api!: ReturnType<typeof useConversations>
+    let api!: ReturnType<typeof createConversations>
     const Harness = defineComponent({
       setup() {
-        api = useConversations({
+        api = createConversations({
           getMessages: () => messages,
           setMessages: (next) => {
             messages = next

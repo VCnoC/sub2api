@@ -114,6 +114,11 @@
             <span v-if="item.iconSvg" class="h-5 w-5 flex-shrink-0 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
             <component v-else :is="item.icon" class="h-5 w-5 flex-shrink-0" />
             <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">{{ item.label }}</span>
+            <span
+              v-if="item.path === '/playground' && playgroundStreaming && !sidebarCollapsed"
+              class="ml-auto h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-primary-500"
+              :title="t('playground.generatingInBackground')"
+            ></span>
           </router-link>
         </div>
       </template>
@@ -134,6 +139,11 @@
             <span v-if="item.iconSvg" class="h-5 w-5 flex-shrink-0 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
             <component v-else :is="item.icon" class="h-5 w-5 flex-shrink-0" />
             <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">{{ item.label }}</span>
+            <span
+              v-if="item.path === '/playground' && playgroundStreaming && !sidebarCollapsed"
+              class="ml-auto h-2 w-2 flex-shrink-0 animate-pulse rounded-full bg-primary-500"
+              :title="t('playground.generatingInBackground')"
+            ></span>
           </router-link>
         </div>
       </template>
@@ -187,6 +197,7 @@ import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } 
 import VersionBadge from '@/components/common/VersionBadge.vue'
 import { sanitizeSvg } from '@/utils/sanitize'
 import { FeatureFlags, makeSidebarFlag } from '@/utils/featureFlags'
+import { playgroundStreaming } from '@/composables/playground/useStreamChat'
 
 interface NavItem {
   path: string
