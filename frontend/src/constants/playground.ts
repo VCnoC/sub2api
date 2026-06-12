@@ -25,7 +25,14 @@ export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: '/playground/chat/completions',
   AVAILABLE_MODELS: '/playground/models',
   AVAILABLE_GROUPS: '/groups/available',
+  CONVERSATIONS: '/playground/conversations',
 } as const
+
+// 会话标题自动取首条用户消息的前 N 个字符
+export const CONVERSATION_TITLE_MAX_CHARS = 20
+
+// 消息保存防抖窗口（流式回复结束后延迟保存，毫秒）
+export const CONVERSATION_SAVE_DEBOUNCE_MS = 1000
 
 // 默认分组（兜底值）
 export const DEFAULT_GROUP = 'default' as const

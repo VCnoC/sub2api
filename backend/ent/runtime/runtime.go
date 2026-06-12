@@ -24,6 +24,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
+	"github.com/Wei-Shaw/sub2api/ent/playgroundconversation"
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/proxy"
@@ -1221,6 +1222,31 @@ func init() {
 	pendingauthsessionDescCompletionCodeHash := pendingauthsessionFields[12].Descriptor()
 	// pendingauthsession.DefaultCompletionCodeHash holds the default value on creation for the completion_code_hash field.
 	pendingauthsession.DefaultCompletionCodeHash = pendingauthsessionDescCompletionCodeHash.Default.(string)
+	playgroundconversationMixin := schema.PlaygroundConversation{}.Mixin()
+	playgroundconversationMixinFields0 := playgroundconversationMixin[0].Fields()
+	_ = playgroundconversationMixinFields0
+	playgroundconversationFields := schema.PlaygroundConversation{}.Fields()
+	_ = playgroundconversationFields
+	// playgroundconversationDescCreatedAt is the schema descriptor for created_at field.
+	playgroundconversationDescCreatedAt := playgroundconversationMixinFields0[0].Descriptor()
+	// playgroundconversation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	playgroundconversation.DefaultCreatedAt = playgroundconversationDescCreatedAt.Default.(func() time.Time)
+	// playgroundconversationDescUpdatedAt is the schema descriptor for updated_at field.
+	playgroundconversationDescUpdatedAt := playgroundconversationMixinFields0[1].Descriptor()
+	// playgroundconversation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	playgroundconversation.DefaultUpdatedAt = playgroundconversationDescUpdatedAt.Default.(func() time.Time)
+	// playgroundconversation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	playgroundconversation.UpdateDefaultUpdatedAt = playgroundconversationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// playgroundconversationDescTitle is the schema descriptor for title field.
+	playgroundconversationDescTitle := playgroundconversationFields[1].Descriptor()
+	// playgroundconversation.DefaultTitle holds the default value on creation for the title field.
+	playgroundconversation.DefaultTitle = playgroundconversationDescTitle.Default.(string)
+	// playgroundconversation.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	playgroundconversation.TitleValidator = playgroundconversationDescTitle.Validators[0].(func(string) error)
+	// playgroundconversationDescLastActivityAt is the schema descriptor for last_activity_at field.
+	playgroundconversationDescLastActivityAt := playgroundconversationFields[5].Descriptor()
+	// playgroundconversation.DefaultLastActivityAt holds the default value on creation for the last_activity_at field.
+	playgroundconversation.DefaultLastActivityAt = playgroundconversationDescLastActivityAt.Default.(func() time.Time)
 	promocodeFields := schema.PromoCode{}.Fields()
 	_ = promocodeFields
 	// promocodeDescCode is the schema descriptor for code field.

@@ -4,39 +4,38 @@
       <template #actions>
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <!-- Total Requests -->
-          <div class="card p-4">
-          <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-              <Icon name="document" size="md" class="text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {{ t('usage.totalRequests') }}
-              </p>
-              <p class="text-xl font-bold text-gray-900 dark:text-white">
-                {{ usageStats?.total_requests?.toLocaleString() || '0' }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ t('usage.inSelectedRange') }}
-              </p>
+          <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
+            <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
+            <div class="relative flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {{ t('usage.totalRequests') }}
+                </p>
+                <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white">
+                  {{ usageStats?.total_requests?.toLocaleString() || '0' }}
+                </p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('usage.inSelectedRange') }}
+                </p>
+              </div>
+              <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110">
+                <Icon name="document" size="md" />
+              </div>
             </div>
           </div>
-        </div>
 
         <!-- Total Tokens -->
-        <div class="card p-4">
-          <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
-              <Icon name="cube" size="md" class="text-amber-600 dark:text-amber-400" />
-            </div>
+        <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
+          <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-colors duration-300 group-hover:bg-amber-500/20"></div>
+          <div class="relative flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
               <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {{ t('usage.totalTokens') }}
               </p>
-              <p class="text-xl font-bold text-gray-900 dark:text-white">
+              <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white">
                 {{ formatTokens(usageStats?.total_tokens || 0) }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">
                 <span>{{ t('usage.in') }} {{ formatTokens(usageStats?.total_input_tokens || 0) }}</span>
                 <span> · </span>
                 <span>{{ t('usage.out') }} {{ formatTokens(usageStats?.total_output_tokens || 0) }}</span>
@@ -45,7 +44,7 @@
                 <span> · </span>
                 <span class="text-amber-600 dark:text-amber-400">{{ t('usage.cacheCreate') }} {{ formatTokens(usageStats?.total_cache_creation_tokens || 0) }}</span>
               </p>
-              <p class="text-xs text-gray-400 dark:text-gray-500">
+              <p class="text-xs tabular-nums text-gray-400 dark:text-gray-500">
                 {{ t('usage.cacheHitRate') }}:
                 <template v-if="cacheStats.totalInput > 0">
                   <span class="text-sky-600 dark:text-sky-400">{{ formatTokens(cacheStats.cacheRead) }}</span>
@@ -56,45 +55,50 @@
                 <template v-else>-</template>
               </p>
             </div>
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/25 transition-transform duration-300 group-hover:scale-110">
+              <Icon name="cube" size="md" />
+            </div>
           </div>
         </div>
 
         <!-- Total Cost -->
-        <div class="card p-4">
-          <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-              <Icon name="dollar" size="md" class="text-green-600 dark:text-green-400" />
-            </div>
+        <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 100ms">
+          <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-colors duration-300 group-hover:bg-emerald-500/20"></div>
+          <div class="relative flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
               <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {{ t('usage.totalCost') }}
               </p>
-              <p class="text-xl font-bold text-green-600 dark:text-green-400">
+              <p class="mt-1.5 text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                 ${{ (usageStats?.total_actual_cost || 0).toFixed(4) }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">
                 {{ t('usage.actualCost') }} /
                 <span class="line-through">${{ (usageStats?.total_cost || 0).toFixed(4) }}</span>
                 {{ t('usage.standardCost') }}
               </p>
             </div>
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-110">
+              <Icon name="dollar" size="md" />
+            </div>
           </div>
         </div>
 
         <!-- Average Duration -->
-        <div class="card p-4">
-          <div class="flex items-center gap-3">
-            <div class="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
-              <Icon name="clock" size="md" class="text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
+        <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
+          <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl transition-colors duration-300 group-hover:bg-violet-500/20"></div>
+          <div class="relative flex items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
               <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
                 {{ t('usage.avgDuration') }}
               </p>
-              <p class="text-xl font-bold text-gray-900 dark:text-white">
+              <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white">
                 {{ formatDuration(usageStats?.average_duration_ms || 0) }}
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.perRequest') }}</p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('usage.perRequest') }}</p>
+            </div>
+            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg shadow-violet-500/25 transition-transform duration-300 group-hover:scale-110">
+              <Icon name="clock" size="md" />
             </div>
           </div>
         </div>

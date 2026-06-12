@@ -65,6 +65,7 @@
         class="playground-textarea"
         @keydown="handleKeydown"
         @input="autoResize"
+        @paste="handlePaste"
       />
 
       <!-- 工具栏 -->
@@ -200,9 +201,15 @@
       </div>
     </div>
 
-    <!-- 提示文字 -->
+    <!-- 提示文字（fullHeight 模式下全局 Footer 被隐藏，法律声明并入此行） -->
     <p class="playground-hint">
-      {{ isProcessingAttachment ? t('playground.input.processingAttachment') : t('playground.input.hint') }}
+      <template v-if="isProcessingAttachment">
+        {{ t('playground.input.processingAttachment') }}
+      </template>
+      <template v-else>
+        {{ t('playground.input.hint') }}
+        <span class="playground-hint-legal">· {{ t('common.legalDisclaimer') }}</span>
+      </template>
     </p>
 
     <input
@@ -395,32 +402,64 @@ function readAsText(file: File): Promise<string> {
   })
 }
 
-async function onImageInput(e: Event) {
-  const input = e.target as HTMLInputElement
-  const files = Array.from(input.files || [])
-  input.value = ''
-  if (files.length === 0) return
+/** 追加单个图片附件（文件选择与粘贴共用） */
+async function appendImageFile(file: File) {
+  if (!file.type.startsWith('image/')) {
+    appStore.showError(t('playground.input.unsupportedImage', { name: file.name }))
+    return
+  }
+  if (!canAppend(file, MAX_IMAGE_BYTES)) return
+  const dataUrl = await readAsDataURL(file)
+  attachments.value = [
+    ...attachments.value,
+    {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'image',
+      name: file.name,
+      type: file.type || 'image/*',
+      size: file.size,
+      dataUrl,
+    },
+  ]
+}
 
+/** 追加单个文档附件（文件选择与粘贴共用） */
+async function appendDocumentFile(file: File) {
+  if (!isSupportedDocument(file)) {
+    appStore.showError(t('playground.input.unsupportedDocument', { name: file.name }))
+    return
+  }
+  if (!canAppend(file, MAX_DOCUMENT_BYTES)) return
+  const content = await readAsText(file)
+  if (!content.trim()) {
+    appStore.showError(t('playground.input.emptyDocument', { name: file.name }))
+    return
+  }
+  attachments.value = [
+    ...attachments.value,
+    {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: 'document',
+      name: file.name,
+      type: file.type || 'text/plain',
+      size: file.size,
+      text: content,
+    },
+  ]
+}
+
+/** 批量处理文件列表（按类型分流到图片/文档管线） */
+async function appendFiles(files: File[], imagesOnly = false) {
   isProcessingAttachment.value = true
   try {
     for (const file of files) {
-      if (!file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/')) {
+        await appendImageFile(file)
+      } else if (!imagesOnly) {
+        await appendDocumentFile(file)
+      } else {
         appStore.showError(t('playground.input.unsupportedImage', { name: file.name }))
-        continue
       }
-      if (!canAppend(file, MAX_IMAGE_BYTES)) continue
-      const dataUrl = await readAsDataURL(file)
-      attachments.value = [
-        ...attachments.value,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          kind: 'image',
-          name: file.name,
-          type: file.type || 'image/*',
-          size: file.size,
-          dataUrl,
-        },
-      ]
     }
   } catch {
     appStore.showError(t('playground.input.attachmentReadFailed'))
@@ -429,42 +468,31 @@ async function onImageInput(e: Event) {
   }
 }
 
+async function onImageInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  input.value = ''
+  if (files.length === 0) return
+  await appendFiles(files, true)
+}
+
 async function onDocumentInput(e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files || [])
   input.value = ''
   if (files.length === 0) return
+  await appendFiles(files)
+}
 
-  isProcessingAttachment.value = true
-  try {
-    for (const file of files) {
-      if (!isSupportedDocument(file)) {
-        appStore.showError(t('playground.input.unsupportedDocument', { name: file.name }))
-        continue
-      }
-      if (!canAppend(file, MAX_DOCUMENT_BYTES)) continue
-      const text = await readAsText(file)
-      if (!text.trim()) {
-        appStore.showError(t('playground.input.emptyDocument', { name: file.name }))
-        continue
-      }
-      attachments.value = [
-        ...attachments.value,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          kind: 'document',
-          name: file.name,
-          type: file.type || 'text/plain',
-          size: file.size,
-          text,
-        },
-      ]
-    }
-  } catch {
-    appStore.showError(t('playground.input.attachmentReadFailed'))
-  } finally {
-    isProcessingAttachment.value = false
-  }
+/**
+ * 粘贴处理：剪贴板中带文件（截图/复制的文件）时拦截默认行为，
+ * 走附件管线（图片 → dataUrl，文本类文档 → 读取内容）；纯文本粘贴不受影响。
+ */
+async function handlePaste(e: ClipboardEvent) {
+  const files = Array.from(e.clipboardData?.files || [])
+  if (files.length === 0) return // 纯文本 → 浏览器默认粘贴
+  e.preventDefault()
+  await appendFiles(files)
 }
 
 watch(() => text.value, () => nextTick(autoResize))
@@ -586,5 +614,9 @@ watch(() => text.value, () => nextTick(autoResize))
 
 .playground-hint {
   @apply mt-1.5 text-center text-xs text-gray-400;
+}
+
+.playground-hint-legal {
+  @apply text-amber-600/70 dark:text-amber-400/70;
 }
 </style>

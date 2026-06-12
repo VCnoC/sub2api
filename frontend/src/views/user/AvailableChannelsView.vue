@@ -2,7 +2,7 @@
   <AppLayout>
     <TablePageLayout>
       <template #filters>
-        <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+        <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
           <div class="flex flex-1 flex-wrap items-center gap-3">
             <div class="relative w-full sm:w-80">
               <Icon
@@ -34,6 +34,8 @@
 
       <template #table>
         <AvailableChannelsTable
+          class="animate-slide-up [animation-fill-mode:backwards]"
+          style="animation-delay: 50ms"
           :columns="columnLabels"
           :rows="filteredChannels"
           :loading="loading"

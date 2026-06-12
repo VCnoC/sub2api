@@ -9,7 +9,7 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="subscriptions.length === 0" class="card p-12 text-center">
+      <div v-else-if="subscriptions.length === 0" class="card p-12 text-center animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
         <div
           class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-dark-700"
         >
@@ -24,11 +24,11 @@
       </div>
 
       <!-- Subscriptions Grid -->
-      <div v-else class="grid gap-6 lg:grid-cols-2">
+      <div v-else class="grid gap-6 lg:grid-cols-2 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
         <div
           v-for="subscription in subscriptions"
           :key="subscription.id"
-          class="overflow-hidden rounded-2xl border bg-white dark:bg-dark-800"
+          class="group overflow-hidden rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover dark:bg-dark-800"
           :class="platformBorderClass(subscription.group?.platform || '')"
         >
           <!-- Header -->
@@ -54,7 +54,7 @@
             <div class="flex items-center gap-2">
               <span
                 :class="[
-                  'rounded-full px-2 py-0.5 text-xs font-medium',
+                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
                   subscription.status === 'active'
                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                     : subscription.status === 'expired'
@@ -62,6 +62,7 @@
                       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
                 ]"
               >
+                <span class="h-1.5 w-1.5 rounded-full bg-current" :class="subscription.status === 'active' ? 'animate-pulse-slow' : 'opacity-60'"></span>
                 {{ t(`userSubscriptions.status.${subscription.status}`) }}
               </span>
               <button
@@ -81,7 +82,7 @@
               <span class="text-gray-500 dark:text-dark-400">{{
                 t('userSubscriptions.expires')
               }}</span>
-              <span :class="getExpirationClass(subscription.expires_at)">
+              <span class="tabular-nums" :class="getExpirationClass(subscription.expires_at)">
                 {{ formatExpirationDate(subscription.expires_at) }}
               </span>
             </div>
@@ -100,7 +101,7 @@
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.daily') }}
                 </span>
-                <span class="text-sm text-gray-500 dark:text-dark-400">
+                <span class="text-sm tabular-nums text-gray-500 dark:text-dark-400">
                   ${{ (subscription.daily_usage_usd || 0).toFixed(2) }} / ${{
                     subscription.group.daily_limit_usd.toFixed(2)
                   }}
@@ -137,7 +138,7 @@
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.weekly') }}
                 </span>
-                <span class="text-sm text-gray-500 dark:text-dark-400">
+                <span class="text-sm tabular-nums text-gray-500 dark:text-dark-400">
                   ${{ (subscription.weekly_usage_usd || 0).toFixed(2) }} / ${{
                     subscription.group.weekly_limit_usd.toFixed(2)
                   }}
@@ -178,7 +179,7 @@
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.monthly') }}
                 </span>
-                <span class="text-sm text-gray-500 dark:text-dark-400">
+                <span class="text-sm tabular-nums text-gray-500 dark:text-dark-400">
                   ${{ (subscription.monthly_usage_usd || 0).toFixed(2) }} / ${{
                     subscription.group.monthly_limit_usd.toFixed(2)
                   }}

@@ -64,6 +64,83 @@
 }
 
 @layer components {
+  /* ============ 全局背景装饰：漂移极光 + 细网格 ============ */
+  .aurora-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.35;
+    will-change: transform;
+  }
+
+  .dark .aurora-blob {
+    opacity: 0.22;
+  }
+
+  .aurora-blob-1 {
+    width: 480px;
+    height: 480px;
+    top: -10%;
+    left: -5%;
+    background: radial-gradient(circle, rgba(20, 184, 166, 0.55) 0%, transparent 70%);
+    animation: aurora-drift-1 26s ease-in-out infinite alternate;
+  }
+
+  .aurora-blob-2 {
+    width: 420px;
+    height: 420px;
+    top: 15%;
+    right: -8%;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.45) 0%, transparent 70%);
+    animation: aurora-drift-2 32s ease-in-out infinite alternate;
+  }
+
+  .aurora-blob-3 {
+    width: 520px;
+    height: 520px;
+    bottom: -15%;
+    left: 30%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+    animation: aurora-drift-3 38s ease-in-out infinite alternate;
+  }
+
+  @keyframes aurora-drift-1 {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(80px, 60px) scale(1.2); }
+  }
+
+  @keyframes aurora-drift-2 {
+    from { transform: translate(0, 0) scale(1.1); }
+    to { transform: translate(-70px, 90px) scale(0.95); }
+  }
+
+  @keyframes aurora-drift-3 {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(-60px, -70px) scale(1.15); }
+  }
+
+  /* 细网格纹理：顶部聚焦，向下渐隐 */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(20, 184, 166, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 184, 166, 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  .dark .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(45, 212, 191, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 212, 191, 0.06) 1px, transparent 1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aurora-blob {
+      animation: none;
+    }
+  }
+
   /* ============ 按钮样式 ============ */
   .btn {
     @apply inline-flex items-center justify-center gap-2;
@@ -79,6 +156,30 @@
     @apply text-white shadow-md shadow-primary-500/25;
     @apply hover:from-primary-600 hover:to-primary-700 hover:shadow-lg hover:shadow-primary-500/30;
     @apply dark:shadow-primary-500/20;
+    @apply relative overflow-hidden;
+  }
+
+  /* 主按钮 hover 流光扫过 */
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.55s ease;
+  }
+
+  .btn-primary:hover::after {
+    left: 160%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-primary::after {
+      display: none;
+    }
   }
 
   .btn-secondary {
@@ -222,7 +323,8 @@
 
   .card-hover {
     @apply hover:-translate-y-0.5 hover:shadow-card-hover;
-    @apply hover:border-gray-200 dark:hover:border-dark-600;
+    @apply hover:border-primary-200/70 dark:hover:border-primary-700/40;
+    @apply hover:shadow-primary-500/5;
   }
 
   .card-glass {
@@ -559,9 +661,24 @@
   }
 
   .sidebar-link-active {
-    @apply bg-primary-50 dark:bg-primary-900/20;
+    @apply bg-gradient-to-r from-primary-50 to-cyan-50/40 dark:from-primary-900/25 dark:to-cyan-900/10;
     @apply text-primary-600 dark:text-primary-400;
-    @apply hover:bg-primary-100 dark:hover:bg-primary-900/30;
+    @apply hover:from-primary-100 hover:to-cyan-50/60 dark:hover:from-primary-900/35 dark:hover:to-cyan-900/15;
+    position: relative;
+  }
+
+  /* 激活项左侧发光指示条 */
+  .sidebar-link-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    border-radius: 9999px;
+    background: linear-gradient(to bottom, #2dd4bf, #0d9488);
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.6);
   }
 
   .sidebar-section {

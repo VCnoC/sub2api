@@ -644,6 +644,9 @@ export default {
   dashboard: {
     title: 'Dashboard',
     welcomeMessage: "Welcome back! Here's an overview of your account.",
+    greetingMorning: 'Good morning',
+    greetingAfternoon: 'Good afternoon',
+    greetingEvening: 'Good evening',
     balance: 'Balance',
     apiKeys: 'API Keys',
     todayRequests: 'Today Requests',
@@ -872,6 +875,18 @@ export default {
   playground: {
     title: 'Playground',
     subtitle: 'Group: {group}',
+    conversations: {
+      title: 'Chats',
+      new: 'New',
+      empty: 'No conversations yet. Click "New" to start.',
+      untitled: 'Untitled',
+      defaultTitle: 'New chat',
+      delete: 'Delete conversation',
+      confirmDelete: 'Delete this conversation? This cannot be undone.',
+      retentionHint: 'Conversations are kept for 3 days (by last activity)',
+      loadFailed: 'Failed to load conversations, please retry later',
+      deleteFailed: 'Failed to delete conversation, please retry later',
+    },
     chat: {
       emptyTitle: 'Start your first conversation',
       emptyDesc:
@@ -886,7 +901,7 @@ export default {
       noGroup: 'No groups available',
       noModel: 'No models available for this group',
       loadingModels: 'Loading models…',
-      hint: 'Enter to send · Shift+Enter for newline · Images and text documents supported',
+      hint: 'Enter to send · Shift+Enter for newline · Paste or upload images and text documents',
       attachImage: 'Upload image',
       attachDocument: 'Upload document',
       removeAttachment: 'Remove attachment',

@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="external-purchase-layout">
-      <div class="card flex-1 min-h-0 overflow-hidden">
+      <div class="card flex-1 min-h-0 overflow-hidden animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
         <div class="external-purchase-shell">
           <a
             :href="purchaseUrl"

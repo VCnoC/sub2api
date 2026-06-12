@@ -31,6 +31,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
+	"github.com/Wei-Shaw/sub2api/ent/playgroundconversation"
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/promocode"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
@@ -79,6 +80,7 @@ const (
 	TypePaymentOrder                  = "PaymentOrder"
 	TypePaymentProviderInstance       = "PaymentProviderInstance"
 	TypePendingAuthSession            = "PendingAuthSession"
+	TypePlaygroundConversation        = "PlaygroundConversation"
 	TypePromoCode                     = "PromoCode"
 	TypePromoCodeUsage                = "PromoCodeUsage"
 	TypeProxy                         = "Proxy"
@@ -26238,6 +26240,842 @@ func (m *PendingAuthSessionMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown PendingAuthSession edge %s", name)
+}
+
+// PlaygroundConversationMutation represents an operation that mutates the PlaygroundConversation nodes in the graph.
+type PlaygroundConversationMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int64
+	created_at       *time.Time
+	updated_at       *time.Time
+	user_id          *int64
+	adduser_id       *int64
+	title            *string
+	model            *string
+	group_name       *string
+	messages         *json.RawMessage
+	appendmessages   json.RawMessage
+	last_activity_at *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*PlaygroundConversation, error)
+	predicates       []predicate.PlaygroundConversation
+}
+
+var _ ent.Mutation = (*PlaygroundConversationMutation)(nil)
+
+// playgroundconversationOption allows management of the mutation configuration using functional options.
+type playgroundconversationOption func(*PlaygroundConversationMutation)
+
+// newPlaygroundConversationMutation creates new mutation for the PlaygroundConversation entity.
+func newPlaygroundConversationMutation(c config, op Op, opts ...playgroundconversationOption) *PlaygroundConversationMutation {
+	m := &PlaygroundConversationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePlaygroundConversation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPlaygroundConversationID sets the ID field of the mutation.
+func withPlaygroundConversationID(id int64) playgroundconversationOption {
+	return func(m *PlaygroundConversationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *PlaygroundConversation
+		)
+		m.oldValue = func(ctx context.Context) (*PlaygroundConversation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().PlaygroundConversation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPlaygroundConversation sets the old PlaygroundConversation of the mutation.
+func withPlaygroundConversation(node *PlaygroundConversation) playgroundconversationOption {
+	return func(m *PlaygroundConversationMutation) {
+		m.oldValue = func(context.Context) (*PlaygroundConversation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PlaygroundConversationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PlaygroundConversationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PlaygroundConversationMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PlaygroundConversationMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().PlaygroundConversation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *PlaygroundConversationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PlaygroundConversationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PlaygroundConversationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *PlaygroundConversationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *PlaygroundConversationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *PlaygroundConversationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *PlaygroundConversationMutation) SetUserID(i int64) {
+	m.user_id = &i
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *PlaygroundConversationMutation) UserID() (r int64, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldUserID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds i to the "user_id" field.
+func (m *PlaygroundConversationMutation) AddUserID(i int64) {
+	if m.adduser_id != nil {
+		*m.adduser_id += i
+	} else {
+		m.adduser_id = &i
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *PlaygroundConversationMutation) AddedUserID() (r int64, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *PlaygroundConversationMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *PlaygroundConversationMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *PlaygroundConversationMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ClearTitle clears the value of the "title" field.
+func (m *PlaygroundConversationMutation) ClearTitle() {
+	m.title = nil
+	m.clearedFields[playgroundconversation.FieldTitle] = struct{}{}
+}
+
+// TitleCleared returns if the "title" field was cleared in this mutation.
+func (m *PlaygroundConversationMutation) TitleCleared() bool {
+	_, ok := m.clearedFields[playgroundconversation.FieldTitle]
+	return ok
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *PlaygroundConversationMutation) ResetTitle() {
+	m.title = nil
+	delete(m.clearedFields, playgroundconversation.FieldTitle)
+}
+
+// SetModel sets the "model" field.
+func (m *PlaygroundConversationMutation) SetModel(s string) {
+	m.model = &s
+}
+
+// Model returns the value of the "model" field in the mutation.
+func (m *PlaygroundConversationMutation) Model() (r string, exists bool) {
+	v := m.model
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModel returns the old "model" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldModel(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModel: %w", err)
+	}
+	return oldValue.Model, nil
+}
+
+// ClearModel clears the value of the "model" field.
+func (m *PlaygroundConversationMutation) ClearModel() {
+	m.model = nil
+	m.clearedFields[playgroundconversation.FieldModel] = struct{}{}
+}
+
+// ModelCleared returns if the "model" field was cleared in this mutation.
+func (m *PlaygroundConversationMutation) ModelCleared() bool {
+	_, ok := m.clearedFields[playgroundconversation.FieldModel]
+	return ok
+}
+
+// ResetModel resets all changes to the "model" field.
+func (m *PlaygroundConversationMutation) ResetModel() {
+	m.model = nil
+	delete(m.clearedFields, playgroundconversation.FieldModel)
+}
+
+// SetGroupName sets the "group_name" field.
+func (m *PlaygroundConversationMutation) SetGroupName(s string) {
+	m.group_name = &s
+}
+
+// GroupName returns the value of the "group_name" field in the mutation.
+func (m *PlaygroundConversationMutation) GroupName() (r string, exists bool) {
+	v := m.group_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupName returns the old "group_name" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldGroupName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupName: %w", err)
+	}
+	return oldValue.GroupName, nil
+}
+
+// ClearGroupName clears the value of the "group_name" field.
+func (m *PlaygroundConversationMutation) ClearGroupName() {
+	m.group_name = nil
+	m.clearedFields[playgroundconversation.FieldGroupName] = struct{}{}
+}
+
+// GroupNameCleared returns if the "group_name" field was cleared in this mutation.
+func (m *PlaygroundConversationMutation) GroupNameCleared() bool {
+	_, ok := m.clearedFields[playgroundconversation.FieldGroupName]
+	return ok
+}
+
+// ResetGroupName resets all changes to the "group_name" field.
+func (m *PlaygroundConversationMutation) ResetGroupName() {
+	m.group_name = nil
+	delete(m.clearedFields, playgroundconversation.FieldGroupName)
+}
+
+// SetMessages sets the "messages" field.
+func (m *PlaygroundConversationMutation) SetMessages(jm json.RawMessage) {
+	m.messages = &jm
+	m.appendmessages = nil
+}
+
+// Messages returns the value of the "messages" field in the mutation.
+func (m *PlaygroundConversationMutation) Messages() (r json.RawMessage, exists bool) {
+	v := m.messages
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessages returns the old "messages" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldMessages(ctx context.Context) (v json.RawMessage, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessages is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessages requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessages: %w", err)
+	}
+	return oldValue.Messages, nil
+}
+
+// AppendMessages adds jm to the "messages" field.
+func (m *PlaygroundConversationMutation) AppendMessages(jm json.RawMessage) {
+	m.appendmessages = append(m.appendmessages, jm...)
+}
+
+// AppendedMessages returns the list of values that were appended to the "messages" field in this mutation.
+func (m *PlaygroundConversationMutation) AppendedMessages() (json.RawMessage, bool) {
+	if len(m.appendmessages) == 0 {
+		return nil, false
+	}
+	return m.appendmessages, true
+}
+
+// ClearMessages clears the value of the "messages" field.
+func (m *PlaygroundConversationMutation) ClearMessages() {
+	m.messages = nil
+	m.appendmessages = nil
+	m.clearedFields[playgroundconversation.FieldMessages] = struct{}{}
+}
+
+// MessagesCleared returns if the "messages" field was cleared in this mutation.
+func (m *PlaygroundConversationMutation) MessagesCleared() bool {
+	_, ok := m.clearedFields[playgroundconversation.FieldMessages]
+	return ok
+}
+
+// ResetMessages resets all changes to the "messages" field.
+func (m *PlaygroundConversationMutation) ResetMessages() {
+	m.messages = nil
+	m.appendmessages = nil
+	delete(m.clearedFields, playgroundconversation.FieldMessages)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *PlaygroundConversationMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *PlaygroundConversationMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the PlaygroundConversation entity.
+// If the PlaygroundConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlaygroundConversationMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *PlaygroundConversationMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+}
+
+// Where appends a list predicates to the PlaygroundConversationMutation builder.
+func (m *PlaygroundConversationMutation) Where(ps ...predicate.PlaygroundConversation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PlaygroundConversationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PlaygroundConversationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.PlaygroundConversation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PlaygroundConversationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PlaygroundConversationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (PlaygroundConversation).
+func (m *PlaygroundConversationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PlaygroundConversationMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.created_at != nil {
+		fields = append(fields, playgroundconversation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, playgroundconversation.FieldUpdatedAt)
+	}
+	if m.user_id != nil {
+		fields = append(fields, playgroundconversation.FieldUserID)
+	}
+	if m.title != nil {
+		fields = append(fields, playgroundconversation.FieldTitle)
+	}
+	if m.model != nil {
+		fields = append(fields, playgroundconversation.FieldModel)
+	}
+	if m.group_name != nil {
+		fields = append(fields, playgroundconversation.FieldGroupName)
+	}
+	if m.messages != nil {
+		fields = append(fields, playgroundconversation.FieldMessages)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, playgroundconversation.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PlaygroundConversationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case playgroundconversation.FieldCreatedAt:
+		return m.CreatedAt()
+	case playgroundconversation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case playgroundconversation.FieldUserID:
+		return m.UserID()
+	case playgroundconversation.FieldTitle:
+		return m.Title()
+	case playgroundconversation.FieldModel:
+		return m.Model()
+	case playgroundconversation.FieldGroupName:
+		return m.GroupName()
+	case playgroundconversation.FieldMessages:
+		return m.Messages()
+	case playgroundconversation.FieldLastActivityAt:
+		return m.LastActivityAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PlaygroundConversationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case playgroundconversation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case playgroundconversation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case playgroundconversation.FieldUserID:
+		return m.OldUserID(ctx)
+	case playgroundconversation.FieldTitle:
+		return m.OldTitle(ctx)
+	case playgroundconversation.FieldModel:
+		return m.OldModel(ctx)
+	case playgroundconversation.FieldGroupName:
+		return m.OldGroupName(ctx)
+	case playgroundconversation.FieldMessages:
+		return m.OldMessages(ctx)
+	case playgroundconversation.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown PlaygroundConversation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PlaygroundConversationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case playgroundconversation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case playgroundconversation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case playgroundconversation.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case playgroundconversation.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case playgroundconversation.FieldModel:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModel(v)
+		return nil
+	case playgroundconversation.FieldGroupName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupName(v)
+		return nil
+	case playgroundconversation.FieldMessages:
+		v, ok := value.(json.RawMessage)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessages(v)
+		return nil
+	case playgroundconversation.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PlaygroundConversation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PlaygroundConversationMutation) AddedFields() []string {
+	var fields []string
+	if m.adduser_id != nil {
+		fields = append(fields, playgroundconversation.FieldUserID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PlaygroundConversationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case playgroundconversation.FieldUserID:
+		return m.AddedUserID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PlaygroundConversationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case playgroundconversation.FieldUserID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PlaygroundConversation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PlaygroundConversationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(playgroundconversation.FieldTitle) {
+		fields = append(fields, playgroundconversation.FieldTitle)
+	}
+	if m.FieldCleared(playgroundconversation.FieldModel) {
+		fields = append(fields, playgroundconversation.FieldModel)
+	}
+	if m.FieldCleared(playgroundconversation.FieldGroupName) {
+		fields = append(fields, playgroundconversation.FieldGroupName)
+	}
+	if m.FieldCleared(playgroundconversation.FieldMessages) {
+		fields = append(fields, playgroundconversation.FieldMessages)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PlaygroundConversationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PlaygroundConversationMutation) ClearField(name string) error {
+	switch name {
+	case playgroundconversation.FieldTitle:
+		m.ClearTitle()
+		return nil
+	case playgroundconversation.FieldModel:
+		m.ClearModel()
+		return nil
+	case playgroundconversation.FieldGroupName:
+		m.ClearGroupName()
+		return nil
+	case playgroundconversation.FieldMessages:
+		m.ClearMessages()
+		return nil
+	}
+	return fmt.Errorf("unknown PlaygroundConversation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PlaygroundConversationMutation) ResetField(name string) error {
+	switch name {
+	case playgroundconversation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case playgroundconversation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case playgroundconversation.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case playgroundconversation.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case playgroundconversation.FieldModel:
+		m.ResetModel()
+		return nil
+	case playgroundconversation.FieldGroupName:
+		m.ResetGroupName()
+		return nil
+	case playgroundconversation.FieldMessages:
+		m.ResetMessages()
+		return nil
+	case playgroundconversation.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown PlaygroundConversation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PlaygroundConversationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PlaygroundConversationMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PlaygroundConversationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PlaygroundConversationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PlaygroundConversationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PlaygroundConversationMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PlaygroundConversationMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown PlaygroundConversation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PlaygroundConversationMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown PlaygroundConversation edge %s", name)
 }
 
 // PromoCodeMutation represents an operation that mutates the PromoCode nodes in the graph.

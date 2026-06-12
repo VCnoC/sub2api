@@ -118,19 +118,23 @@
           <!-- Left: Text Content -->
           <div class="flex-1 text-center lg:text-left">
             <h1
-              class="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
+              class="mb-4 text-4xl font-bold text-gray-900 animate-slide-up [animation-fill-mode:backwards] dark:text-white md:text-5xl lg:text-6xl"
+              style="animation-delay: 0ms"
             >
-              {{ siteName }}
+              <span class="text-gradient">{{ siteName }}</span>
             </h1>
-            <p class="mb-8 text-lg text-gray-600 dark:text-dark-300 md:text-xl">
+            <p
+              class="mb-8 text-lg text-gray-600 animate-slide-up [animation-fill-mode:backwards] dark:text-dark-300 md:text-xl"
+              style="animation-delay: 100ms"
+            >
               {{ siteSubtitle }}
             </p>
 
             <!-- CTA Button -->
-            <div>
+            <div class="animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 200ms">
               <router-link
                 :to="isAuthenticated ? dashboardPath : '/login'"
-                class="btn btn-primary px-8 py-3 text-base shadow-lg shadow-primary-500/30"
+                class="btn btn-primary px-8 py-3 text-base shadow-glow hover:shadow-glow-lg"
               >
                 {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
                 <Icon name="arrowRight" size="md" class="ml-2" :stroke-width="2" />
@@ -207,28 +211,30 @@
         <!-- Features Grid -->
         <div class="mb-12 grid gap-6 md:grid-cols-3">
           <!-- Feature 1: Unified Gateway -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
+          <div class="group card card-hover relative overflow-hidden p-6">
             <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110"
+              class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl transition-colors duration-300 group-hover:bg-teal-500/20"
+            ></div>
+            <div
+              class="relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-600 text-white shadow-lg shadow-teal-500/25 transition-transform duration-300 group-hover:scale-110"
             >
               <Icon name="server" size="lg" class="text-white" />
             </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="relative mb-2 text-lg font-semibold text-gray-900 dark:text-white">
               {{ t('home.features.unifiedGateway') }}
             </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
+            <p class="relative text-sm leading-relaxed text-gray-600 dark:text-dark-400">
               {{ t('home.features.unifiedGatewayDesc') }}
             </p>
           </div>
 
           <!-- Feature 2: Account Pool -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
+          <div class="group card card-hover relative overflow-hidden p-6">
             <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/30 transition-transform group-hover:scale-110"
+              class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"
+            ></div>
+            <div
+              class="relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110"
             >
               <svg
                 class="h-6 w-6 text-white"
@@ -244,20 +250,21 @@
                 />
               </svg>
             </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="relative mb-2 text-lg font-semibold text-gray-900 dark:text-white">
               {{ t('home.features.multiAccount') }}
             </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
+            <p class="relative text-sm leading-relaxed text-gray-600 dark:text-dark-400">
               {{ t('home.features.multiAccountDesc') }}
             </p>
           </div>
 
           <!-- Feature 3: Billing & Quota -->
-          <div
-            class="group rounded-2xl border border-gray-200/50 bg-white/60 p-6 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-primary-500/10 dark:border-dark-700/50 dark:bg-dark-800/60"
-          >
+          <div class="group card card-hover relative overflow-hidden p-6">
             <div
-              class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/30 transition-transform group-hover:scale-110"
+              class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl transition-colors duration-300 group-hover:bg-violet-500/20"
+            ></div>
+            <div
+              class="relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg shadow-violet-500/25 transition-transform duration-300 group-hover:scale-110"
             >
               <svg
                 class="h-6 w-6 text-white"
@@ -273,10 +280,10 @@
                 />
               </svg>
             </div>
-            <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 class="relative mb-2 text-lg font-semibold text-gray-900 dark:text-white">
               {{ t('home.features.balanceQuota') }}
             </h3>
-            <p class="text-sm leading-relaxed text-gray-600 dark:text-dark-400">
+            <p class="relative text-sm leading-relaxed text-gray-600 dark:text-dark-400">
               {{ t('home.features.balanceQuotaDesc') }}
             </p>
           </div>
@@ -287,6 +294,9 @@
           <h2 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
             {{ t('home.providers.title') }}
           </h2>
+          <div
+            class="mx-auto mb-3 h-1 w-16 rounded-full bg-gradient-to-r from-primary-400 via-cyan-400 to-primary-600"
+          ></div>
           <p class="text-sm text-gray-600 dark:text-dark-400">
             {{ t('home.providers.description') }}
           </p>

@@ -93,6 +93,7 @@ type Config struct {
 	Gemini                  GeminiConfig                  `mapstructure:"gemini"`
 	Update                  UpdateConfig                  `mapstructure:"update"`
 	Idempotency             IdempotencyConfig             `mapstructure:"idempotency"`
+	Playground              PlaygroundConfig              `mapstructure:"playground"`
 }
 
 type LogConfig struct {
@@ -1339,6 +1340,23 @@ type UsageCleanupConfig struct {
 	TaskTimeoutSeconds int `mapstructure:"task_timeout_seconds"`
 }
 
+// PlaygroundCleanupConfig 对话广场会话过期清理配置
+type PlaygroundCleanupConfig struct {
+	// ConversationRetentionDays 会话保留天数（超过此天数未活动的会话将被删除）。
+	// 0 = 禁用清理；默认 3 天。
+	ConversationRetentionDays int `mapstructure:"conversation_retention_days"`
+	// CleanupIntervalMinutes 清理任务执行间隔（分钟）；默认 60 分钟。
+	CleanupIntervalMinutes int `mapstructure:"cleanup_interval_minutes"`
+	// CleanupBatchSize 每批次最多删除的会话条数；默认 500。
+	CleanupBatchSize int `mapstructure:"cleanup_batch_size"`
+}
+
+// PlaygroundConfig 对话广场相关配置
+type PlaygroundConfig struct {
+	// Cleanup 会话过期清理子配置
+	Cleanup PlaygroundCleanupConfig `mapstructure:"cleanup"`
+}
+
 func NormalizeRunMode(value string) string {
 	normalized := strings.ToLower(strings.TrimSpace(value))
 	switch normalized {
@@ -1798,6 +1816,11 @@ func setDefaults() {
 	viper.SetDefault("usage_cleanup.batch_size", 5000)
 	viper.SetDefault("usage_cleanup.worker_interval_seconds", 10)
 	viper.SetDefault("usage_cleanup.task_timeout_seconds", 1800)
+
+	// Playground 对话广场
+	viper.SetDefault("playground.cleanup.conversation_retention_days", 3)  // 0 = 禁用清理
+	viper.SetDefault("playground.cleanup.cleanup_interval_minutes", 60)    // 每小时跑一次
+	viper.SetDefault("playground.cleanup.cleanup_batch_size", 500)         // 每批 500 条
 
 	// Idempotency
 	viper.SetDefault("idempotency.observe_only", true)

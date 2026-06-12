@@ -1,6 +1,8 @@
 <template>
   <AppLayout>
     <MonitorHero
+      class="animate-slide-up [animation-fill-mode:backwards]"
+      style="animation-delay: 0ms"
       :overall-status="overallStatus"
       :interval-seconds="DEFAULT_INTERVAL_SECONDS"
       :window="currentWindow"
@@ -11,6 +13,8 @@
     />
 
     <MonitorCardGrid
+      class="animate-slide-up [animation-fill-mode:backwards]"
+      style="animation-delay: 50ms"
       :items="items"
       :window="currentWindow"
       :countdown-seconds="countdown"

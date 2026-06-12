@@ -1,11 +1,13 @@
 <template>
   <AuthLayout>
-    <div class="space-y-6">
+    <div class="animate-slide-up space-y-6 [animation-fill-mode:backwards]">
       <!-- Title -->
       <div class="text-center">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('auth.welcomeBack') }}
         </h2>
+        <!-- 渐变装饰分隔线 -->
+        <div class="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-primary-400 to-cyan-500"></div>
         <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
           {{ t('auth.signInToAccount') }}
         </p>

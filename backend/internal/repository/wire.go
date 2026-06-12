@@ -93,8 +93,9 @@ var ProviderSet = wire.NewSet(
 	NewChannelMonitorRequestTemplateRepository,
 	NewContentModerationRepository,
 	NewAffiliateRepository,
-	NewUserPlatformQuotaRepository,     // T14: user × platform quota
-	NewUserPlatformQuotaServiceAdapter, // T14: adapter → service.UserPlatformQuotaRepository
+	NewUserPlatformQuotaRepository,         // T14: user × platform quota
+	NewUserPlatformQuotaServiceAdapter,     // T14: adapter → service.UserPlatformQuotaRepository
+	NewPlaygroundConversationRepository,    // 对话广场多会话持久化
 
 	// Cache implementations
 	NewGatewayCache,

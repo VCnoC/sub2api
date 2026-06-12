@@ -194,6 +194,47 @@ export interface PlaygroundAvailableModelsResponse {
   models: PlaygroundAvailableModel[]
 }
 
+// ==================== 多会话持久化 ====================
+
+/** 会话摘要（列表条目，不含 messages 大字段） */
+export interface ConversationSummary {
+  id: number
+  title: string
+  model?: string | null
+  group_name?: string | null
+  /** 最后活动时间（RFC3339），列表按此倒序 */
+  last_activity_at: string
+  created_at: string
+}
+
+/** 会话详情（含完整消息列表，JSONB 原样透传） */
+export interface ConversationDetail extends ConversationSummary {
+  /** 消息列表；新建空会话时后端可能返回 null */
+  messages: Message[] | null
+  updated_at: string
+}
+
+/** 新建会话请求体 */
+export interface CreateConversationRequest {
+  title: string
+  model?: string | null
+  group_name?: string | null
+  messages?: Message[]
+}
+
+/**
+ * 更新会话请求体。
+ *
+ * ⚠️ 后端语义：title/messages 缺省 = 不改；model/group_name 缺省或 null = 清空！
+ * 因此每次保存消息时必须同时带上 model 和 group_name。
+ */
+export interface UpdateConversationRequest {
+  title?: string
+  model: string | null
+  group_name: string | null
+  messages?: Message[]
+}
+
 // ==================== 错误类型 ====================
 
 export interface PlaygroundError {

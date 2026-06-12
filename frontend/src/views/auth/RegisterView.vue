@@ -1,11 +1,13 @@
 <template>
   <AuthLayout>
-    <div class="space-y-6">
+    <div class="animate-slide-up space-y-6 [animation-fill-mode:backwards]">
       <!-- Title -->
       <div class="text-center">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('auth.createAccount') }}
         </h2>
+        <!-- 渐变装饰分隔线 -->
+        <div class="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-primary-400 to-cyan-500"></div>
         <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
           {{ t('auth.signUpToStart', { siteName }) }}
         </p>
@@ -14,7 +16,7 @@
       <!-- Registration Disabled Message -->
       <div
         v-if="!registrationEnabled && settingsLoaded"
-        class="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20"
+        class="rounded-md border-l-4 border-amber-500 bg-amber-50 p-4 dark:bg-amber-950/40"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
@@ -125,9 +127,9 @@
           </div>
           <!-- Invitation code validation result -->
           <transition name="fade">
-            <div v-if="invitationValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
-              <Icon name="checkCircle" size="sm" class="text-green-600 dark:text-green-400" />
-              <span class="text-sm text-green-700 dark:text-green-400">
+            <div v-if="invitationValidation.valid" class="mt-2 flex items-center gap-2 rounded-md border-l-4 border-emerald-500 bg-emerald-50 px-3 py-2 dark:bg-emerald-950/40">
+              <Icon name="checkCircle" size="sm" class="text-emerald-600 dark:text-emerald-400" />
+              <span class="text-sm text-emerald-700 dark:text-emerald-400">
                 {{ t('auth.invitationCodeValid') }}
               </span>
             </div>
@@ -173,9 +175,9 @@
           </div>
           <!-- Promo code validation result -->
           <transition name="fade">
-            <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
-              <Icon name="gift" size="sm" class="text-green-600 dark:text-green-400" />
-              <span class="text-sm text-green-700 dark:text-green-400">
+            <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-md border-l-4 border-emerald-500 bg-emerald-50 px-3 py-2 dark:bg-emerald-950/40">
+              <Icon name="gift" size="sm" class="text-emerald-600 dark:text-emerald-400" />
+              <span class="text-sm text-emerald-700 dark:text-emerald-400">
                 {{ t('auth.promoCodeValid', { amount: promoValidation.bonusAmount?.toFixed(2) }) }}
               </span>
             </div>

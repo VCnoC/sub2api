@@ -1,7 +1,10 @@
 <template>
   <div class="card">
     <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('dashboard.recentUsage') }}</h2>
+      <div class="flex items-center gap-2">
+        <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('dashboard.recentUsage') }}</h2>
+      </div>
       <span class="badge badge-gray">{{ t('dashboard.last7Days') }}</span>
     </div>
     <div class="p-6">

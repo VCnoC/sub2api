@@ -116,7 +116,7 @@
                 <span v-else class="text-sm text-gray-400 dark:text-dark-500">{{
                   t('keys.noGroup')
                 }}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('keys.selectGroup') }}</span>
+                <span class="text-xs text-gray-400 opacity-0 transition-opacity duration-150 group-hover/dropdown:opacity-100 dark:text-gray-500">{{ t('keys.selectGroup') }}</span>
                 <svg
                   class="h-3.5 w-3.5 text-gray-400 opacity-60 transition-opacity group-hover/dropdown:opacity-100"
                   fill="none"
@@ -165,9 +165,9 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.quota_used >= row.quota ? 'bg-red-500' :
-                      row.quota_used >= row.quota * 0.8 ? 'bg-yellow-500' :
-                      'bg-primary-500'
+                      row.quota_used >= row.quota ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      row.quota_used >= row.quota * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                      'bg-gradient-to-r from-teal-400 to-primary-500'
                     ]"
                     :style="{ width: Math.min((row.quota_used / row.quota) * 100, 100) + '%' }"
                   />
@@ -195,9 +195,9 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_5h >= row.rate_limit_5h ? 'bg-red-500' :
-                      row.usage_5h >= row.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
-                      'bg-emerald-500'
+                      row.usage_5h >= row.rate_limit_5h ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      row.usage_5h >= row.rate_limit_5h * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                      'bg-gradient-to-r from-emerald-400 to-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_5h / row.rate_limit_5h) * 100, 100) + '%' }"
                   />
@@ -223,9 +223,9 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_1d >= row.rate_limit_1d ? 'bg-red-500' :
-                      row.usage_1d >= row.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
-                      'bg-emerald-500'
+                      row.usage_1d >= row.rate_limit_1d ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      row.usage_1d >= row.rate_limit_1d * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                      'bg-gradient-to-r from-emerald-400 to-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_1d / row.rate_limit_1d) * 100, 100) + '%' }"
                   />
@@ -251,9 +251,9 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_7d >= row.rate_limit_7d ? 'bg-red-500' :
-                      row.usage_7d >= row.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
-                      'bg-emerald-500'
+                      row.usage_7d >= row.rate_limit_7d ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      row.usage_7d >= row.rate_limit_7d * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
+                      'bg-gradient-to-r from-emerald-400 to-emerald-500'
                     ]"
                     :style="{ width: Math.min((row.usage_7d / row.rate_limit_7d) * 100, 100) + '%' }"
                   />
@@ -277,12 +277,16 @@
           </template>
 
           <template #cell-expires_at="{ value }">
-            <span v-if="value" :class="[
-              'text-sm',
-              new Date(value) < new Date() ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-dark-400'
-            ]">
-              {{ formatDateTime(value) }}
-            </span>
+            <div v-if="value" class="leading-tight">
+              <div :class="[
+                'text-sm tabular-nums',
+                new Date(value) < new Date() ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-300'
+              ]">{{ formatDateOnly(value) }}</div>
+              <div :class="[
+                'text-xs tabular-nums',
+                new Date(value) < new Date() ? 'text-red-400 dark:text-red-500' : 'text-gray-400 dark:text-dark-500'
+              ]">{{ formatTime(value) }}</div>
+            </div>
             <span v-else class="text-sm text-gray-400 dark:text-dark-500">{{ t('keys.noExpiration') }}</span>
           </template>
 
@@ -294,69 +298,74 @@
               value === 'expired' ? 'badge-danger' :
               'badge-gray'
             ]">
+              <span class="h-1.5 w-1.5 rounded-full bg-current" :class="value === 'active' ? 'animate-pulse-slow' : 'opacity-60'"></span>
               {{ t('keys.status.' + value) }}
             </span>
           </template>
 
           <template #cell-last_used_at="{ value }">
-            <span v-if="value" class="text-sm text-gray-500 dark:text-dark-400">
-              {{ formatDateTime(value) }}
-            </span>
+            <div v-if="value" class="leading-tight">
+              <div class="text-sm tabular-nums text-gray-600 dark:text-gray-300">{{ formatDateOnly(value) }}</div>
+              <div class="text-xs tabular-nums text-gray-400 dark:text-dark-500">{{ formatTime(value) }}</div>
+            </div>
             <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
           </template>
 
           <template #cell-created_at="{ value }">
-            <span class="text-sm text-gray-500 dark:text-dark-400">{{ formatDateTime(value) }}</span>
+            <div class="leading-tight">
+              <div class="text-sm tabular-nums text-gray-600 dark:text-gray-300">{{ formatDateOnly(value) }}</div>
+              <div class="text-xs tabular-nums text-gray-400 dark:text-dark-500">{{ formatTime(value) }}</div>
+            </div>
           </template>
 
           <template #cell-actions="{ row }">
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-0.5 rounded-xl border border-gray-100 bg-gray-50/50 p-0.5 dark:border-dark-700 dark:bg-dark-800/50">
               <!-- Use Key Button -->
               <button
                 @click="openUseKeyModal(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400"
+                :title="t('keys.useKey')"
+                class="rounded-lg p-2 text-gray-400 transition-all duration-150 hover:scale-110 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
               >
                 <Icon name="terminal" size="sm" />
-                <span class="text-xs">{{ t('keys.useKey') }}</span>
               </button>
               <!-- Import to CC Switch Button -->
               <button
                 v-if="!publicSettings?.hide_ccs_import_button"
                 @click="importToCcswitch(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                :title="t('keys.importToCcSwitch')"
+                class="rounded-lg p-2 text-gray-400 transition-all duration-150 hover:scale-110 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
               >
                 <Icon name="upload" size="sm" />
-                <span class="text-xs">{{ t('keys.importToCcSwitch') }}</span>
               </button>
               <!-- Toggle Status Button -->
               <button
                 @click="toggleKeyStatus(row)"
+                :title="row.status === 'active' ? t('keys.disable') : t('keys.enable')"
                 :class="[
-                  'flex flex-col items-center gap-0.5 rounded-lg p-1.5 transition-colors',
+                  'rounded-lg p-2 text-gray-400 transition-all duration-150 hover:scale-110',
                   row.status === 'active'
-                    ? 'text-gray-500 hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-400'
-                    : 'text-gray-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
+                    ? 'hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
+                    : 'hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400'
                 ]"
               >
                 <Icon v-if="row.status === 'active'" name="ban" size="sm" />
                 <Icon v-else name="checkCircle" size="sm" />
-                <span class="text-xs">{{ row.status === 'active' ? t('keys.disable') : t('keys.enable') }}</span>
               </button>
               <!-- Edit Button -->
               <button
                 @click="editKey(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
+                :title="t('common.edit')"
+                class="rounded-lg p-2 text-gray-400 transition-all duration-150 hover:scale-110 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
               >
                 <Icon name="edit" size="sm" />
-                <span class="text-xs">{{ t('common.edit') }}</span>
               </button>
               <!-- Delete Button -->
               <button
                 @click="confirmDelete(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                :title="t('common.delete')"
+                class="rounded-lg p-2 text-gray-400 transition-all duration-150 hover:scale-110 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               >
                 <Icon name="trash" size="sm" />
-                <span class="text-xs">{{ t('common.delete') }}</span>
               </button>
             </div>
           </template>
@@ -652,8 +661,8 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'bg-red-500' :
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_5h / selectedKey.rate_limit_5h) * 100, 100) + '%' }"
@@ -698,8 +707,8 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'bg-red-500' :
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_1d / selectedKey.rate_limit_1d) * 100, 100) + '%' }"
@@ -744,8 +753,8 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'bg-red-500' :
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'bg-gradient-to-r from-red-400 to-red-500' :
+                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'bg-gradient-to-r from-amber-400 to-yellow-500' :
                       'bg-green-500'
                     ]"
                     :style="{ width: Math.min((selectedKey.usage_7d / selectedKey.rate_limit_7d) * 100, 100) + '%' }"
@@ -1071,7 +1080,7 @@ import TablePageLayout from '@/components/layout/TablePageLayout.vue'
 	import type { ApiKey, Group, PublicSettings, SubscriptionType, GroupPlatform } from '@/types'
 import type { Column } from '@/components/common/types'
 import type { BatchApiKeyUsageStats } from '@/api/usage'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime, formatDateOnly, formatTime } from '@/utils/format'
 import { maskApiKey } from '@/utils/maskApiKey'
 import {
   buildCcSwitchImportDeeplink,
@@ -1109,7 +1118,8 @@ const columns = computed<Column[]>(() => [
   { key: 'status', label: t('common.status'), sortable: true },
   { key: 'last_used_at', label: t('keys.lastUsedAt'), sortable: true },
   { key: 'created_at', label: t('keys.created'), sortable: true },
-  { key: 'actions', label: t('common.actions'), sortable: false }
+  // w-px 让操作列收缩至内容宽度，避免作为末列吃掉剩余空间产生大片空白
+  { key: 'actions', label: t('common.actions'), sortable: false, class: 'w-px' }
 ])
 
 const apiKeys = ref<ApiKey[]>([])

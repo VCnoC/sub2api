@@ -9,43 +9,50 @@
 
       <template v-else-if="detail">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="card p-5">
-            <p class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-dark-400">
+          <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
+            <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl transition-colors duration-300 group-hover:bg-teal-500/20"></div>
+            <p class="relative flex items-center gap-1.5 text-sm text-gray-500 dark:text-dark-400">
               <Icon name="dollar" size="sm" class="text-primary-500" />
               {{ t('affiliate.stats.rebateRate') }}
             </p>
-            <p class="mt-2 text-2xl font-semibold text-primary-600 dark:text-primary-400">
+            <p class="relative mt-2 text-2xl font-semibold tabular-nums text-primary-600 dark:text-primary-400">
               {{ formattedRebateRate }}<span class="ml-0.5 text-base font-medium">%</span>
             </p>
-            <p class="mt-1 text-xs text-gray-400 dark:text-dark-500">
+            <p class="relative mt-1 text-xs text-gray-400 dark:text-dark-500">
               {{ t('affiliate.stats.rebateRateHint') }}
             </p>
           </div>
-          <div class="card p-5">
-            <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.invitedUsers') }}</p>
-            <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+          <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
+            <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
+            <p class="relative text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.invitedUsers') }}</p>
+            <p class="relative mt-2 text-2xl font-semibold tabular-nums text-gray-900 dark:text-white">
               {{ formatCount(detail.aff_count) }}
             </p>
           </div>
-          <div class="card p-5">
-            <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.availableQuota') }}</p>
-            <p class="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+          <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 100ms">
+            <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-colors duration-300 group-hover:bg-emerald-500/20"></div>
+            <p class="relative text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.availableQuota') }}</p>
+            <p class="relative mt-2 text-2xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
               {{ formatCurrency(detail.aff_quota) }}
             </p>
           </div>
-          <div class="card p-5">
-            <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.totalQuota') }}</p>
-            <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
+          <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
+            <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-2xl transition-colors duration-300 group-hover:bg-indigo-500/20"></div>
+            <p class="relative text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.totalQuota') }}</p>
+            <p class="relative mt-2 text-2xl font-semibold tabular-nums text-gray-900 dark:text-white">
               {{ formatCurrency(detail.aff_history_quota) }}
             </p>
-            <p v-if="detail.aff_frozen_quota > 0" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+            <p v-if="detail.aff_frozen_quota > 0" class="relative mt-1 text-xs tabular-nums text-amber-600 dark:text-amber-400">
               {{ t('affiliate.stats.frozenQuota') }}: {{ formatCurrency(detail.aff_frozen_quota) }}
             </p>
           </div>
         </div>
 
-        <div class="card p-6">
-          <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.title') }}</h3>
+        <div class="card p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 200ms">
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.title') }}</h3>
+          </div>
           <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.description') }}</p>
 
           <div class="mt-5 grid gap-4 md:grid-cols-2">
@@ -88,7 +95,7 @@
                 <p class="text-xs text-gray-500 dark:text-emerald-300/80">
                   {{ t('affiliate.signupBonus.youGet') }}
                 </p>
-                <p class="mt-0.5 text-lg font-bold text-emerald-700 dark:text-emerald-200">
+                <p class="mt-0.5 text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-200">
                   +${{ formatBonus(detail.inviter_bonus_usd) }}
                 </p>
               </div>
@@ -96,7 +103,7 @@
                 <p class="text-xs text-gray-500 dark:text-emerald-300/80">
                   {{ t('affiliate.signupBonus.theyGet') }}
                 </p>
-                <p class="mt-0.5 text-lg font-bold text-emerald-700 dark:text-emerald-200">
+                <p class="mt-0.5 text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-200">
                   +${{ formatBonus(detail.invitee_bonus_usd) }}
                 </p>
               </div>
@@ -114,10 +121,13 @@
           </div>
         </div>
 
-        <div class="card p-6">
+        <div class="card p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 250ms">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.transfer.title') }}</h3>
+              <div class="flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.transfer.title') }}</h3>
+              </div>
               <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.transfer.description') }}</p>
             </div>
             <button
@@ -135,8 +145,11 @@
           </p>
         </div>
 
-        <div class="card p-6">
-          <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.invitees.title') }}</h3>
+        <div class="card p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 300ms">
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('affiliate.invitees.title') }}</h3>
+          </div>
           <div v-if="detail.invitees.length === 0" class="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
             {{ t('affiliate.invitees.empty') }}
           </div>
@@ -158,7 +171,7 @@
                 >
                   <td class="px-3 py-3 text-gray-900 dark:text-white">{{ item.email || '-' }}</td>
                   <td class="px-3 py-3 text-gray-700 dark:text-gray-300">{{ item.username || '-' }}</td>
-                  <td class="px-3 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">{{ formatCurrency(item.total_rebate) }}</td>
+                  <td class="px-3 py-3 text-right font-medium tabular-nums text-emerald-600 dark:text-emerald-400">{{ formatCurrency(item.total_rebate) }}</td>
                   <td class="px-3 py-3 text-gray-700 dark:text-gray-300">{{ formatDateTime(item.created_at) || '-' }}</td>
                 </tr>
               </tbody>

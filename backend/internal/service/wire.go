@@ -594,6 +594,8 @@ var ProviderSet = wire.NewSet(
 	ProvideChannelMonitorRunner,
 	NewChannelMonitorRequestTemplateService,
 	ProvideUserPlatformQuotaUsageFlusher,
+	NewPlaygroundConversationService,
+	ProvidePlaygroundConversationCleanupService,
 )
 
 // ProvideUserPlatformQuotaUsageFlusher 创建并启动 UserPlatformQuotaUsageFlusher。
@@ -649,4 +651,16 @@ func ProvideChannelMonitorRunner(svc *ChannelMonitorService, settingService *Set
 	svc.SetScheduler(r)
 	r.Start()
 	return r
+}
+
+// ProvidePlaygroundConversationCleanupService 创建并启动对话广场会话过期清理服务。
+// 当 playground.cleanup.conversation_retention_days ≤ 0 时，Start() 内部直接跳过（禁用状态）。
+func ProvidePlaygroundConversationCleanupService(
+	repo PlaygroundConversationRepository,
+	timingWheel *TimingWheelService,
+	cfg *config.Config,
+) *PlaygroundConversationCleanupService {
+	svc := NewPlaygroundConversationCleanupService(repo, timingWheel, cfg)
+	svc.Start()
+	return svc
 }

@@ -2,25 +2,27 @@
   <AppLayout>
     <div class="mx-auto max-w-2xl space-y-6">
       <!-- Current Balance Card -->
-      <div class="card overflow-hidden">
-        <div class="bg-gradient-to-br from-primary-500 to-primary-600 px-6 py-8 text-center">
+      <div class="group card card-hover overflow-hidden animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
+        <div class="relative overflow-hidden bg-gradient-to-br from-primary-500 to-primary-600 px-6 py-8 text-center">
+          <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 blur-2xl transition-colors duration-300 group-hover:bg-white/20"></div>
+          <div class="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-white/10 blur-2xl"></div>
           <div
-            class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm"
+            class="relative mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 shadow-lg shadow-primary-500/25 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110"
           >
             <Icon name="creditCard" size="xl" class="text-white" />
           </div>
-          <p class="text-sm font-medium text-primary-100">{{ t('redeem.currentBalance') }}</p>
-          <p class="mt-2 text-4xl font-bold text-white">
+          <p class="relative text-sm font-medium text-primary-100">{{ t('redeem.currentBalance') }}</p>
+          <p class="relative mt-2 text-4xl font-bold tabular-nums text-white">
             ${{ user?.balance?.toFixed(2) || '0.00' }}
           </p>
-          <p class="mt-2 text-sm text-primary-100">
+          <p class="relative mt-2 text-sm tabular-nums text-primary-100">
             {{ t('redeem.concurrency') }}: {{ user?.concurrency || 0 }} {{ t('redeem.requests') }}
           </p>
         </div>
       </div>
 
       <!-- Redeem Form -->
-      <div class="card">
+      <div class="card animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
         <div class="p-6">
           <form @submit.prevent="handleRedeem" class="space-y-5">
             <div>
@@ -87,9 +89,9 @@
           <div class="p-6">
             <div class="flex items-start gap-4">
               <div
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25"
               >
-                <Icon name="checkCircle" size="md" class="text-emerald-600 dark:text-emerald-400" />
+                <Icon name="checkCircle" size="md" />
               </div>
               <div class="flex-1">
                 <h3 class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
@@ -98,10 +100,10 @@
                 <div class="mt-2 text-sm text-emerald-700 dark:text-emerald-400">
                   <p>{{ redeemResult.message }}</p>
                   <div class="mt-3 space-y-1">
-                    <p v-if="redeemResult.type === 'balance'" class="font-medium">
+                    <p v-if="redeemResult.type === 'balance'" class="font-medium tabular-nums">
                       {{ t('redeem.added') }}: ${{ redeemResult.value.toFixed(2) }}
                     </p>
-                    <p v-else-if="redeemResult.type === 'concurrency'" class="font-medium">
+                    <p v-else-if="redeemResult.type === 'concurrency'" class="font-medium tabular-nums">
                       {{ t('redeem.added') }}: {{ redeemResult.value }}
                       {{ t('redeem.concurrentRequests') }}
                     </p>
@@ -116,11 +118,11 @@
                     </p>
                     <p v-if="redeemResult.new_balance !== undefined">
                       {{ t('redeem.newBalance') }}:
-                      <span class="font-semibold">${{ redeemResult.new_balance.toFixed(2) }}</span>
+                      <span class="font-semibold tabular-nums">${{ redeemResult.new_balance.toFixed(2) }}</span>
                     </p>
                     <p v-if="redeemResult.new_concurrency !== undefined">
                       {{ t('redeem.newConcurrency') }}:
-                      <span class="font-semibold"
+                      <span class="font-semibold tabular-nums"
                         >{{ redeemResult.new_concurrency }} {{ t('redeem.requests') }}</span
                       >
                     </p>
@@ -141,12 +143,11 @@
           <div class="p-6">
             <div class="flex items-start gap-4">
               <div
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-400 to-rose-600 text-white shadow-lg shadow-red-500/25"
               >
                 <Icon
                   name="exclamationCircle"
                   size="md"
-                  class="text-red-600 dark:text-red-400"
                 />
               </div>
               <div class="flex-1">
@@ -164,14 +165,16 @@
 
       <!-- Information Card -->
       <div
-        class="card border-primary-200 bg-primary-50 dark:border-primary-800/50 dark:bg-primary-900/20"
+        class="group card card-hover relative overflow-hidden border-primary-200 bg-primary-50 dark:border-primary-800/50 dark:bg-primary-900/20 animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 100ms"
       >
-        <div class="p-6">
+        <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
+        <div class="relative p-6">
           <div class="flex items-start gap-4">
             <div
-              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30"
+              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110"
             >
-              <Icon name="infoCircle" size="md" class="text-primary-600 dark:text-primary-400" />
+              <Icon name="infoCircle" size="md" />
             </div>
             <div class="flex-1">
               <h3 class="text-sm font-semibold text-primary-800 dark:text-primary-300">
@@ -199,11 +202,14 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="card">
+      <div class="card animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
         <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ t('redeem.recentActivity') }}
-          </h2>
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ t('redeem.recentActivity') }}
+            </h2>
+          </div>
         </div>
         <div class="p-6">
           <!-- Loading State -->
@@ -289,7 +295,7 @@
               <div class="text-right">
                 <p
                   :class="[
-                    'text-sm font-semibold',
+                    'text-sm font-semibold tabular-nums',
                     isBalanceType(item.type)
                       ? item.value >= 0
                         ? 'text-emerald-600 dark:text-emerald-400'

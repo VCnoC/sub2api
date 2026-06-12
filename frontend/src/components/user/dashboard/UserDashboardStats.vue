@@ -2,66 +2,70 @@
   <!-- Row 1: Core Stats -->
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
     <!-- Balance -->
-    <div v-if="!isSimple" class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/30">
-          <svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="!isSimple" class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-colors duration-300 group-hover:bg-emerald-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.balance') }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">$<AnimatedNumber :value="balance" :format="formatBalance" /></p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('common.available') }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-110">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
           </svg>
-        </div>
-        <div>
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.balance') }}</p>
-          <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">${{ formatBalance(balance) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('common.available') }}</p>
         </div>
       </div>
     </div>
 
     <!-- API Keys -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-          <Icon name="key" size="md" class="text-blue-600 dark:text-blue-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl transition-colors duration-300 group-hover:bg-teal-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.apiKeys') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.total_api_keys || 0 }}</p>
-          <p class="text-xs text-green-600 dark:text-green-400">{{ stats?.active_api_keys || 0 }} {{ t('common.active') }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.total_api_keys || 0" /></p>
+          <p class="mt-1 text-xs text-emerald-600 dark:text-emerald-400">{{ stats?.active_api_keys || 0 }} {{ t('common.active') }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-600 text-white shadow-lg shadow-teal-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="key" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Today Requests -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-          <Icon name="chart" size="md" class="text-green-600 dark:text-green-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 100ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayRequests') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.today_requests || 0 }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.total_requests || 0) }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.today_requests || 0" /></p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.total_requests || 0) }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="chart" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Today Cost -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
-          <Icon name="dollar" size="md" class="text-purple-600 dark:text-purple-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl transition-colors duration-300 group-hover:bg-violet-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
-            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.today_actual_cost || 0) }}</span>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white">
+            <span class="text-violet-600 dark:text-violet-400" :title="t('dashboard.actual')">$<AnimatedNumber :value="stats?.today_actual_cost || 0" :format="formatCost" /></span>
             <span class="text-sm font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.today_cost || 0) }}</span>
           </p>
-          <p class="text-xs">
+          <p class="mt-1 text-xs tabular-nums">
             <span class="text-gray-500 dark:text-gray-400">{{ t('common.total') }}: </span>
-            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.total_actual_cost || 0) }}</span>
+            <span class="text-violet-600 dark:text-violet-400" :title="t('dashboard.actual')">${{ formatCost(stats?.total_actual_cost || 0) }}</span>
             <span class="text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.total_cost || 0) }}</span>
           </p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg shadow-violet-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="dollar" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
@@ -70,73 +74,80 @@
   <!-- Row 2: Token Stats -->
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
     <!-- Today Tokens -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
-          <Icon name="cube" size="md" class="text-amber-600 dark:text-amber-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 200ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-colors duration-300 group-hover:bg-amber-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayTokens') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.today_tokens || 0) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.today_tokens || 0" :format="formatTokens" /></p>
+          <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="cube" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Total Tokens -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-indigo-100 p-2 dark:bg-indigo-900/30">
-          <Icon name="database" size="md" class="text-indigo-600 dark:text-indigo-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 250ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-2xl transition-colors duration-300 group-hover:bg-indigo-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.totalTokens') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.total_tokens || 0) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.total_tokens || 0" :format="formatTokens" /></p>
+          <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-blue-600 text-white shadow-lg shadow-indigo-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="database" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Performance (RPM/TPM) -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-violet-100 p-2 dark:bg-violet-900/30">
-          <Icon name="bolt" size="md" class="text-violet-600 dark:text-violet-400" :stroke-width="2" />
-        </div>
-        <div class="flex-1">
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 300ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-fuchsia-500/10 blur-2xl transition-colors duration-300 group-hover:bg-fuchsia-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.performance') }}</p>
-          <div class="flex items-baseline gap-2">
-            <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.rpm || 0) }}</p>
+          <div class="mt-1.5 flex items-baseline gap-2">
+            <p class="text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.rpm || 0" :format="formatTokens" /></p>
             <span class="text-xs text-gray-500 dark:text-gray-400">RPM</span>
           </div>
-          <div class="flex items-baseline gap-2">
-            <p class="text-sm font-semibold text-violet-600 dark:text-violet-400">{{ formatTokens(stats?.tpm || 0) }}</p>
+          <div class="mt-1 flex items-baseline gap-2">
+            <p class="text-sm font-semibold tabular-nums text-fuchsia-600 dark:text-fuchsia-400"><AnimatedNumber :value="stats?.tpm || 0" :format="formatTokens" /></p>
             <span class="text-xs text-gray-500 dark:text-gray-400">TPM</span>
           </div>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-400 to-violet-600 text-white shadow-lg shadow-fuchsia-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="bolt" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Avg Response Time -->
-    <div class="card p-4">
-      <div class="flex items-center gap-3">
-        <div class="rounded-lg bg-rose-100 p-2 dark:bg-rose-900/30">
-          <Icon name="clock" size="md" class="text-rose-600 dark:text-rose-400" :stroke-width="2" />
-        </div>
-        <div>
+    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 350ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-rose-500/10 blur-2xl transition-colors duration-300 group-hover:bg-rose-500/20"></div>
+      <div class="relative flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.avgResponse') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatDuration(stats?.average_duration_ms || 0) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.averageTime') }}</p>
+          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.average_duration_ms || 0" :format="formatDuration" /></p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.averageTime') }}</p>
+        </div>
+        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-pink-600 text-white shadow-lg shadow-rose-500/25 transition-transform duration-300 group-hover:scale-110">
+          <Icon name="clock" size="md" :stroke-width="2" />
         </div>
       </div>
     </div>
   </div>
 
   <!-- Row 3: Per-platform breakdown -->
-  <div v-if="!isSimple && platformCards.length > 0" class="card p-4">
-    <div class="mb-3 flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('dashboard.platformBreakdown') }}</h3>
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+  <div class="card p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 400ms" v-if="!isSimple && platformCards.length > 0">
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('dashboard.platformBreakdown') }}</h3>
+      </div>
+      <span class="badge badge-gray">
         {{ t('dashboard.platformCount', { count: sortedPlatforms.length }) }}
       </span>
     </div>
@@ -145,17 +156,18 @@
         v-for="item in platformCards"
         :key="item.platform"
         :class="[
-          'rounded-lg border p-3',
+          'rounded-xl border p-3.5 transition-all duration-200',
           item.isOther
             ? 'border-dashed border-gray-300 bg-gray-50 dark:border-dark-500 dark:bg-dark-700/30'
-            : 'border-gray-200 dark:border-dark-600'
+            : 'border-gray-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-card-hover dark:border-dark-600 dark:hover:border-primary-700'
         ]"
       >
         <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold text-gray-900 dark:text-white">
+          <span class="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-white">
+            <span v-if="!item.isOther" class="h-2 w-2 rounded-full" :class="platformDotClass(item.platform)"></span>
             {{ item.isOther ? t('dashboard.platformOther') : platformLabel(item.platform) }}
           </span>
-          <span class="font-mono text-sm text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">
+          <span class="font-mono text-sm font-semibold text-violet-600 dark:text-violet-400" :title="t('dashboard.actual')">
             ${{ formatCost(item.total_actual_cost) }}
           </span>
         </div>
@@ -226,6 +238,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import type { UserDashboardStats as UserStatsType } from '@/api/usage'
 import type { PlatformQuotaItem } from '@/types'
 
@@ -255,6 +268,15 @@ const PLATFORM_LABELS: Record<string, string> = {
 }
 
 const platformLabel = (p: string) => PLATFORM_LABELS[p] ?? p
+
+// 平台品牌色点（用于平台卡片标题前的标识）
+const PLATFORM_DOT_CLASSES: Record<string, string> = {
+  anthropic: 'bg-orange-500',
+  openai: 'bg-emerald-500',
+  gemini: 'bg-blue-500',
+  antigravity: 'bg-purple-500'
+}
+const platformDotClass = (p: string) => PLATFORM_DOT_CLASSES[p] ?? 'bg-gray-400'
 
 const sortedPlatforms = computed(() => {
   const list = props.stats?.by_platform ?? []
@@ -345,9 +367,9 @@ function calcPercent(usage: number, limit: number): number {
 }
 
 function quotaBarClass(p: number): string {
-  if (p >= 95) return 'bg-red-500'
-  if (p >= 75) return 'bg-amber-500'
-  return 'bg-green-500'
+  if (p >= 95) return 'bg-gradient-to-r from-red-400 to-red-500'
+  if (p >= 75) return 'bg-gradient-to-r from-amber-400 to-amber-500'
+  return 'bg-gradient-to-r from-emerald-400 to-emerald-500'
 }
 
 // 与 formatBalance 一致使用 Intl.NumberFormat 做半偶舍入，避免 toFixed 在不同 JS 引擎

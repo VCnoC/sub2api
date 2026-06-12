@@ -1016,6 +1016,36 @@ var (
 			},
 		},
 	}
+	// PlaygroundConversationsColumns holds the columns for the "playground_conversations" table.
+	PlaygroundConversationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "title", Type: field.TypeString, Nullable: true, Size: 255, Default: ""},
+		{Name: "model", Type: field.TypeString, Nullable: true},
+		{Name: "group_name", Type: field.TypeString, Nullable: true},
+		{Name: "messages", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "last_activity_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+	}
+	// PlaygroundConversationsTable holds the schema information for the "playground_conversations" table.
+	PlaygroundConversationsTable = &schema.Table{
+		Name:       "playground_conversations",
+		Columns:    PlaygroundConversationsColumns,
+		PrimaryKey: []*schema.Column{PlaygroundConversationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "playgroundconversation_user_id_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{PlaygroundConversationsColumns[3], PlaygroundConversationsColumns[8]},
+			},
+			{
+				Name:    "playgroundconversation_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{PlaygroundConversationsColumns[8]},
+			},
+		},
+	}
 	// PromoCodesColumns holds the columns for the "promo_codes" table.
 	PromoCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -1793,6 +1823,7 @@ var (
 		PaymentOrdersTable,
 		PaymentProviderInstancesTable,
 		PendingAuthSessionsTable,
+		PlaygroundConversationsTable,
 		PromoCodesTable,
 		PromoCodeUsagesTable,
 		ProxiesTable,
@@ -1885,6 +1916,9 @@ func init() {
 	PendingAuthSessionsTable.ForeignKeys[0].RefTable = UsersTable
 	PendingAuthSessionsTable.Annotation = &entsql.Annotation{
 		Table: "pending_auth_sessions",
+	}
+	PlaygroundConversationsTable.Annotation = &entsql.Annotation{
+		Table: "playground_conversations",
 	}
 	PromoCodesTable.Annotation = &entsql.Annotation{
 		Table: "promo_codes",

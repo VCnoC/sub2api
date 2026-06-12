@@ -1,6 +1,7 @@
 <template>
   <div class="card">
-    <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+    <div class="flex items-center gap-2 border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+      <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('dashboard.quickActions') }}</h2>
     </div>
     <div class="space-y-3 p-4">

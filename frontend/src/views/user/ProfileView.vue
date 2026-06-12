@@ -5,6 +5,8 @@
       class="mx-auto max-w-[950px] space-y-6"
     >
       <ProfileInfoCard
+        class="animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 0ms"
         :user="user"
         :linuxdo-enabled="linuxdoOAuthEnabled"
         :dingtalk-enabled="dingtalkOAuthEnabled"
@@ -17,25 +19,35 @@
 
       <div
         v-if="contactInfo"
-        class="card border-primary-200 bg-primary-50 p-6 dark:bg-primary-900/20"
+        class="group card card-hover relative overflow-hidden border-primary-200 bg-primary-50 p-6 dark:bg-primary-900/20 animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 50ms"
       >
-        <div class="flex items-center gap-4">
-          <div class="rounded-xl bg-primary-100 p-3 text-primary-600">
+        <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
+        <div class="relative flex items-center gap-4">
+          <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110">
             <Icon name="chat" size="lg" />
           </div>
           <div>
-            <h3 class="font-semibold text-primary-800 dark:text-primary-200">
-              {{ t('common.contactSupport') }}
-            </h3>
+            <div class="flex items-center gap-2">
+              <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+              <h3 class="font-semibold text-primary-800 dark:text-primary-200">
+                {{ t('common.contactSupport') }}
+              </h3>
+            </div>
             <p class="text-sm font-medium">{{ contactInfo }}</p>
           </div>
         </div>
       </div>
 
-      <ProfilePasswordForm />
+      <ProfilePasswordForm
+        class="animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 100ms"
+      />
 
       <ProfileBalanceNotifyCard
         v-if="user && balanceLowNotifyEnabled"
+        class="animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 150ms"
         :enabled="user.balance_notify_enabled ?? true"
         :threshold="user.balance_notify_threshold"
         :extra-emails="user.balance_notify_extra_emails ?? []"
@@ -43,7 +55,10 @@
         :user-email="user.email"
       />
 
-      <ProfileTotpCard />
+      <ProfileTotpCard
+        class="animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 200ms"
+      />
     </div>
   </AppLayout>
 </template>

@@ -2,7 +2,7 @@
   <AppLayout>
     <div class="space-y-4">
       <!-- Filters -->
-      <div class="card p-4">
+      <div class="card p-4 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
         <div class="flex flex-wrap items-center gap-3">
           <Select v-model="currentFilter" :options="statusFilters" class="w-36" @change="fetchOrders" />
           <div class="flex flex-1 items-center justify-end gap-2">
@@ -15,7 +15,7 @@
       </div>
 
       <!-- Table -->
-      <OrderTable :orders="orders" :loading="loading">
+      <OrderTable class="animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms" :orders="orders" :loading="loading">
         <template #actions="{ row }">
           <div class="flex items-center gap-2">
             <button v-if="row.status === 'PENDING'" @click="handleCancel(row.id)" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-yellow-600 hover:bg-yellow-50 dark:text-yellow-400 dark:hover:bg-yellow-900/20">
@@ -33,6 +33,8 @@
       <!-- Pagination -->
       <Pagination
         v-if="pagination.total > 0"
+        class="animate-slide-up [animation-fill-mode:backwards]"
+        style="animation-delay: 100ms"
         :page="pagination.page"
         :total="pagination.total"
         :page-size="pagination.page_size"

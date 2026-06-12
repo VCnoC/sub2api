@@ -1,11 +1,13 @@
 <template>
   <AuthLayout>
-    <div class="space-y-6">
+    <div class="animate-slide-up space-y-6 [animation-fill-mode:backwards]">
       <!-- Title -->
       <div class="text-center">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('auth.forgotPasswordTitle') }}
         </h2>
+        <!-- 渐变装饰分隔线 -->
+        <div class="mx-auto mt-3 h-1 w-12 rounded-full bg-gradient-to-r from-primary-400 to-cyan-500"></div>
         <p class="mt-2 text-sm text-gray-500 dark:text-dark-400">
           {{ t('auth.forgotPasswordHint') }}
         </p>
@@ -13,16 +15,16 @@
 
       <!-- Success State -->
       <div v-if="isSubmitted" class="space-y-6">
-        <div class="rounded-xl border border-green-200 bg-green-50 p-6 dark:border-green-800/50 dark:bg-green-900/20">
+        <div class="rounded-md border-l-4 border-emerald-500 bg-emerald-50 p-6 dark:bg-emerald-950/40">
           <div class="flex flex-col items-center gap-4 text-center">
-            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-800/50">
-              <Icon name="checkCircle" size="lg" class="text-green-600 dark:text-green-400" />
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-800/50">
+              <Icon name="checkCircle" size="lg" class="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-green-800 dark:text-green-200">
+              <h3 class="text-lg font-semibold text-emerald-800 dark:text-emerald-200">
                 {{ t('auth.resetEmailSent') }}
               </h3>
-              <p class="mt-2 text-sm text-green-700 dark:text-green-300">
+              <p class="mt-2 text-sm text-emerald-700 dark:text-emerald-300">
                 {{ t('auth.resetEmailSentHint') }}
               </p>
             </div>

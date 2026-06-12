@@ -1,12 +1,15 @@
 <template>
-  <AppLayout>
+  <AppLayout full-height>
     <div class="playground-page">
       <!-- 顶部工具条 -->
-      <div class="playground-header">
+      <div class="playground-header animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
         <div class="playground-header-left">
-          <h1 class="playground-title">
-            {{ t('playground.title') }}
-          </h1>
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h1 class="playground-title">
+              {{ t('playground.title') }}
+            </h1>
+          </div>
           <span v-if="config.group" class="playground-subtitle">
             {{ t('playground.subtitle', { group: config.group }) }}
           </span>
@@ -135,8 +138,20 @@
         </div>
       </div>
 
-      <!-- 主体：消息区 + 输入区 -->
-      <div class="playground-body">
+      <!-- 主体：会话侧栏 + （消息区 + 输入区） -->
+      <div class="playground-body animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
+        <!-- 左侧会话列表（移动端隐藏）；mb 与右侧输入区的底部留白对齐 -->
+        <ConversationSidebar
+          class="mb-3 hidden md:mb-4 md:flex"
+          :conversations="conversations"
+          :active-id="activeConversationId"
+          :loading="isLoadingList"
+          @select="handleSelectConversation"
+          @create="handleNewConversation"
+          @remove="handleRemoveConversation"
+        />
+
+        <div class="playground-main">
         <PlaygroundChat
           :messages="messages"
           :is-generating="isGenerating"
@@ -167,12 +182,16 @@
             @group-change="onGroupChange"
           />
         </div>
+        </div>
       </div>
 
       <!-- 系统提示词对话框 -->
       <div v-if="systemPromptDialogOpen" class="dialog-overlay" @click.self="systemPromptDialogOpen = false">
-        <div class="dialog-panel">
-          <h3 class="dialog-title">{{ t('playground.systemPrompt.title') }}</h3>
+        <div class="dialog-panel animate-slide-up">
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h3 class="dialog-title">{{ t('playground.systemPrompt.title') }}</h3>
+          </div>
           <p class="dialog-desc">{{ t('playground.systemPrompt.desc') }}</p>
           <textarea
             v-model="systemPromptDraft"
@@ -184,7 +203,7 @@
             <button class="msg-btn msg-btn-outline" @click="systemPromptDialogOpen = false">
               {{ t('playground.message.cancel') }}
             </button>
-            <button class="msg-btn msg-btn-primary" @click="onSaveSystemPrompt">
+            <button class="msg-btn msg-btn-primary bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/25 hover:from-primary-600 hover:to-primary-700" @click="onSaveSystemPrompt">
               {{ t('playground.message.save') }}
             </button>
           </div>
@@ -193,8 +212,11 @@
 
       <!-- 参数面板对话框 -->
       <div v-if="paramDialogOpen" class="dialog-overlay" @click.self="paramDialogOpen = false">
-        <div class="dialog-panel dialog-panel-wide">
-          <h3 class="dialog-title">{{ t('playground.params.title') }}</h3>
+        <div class="dialog-panel dialog-panel-wide animate-slide-up">
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
+            <h3 class="dialog-title">{{ t('playground.params.title') }}</h3>
+          </div>
           <p class="dialog-desc">{{ t('playground.params.desc') }}</p>
 
           <div class="dialog-params">
@@ -263,7 +285,7 @@
             <button class="msg-btn msg-btn-outline" @click="onResetParams">
               {{ t('playground.params.reset') }}
             </button>
-            <button class="msg-btn msg-btn-primary" @click="paramDialogOpen = false">
+            <button class="msg-btn msg-btn-primary bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg shadow-primary-500/25 hover:from-primary-600 hover:to-primary-700" @click="paramDialogOpen = false">
               {{ t('playground.message.save') }}
             </button>
           </div>
@@ -288,8 +310,10 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import PlaygroundChat from '@/components/playground/PlaygroundChat.vue'
 import PlaygroundInput from '@/components/playground/PlaygroundInput.vue'
+import ConversationSidebar from '@/components/playground/ConversationSidebar.vue'
 import ParamSlider from '@/components/playground/ParamSlider.vue'
 import { usePlaygroundState } from '@/composables/playground/usePlaygroundState'
+import { useConversations } from '@/composables/playground/useConversations'
 import {
   useChatHandler,
   createUserMessage,
@@ -328,6 +352,68 @@ const { sendChat, stopGeneration, isGenerating } = useChatHandler({
   messages,
   updateMessages,
 })
+
+// ==================== 多会话管理 ====================
+
+const {
+  conversations,
+  activeConversationId,
+  isLoadingList,
+  loadConversations,
+  selectConversation,
+  newConversation,
+  removeConversation,
+  scheduleSave,
+} = useConversations({
+  getMessages: () => messages.value,
+  setMessages,
+  getModel: () => config.value.model,
+  getGroupName: () => config.value.group,
+  defaultTitle: () => t('playground.conversations.defaultTitle'),
+})
+
+// 流式回复结束（true → false）后防抖保存当前会话
+watch(isGenerating, (generating, wasGenerating) => {
+  if (wasGenerating && !generating) {
+    scheduleSave()
+  }
+})
+
+/** 生成中切换/新建前的收尾：停止本轮生成（部分回复定稿）并排入保存队列 */
+function stopAndQueueSave() {
+  if (!isGenerating.value) return
+  stopGeneration()
+  // 设置待保存任务：后续 selectConversation/newConversation 内部 flush 时
+  // 会在切换前把部分回复落库到原会话
+  scheduleSave()
+}
+
+async function handleSelectConversation(id: number) {
+  stopAndQueueSave()
+  try {
+    await selectConversation(id)
+  } catch {
+    appStore.showError(t('playground.conversations.loadFailed'))
+  }
+}
+
+async function handleNewConversation() {
+  stopAndQueueSave()
+  await newConversation()
+}
+
+async function handleRemoveConversation(id: number) {
+  if (!window.confirm(t('playground.conversations.confirmDelete'))) return
+  // 删除的是正在生成的当前会话 → 先停止生成
+  if (isGenerating.value && id === activeConversationId.value) {
+    stopGeneration()
+  }
+  try {
+    await removeConversation(id)
+  } catch {
+    appStore.showError(t('playground.conversations.deleteFailed'))
+  }
+}
 
 // ==================== 模型 / 分组加载 ====================
 
@@ -379,6 +465,12 @@ onMounted(async () => {
   await loadGroups()
   if (config.value.group) {
     await loadModels(config.value.group)
+  }
+  // 会话列表加载放最后：旧 localStorage 迁移需要 model/group 已就绪
+  try {
+    await loadConversations()
+  } catch {
+    appStore.showError(t('playground.conversations.loadFailed'))
   }
 })
 
@@ -446,6 +538,7 @@ function handleSaveEdit(key: string, content: string) {
     )
   )
   editingKey.value = null
+  scheduleSave()
 }
 
 function handleSaveEditAndSubmit(key: string, content: string) {
@@ -467,6 +560,7 @@ function handleSaveEditAndSubmit(key: string, content: string) {
 function handleRemove(target: Message) {
   if (!window.confirm(t('playground.message.confirmDelete'))) return
   updateMessages((prev) => prev.filter((m) => m.key !== target.key))
+  scheduleSave()
 }
 
 function handleSwitchVersion(key: string, index: number) {
@@ -512,6 +606,8 @@ function onResetParams() {
 function confirmClear() {
   if (!window.confirm(t('playground.actions.confirmClear'))) return
   clearMessages()
+  // 同步清空当前会话的服务端记录
+  scheduleSave()
   appStore.showSuccess(t('playground.actions.cleared'))
 }
 
@@ -554,7 +650,8 @@ function onExport() {
 
 <style scoped>
 .playground-page {
-  @apply flex h-[calc(100vh-7rem)] flex-col gap-0 md:h-[calc(100vh-8rem)];
+  /* 高度由 AppLayout fullHeight 模式的 flex 链路提供，无需魔法数字 */
+  @apply flex min-h-0 flex-1 flex-col gap-0;
 }
 
 .playground-header {
@@ -601,7 +698,12 @@ function onExport() {
 }
 
 .playground-body {
-  @apply flex min-h-0 flex-1 flex-col;
+  /* 横向布局：左侧会话栏 + 右侧聊天主区 */
+  @apply flex min-h-0 flex-1 flex-row gap-3 pt-3;
+}
+
+.playground-main {
+  @apply flex min-h-0 min-w-0 flex-1 flex-col;
 }
 
 /* Dialog */

@@ -12,8 +12,13 @@ import (
 // RegisterPlaygroundRoutes 注册对话广场（Playground）路由。
 //
 // 路由分组：/api/v1/playground
-//   - GET  /models                 列出指定分组下用户可用的模型
-//   - POST /chat/completions       OpenAI Chat Completions 兼容转发
+//   - GET  /models                           列出指定分组下用户可用的模型
+//   - POST /chat/completions                 OpenAI Chat Completions 兼容转发
+//   - GET  /conversations                    列出当前用户的所有会话摘要
+//   - POST /conversations                    新建会话
+//   - GET  /conversations/:id               获取会话详情（含 messages）
+//   - PUT  /conversations/:id               更新会话（全量覆盖 messages，body 上限 50MB）
+//   - DELETE /conversations/:id             删除会话
 //
 // 鉴权：JWT（用户 Web 会话），区别于 /v1/chat/completions 的 API Key 鉴权。
 //
@@ -59,6 +64,18 @@ func RegisterPlaygroundRoutes(
 				}
 				h.Gateway.ChatCompletions(c)
 			})
+		}
+
+		// 会话 CRUD：使用独立子组并放宽 body 上限至 52MB（messages 上限 50MB + 包装开销）
+		// 注意：不复用 chat 子组，避免引入 OpsErrorLogger/EndpointMiddleware 等无关中间件
+		conversations := pg.Group("/conversations")
+		conversations.Use(middleware.RequestBodyLimit(52 << 20)) // 52MB
+		{
+			conversations.GET("", h.PlaygroundConversation.ListConversations)
+			conversations.POST("", h.PlaygroundConversation.CreateConversation)
+			conversations.GET("/:id", h.PlaygroundConversation.GetConversation)
+			conversations.PUT("/:id", h.PlaygroundConversation.UpdateConversation)
+			conversations.DELETE("/:id", h.PlaygroundConversation.DeleteConversation)
 		}
 	}
 }

@@ -643,6 +643,9 @@ export default {
   dashboard: {
     title: '仪表盘',
     welcomeMessage: '欢迎回来！这是您账户的概览。',
+    greetingMorning: '早上好',
+    greetingAfternoon: '下午好',
+    greetingEvening: '晚上好',
     balance: '余额',
     apiKeys: 'API 密钥',
     todayRequests: '今日请求',
@@ -876,6 +879,18 @@ export default {
   playground: {
     title: '对话广场',
     subtitle: '当前分组：{group}',
+    conversations: {
+      title: '会话',
+      new: '新建',
+      empty: '暂无会话，点击「新建」开始对话',
+      untitled: '未命名会话',
+      defaultTitle: '新对话',
+      delete: '删除会话',
+      confirmDelete: '确定删除这个会话吗？删除后无法恢复。',
+      retentionHint: '会话保留 3 天（按最后活动时间）',
+      loadFailed: '会话加载失败，请稍后重试',
+      deleteFailed: '会话删除失败，请稍后重试',
+    },
     chat: {
       emptyTitle: '开始你的第一段对话',
       emptyDesc: '选择分组与模型，输入问题即可流式获得回答。所有用量会按你的账户计费，与外部 API 调用一致。',
@@ -889,7 +904,7 @@ export default {
       noGroup: '暂无可用分组',
       noModel: '该分组暂无可用模型',
       loadingModels: '加载模型中…',
-      hint: '回车发送 · Shift+Enter 换行 · 支持图片和文本类文档',
+      hint: '回车发送 · Shift+Enter 换行 · 支持粘贴/上传图片和文本类文档',
       attachImage: '上传图片',
       attachDocument: '上传文档',
       removeAttachment: '移除附件',
