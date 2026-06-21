@@ -11,7 +11,9 @@
 *.md
 !deploy/DOCKER.md
 docs/
+# admin-compliance gate (LegalDocumentView.vue) build-time imports
 !docs/legal/
+!docs/legal/*.md
 
 # IDE
 .idea/
