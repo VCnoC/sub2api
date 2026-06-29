@@ -175,7 +175,12 @@
         </template>
 
         <template #cell-duration="{ row }">
-          <span class="text-sm text-gray-600 dark:text-gray-400">{{ formatDuration(row.duration_ms) }}</span>
+          <div class="text-sm">
+            <div class="text-gray-600 dark:text-gray-400">{{ formatDuration(row.duration_ms) }}</div>
+            <div v-if="formatTps(row)" class="mt-0.5 text-[11px] font-medium text-cyan-600 dark:text-cyan-400">
+              {{ formatTps(row) }} t/s
+            </div>
+          </div>
         </template>
 
         <template #cell-created_at="{ value }">
@@ -501,6 +506,19 @@ const formatDuration = (ms: number | null | undefined): string => {
   if (ms == null) return '-'
   if (ms < 1000) return `${ms}ms`
   return `${(ms / 1000).toFixed(2)}s`
+}
+
+// 输出 token / 秒；优先扣除 TTFT 的纯生成速率（首 token 已知且总耗时>首 token 时），否则降级总速率
+const formatTps = (row: AdminUsageLog): string | null => {
+  const out = row.output_tokens ?? 0
+  const dur = row.duration_ms ?? 0
+  if (out <= 0 || dur <= 0) return null
+  const ttft = row.first_token_ms
+  const baseMs = ttft != null && dur > ttft ? dur - ttft : dur
+  if (baseMs <= 0) return null
+  const tps = (out * 1000) / baseMs
+  if (!Number.isFinite(tps) || tps <= 0) return null
+  return tps >= 100 ? tps.toFixed(0) : tps.toFixed(1)
 }
 
 // Cost tooltip functions

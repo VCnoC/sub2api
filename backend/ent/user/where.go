@@ -170,6 +170,16 @@ func RpmLimit(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldRpmLimit, v))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamRole applies equality check predicate on the "team_role" field. It's identical to TeamRoleEQ.
+func TeamRole(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTeamRole, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -1340,6 +1350,101 @@ func RpmLimitLTE(v int) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldRpmLimit, v))
 }
 
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v int64) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...int64) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDIsNil applies the IsNil predicate on the "team_id" field.
+func TeamIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldTeamID))
+}
+
+// TeamIDNotNil applies the NotNil predicate on the "team_id" field.
+func TeamIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldTeamID))
+}
+
+// TeamRoleEQ applies the EQ predicate on the "team_role" field.
+func TeamRoleEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldTeamRole, v))
+}
+
+// TeamRoleNEQ applies the NEQ predicate on the "team_role" field.
+func TeamRoleNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldTeamRole, v))
+}
+
+// TeamRoleIn applies the In predicate on the "team_role" field.
+func TeamRoleIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldTeamRole, vs...))
+}
+
+// TeamRoleNotIn applies the NotIn predicate on the "team_role" field.
+func TeamRoleNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldTeamRole, vs...))
+}
+
+// TeamRoleGT applies the GT predicate on the "team_role" field.
+func TeamRoleGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldTeamRole, v))
+}
+
+// TeamRoleGTE applies the GTE predicate on the "team_role" field.
+func TeamRoleGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldTeamRole, v))
+}
+
+// TeamRoleLT applies the LT predicate on the "team_role" field.
+func TeamRoleLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldTeamRole, v))
+}
+
+// TeamRoleLTE applies the LTE predicate on the "team_role" field.
+func TeamRoleLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldTeamRole, v))
+}
+
+// TeamRoleContains applies the Contains predicate on the "team_role" field.
+func TeamRoleContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldTeamRole, v))
+}
+
+// TeamRoleHasPrefix applies the HasPrefix predicate on the "team_role" field.
+func TeamRoleHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldTeamRole, v))
+}
+
+// TeamRoleHasSuffix applies the HasSuffix predicate on the "team_role" field.
+func TeamRoleHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldTeamRole, v))
+}
+
+// TeamRoleEqualFold applies the EqualFold predicate on the "team_role" field.
+func TeamRoleEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldTeamRole, v))
+}
+
+// TeamRoleContainsFold applies the ContainsFold predicate on the "team_role" field.
+func TeamRoleContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldTeamRole, v))
+}
+
 // HasAPIKeys applies the HasEdge predicate on the "api_keys" edge.
 func HasAPIKeys() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -1631,6 +1736,29 @@ func HasPlatformQuotas() predicate.User {
 func HasPlatformQuotasWith(preds ...predicate.UserPlatformQuota) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newPlatformQuotasStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTeam applies the HasEdge predicate on the "team" edge.
+func HasTeam() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TeamTable, TeamColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTeamWith applies the HasEdge predicate on the "team" edge with a given conditions (other predicates).
+func HasTeamWith(preds ...predicate.Team) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTeamStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

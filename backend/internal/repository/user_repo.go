@@ -1054,3 +1054,67 @@ func (r *userRepository) DisableTotp(ctx context.Context, userID int64) error {
 	}
 	return nil
 }
+
+// ListByTeamID 查询指定团队下的所有非软删除成员
+func (r *userRepository) ListByTeamID(ctx context.Context, teamID int64, params pagination.PaginationParams) ([]service.User, *pagination.PaginationResult, error) {
+	q := r.client.User.Query().Where(dbuser.TeamIDEQ(teamID))
+
+	total, err := q.Clone().Count(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	users, err := q.
+		Offset(params.Offset()).
+		Limit(params.Limit()).
+		Order(dbent.Desc(dbuser.FieldCreatedAt)).
+		All(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	out := make([]service.User, 0, len(users))
+	for i := range users {
+		out = append(out, *userEntityToService(users[i]))
+	}
+	return out, paginationResultFromTotal(int64(total), params), nil
+}
+
+// UpdateTeamMembership 将用户加入指定团队。
+// 通过 Where(dbuser.TeamIDIsNil()) 条件更新，确保一个用户不会同时加入多个团队。
+func (r *userRepository) UpdateTeamMembership(ctx context.Context, userID, teamID int64, role string) error {
+	client := clientFromContext(ctx, r.client)
+	n, err := client.User.Update().
+		Where(
+			dbuser.IDEQ(userID),
+			dbuser.TeamIDIsNil(),
+			dbuser.TeamRoleEQ(""),
+		).
+		SetTeamID(teamID).
+		SetTeamRole(role).
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	if n == 0 {
+		return service.ErrAlreadyInTeam
+	}
+	return nil
+}
+
+// ClearTeamMembership 清除用户的团队归属
+func (r *userRepository) ClearTeamMembership(ctx context.Context, userID int64) error {
+	client := clientFromContext(ctx, r.client)
+	n, err := client.User.Update().
+		Where(dbuser.IDEQ(userID)).
+		ClearTeamID().
+		SetTeamRole("").
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrUserNotFound, nil)
+	}
+	if n == 0 {
+		return service.ErrUserNotFound
+	}
+	return nil
+}

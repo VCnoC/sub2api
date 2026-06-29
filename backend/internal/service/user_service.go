@@ -120,6 +120,11 @@ type UserRepository interface {
 	UpdateTotpSecret(ctx context.Context, userID int64, encryptedSecret *string) error
 	EnableTotp(ctx context.Context, userID int64) error
 	DisableTotp(ctx context.Context, userID int64) error
+
+	// Team membership
+	ListByTeamID(ctx context.Context, teamID int64, params pagination.PaginationParams) ([]User, *pagination.PaginationResult, error)
+	UpdateTeamMembership(ctx context.Context, userID, teamID int64, role string) error
+	ClearTeamMembership(ctx context.Context, userID int64) error
 }
 
 type UserAuthIdentityRecord struct {

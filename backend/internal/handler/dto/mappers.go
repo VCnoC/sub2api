@@ -31,6 +31,8 @@ func UserFromServiceShallow(u *service.User) *User {
 		TotalRecharged:             u.TotalRecharged,
 		RPMLimit:                   u.RPMLimit,
 		DeletedAt:                  u.DeletedAt,
+		TeamID:                     u.TeamID,
+		TeamRole:                   u.TeamRole,
 	}
 }
 

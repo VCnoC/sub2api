@@ -112,6 +112,22 @@ func (User) Fields() []ent.Field {
 		// 用户级每分钟请求数上限（0 = 不限制）。仅当所在分组未设置 rpm_limit 时作为兜底生效。
 		field.Int("rpm_limit").
 			Default(0),
+
+		// 团队功能字段
+		field.Int64("team_id").
+			Optional().
+			Nillable(),
+		field.String("team_role").
+			MaxLen(20).
+			Default("").
+			Validate(func(value string) error {
+				switch value {
+				case "", domain.TeamRoleOwner, domain.TeamRoleMember:
+					return nil
+				default:
+					return fmt.Errorf("must be one of '', %s, %s", domain.TeamRoleOwner, domain.TeamRoleMember)
+				}
+			}),
 	}
 }
 
@@ -132,6 +148,10 @@ func (User) Edges() []ent.Edge {
 			Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("pending_auth_sessions", PendingAuthSession.Type),
 		edge.To("platform_quotas", UserPlatformQuota.Type),
+		edge.From("team", Team.Type).
+			Ref("members").
+			Field("team_id").
+			Unique(),
 	}
 }
 
@@ -140,5 +160,6 @@ func (User) Indexes() []ent.Index {
 		// email 字段已在 Fields() 中声明 Unique()，无需重复索引
 		index.Fields("status"),
 		index.Fields("deleted_at"),
+		index.Fields("team_id"),
 	}
 }

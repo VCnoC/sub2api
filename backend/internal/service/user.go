@@ -61,6 +61,10 @@ type User struct {
 
 	APIKeys       []APIKey
 	Subscriptions []UserSubscription
+
+	// Team fields
+	TeamID   *int64
+	TeamRole string
 }
 
 func (u *User) IsAdmin() bool {

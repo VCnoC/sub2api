@@ -16,6 +16,12 @@ const (
 	RoleUser  = "user"
 )
 
+// Team role constants
+const (
+	TeamRoleOwner  = "owner"
+	TeamRoleMember = "member"
+)
+
 // Platform constants
 const (
 	PlatformAnthropic   = "anthropic"
@@ -36,10 +42,12 @@ const (
 
 // Redeem type constants
 const (
-	RedeemTypeBalance      = "balance"
-	RedeemTypeConcurrency  = "concurrency"
-	RedeemTypeSubscription = "subscription"
-	RedeemTypeInvitation   = "invitation"
+	RedeemTypeBalance          = "balance"
+	RedeemTypeConcurrency      = "concurrency"
+	RedeemTypeSubscription     = "subscription"
+	RedeemTypeInvitation       = "invitation"
+	RedeemTypeTeamTransferOut  = "team_transfer_out"
+	RedeemTypeTeamTransferIn   = "team_transfer_in"
 )
 
 // PromoCode status constants

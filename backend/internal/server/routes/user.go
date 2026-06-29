@@ -34,6 +34,20 @@ func RegisterUserRoutes(
 			user.GET("/api-keys/:id/usage/daily", h.Usage.GetMyAPIKeyDailyUsage)
 			user.GET("/platform-quotas", h.User.GetMyPlatformQuotas)
 
+			// 团队功能
+			team := user.Group("/team")
+			{
+				team.POST("", h.Team.CreateTeam)
+				team.GET("", h.Team.GetMyTeam)
+				team.POST("/invite-code", h.Team.RefreshInviteCode)
+				team.POST("/join", h.Team.JoinTeam)
+				team.POST("/leave", h.Team.LeaveTeam)
+				team.GET("/members", h.Team.ListMembers)
+				team.GET("/members/:id/usage", h.Team.GetMemberUsage)
+				team.DELETE("/members/:id", h.Team.RemoveMember)
+				team.POST("/members/:id/transfer", h.Team.TransferBalance)
+			}
+
 			// 通知邮箱管理
 			notifyEmail := user.Group("/notify-email")
 			{

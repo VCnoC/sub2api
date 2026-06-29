@@ -1,0 +1,8 @@
+services:
+  sub2api:
+    build: !reset null
+    image: deploy-sub2api:latest
+    volumes:
+      - ../backend/bin/server:/app/main:Z
+      - ./data:/app/data:Z
+    command: ["/app/main"]

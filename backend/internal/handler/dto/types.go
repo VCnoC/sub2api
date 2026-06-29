@@ -34,6 +34,10 @@ type User struct {
 
 	APIKeys       []APIKey           `json:"api_keys,omitempty"`
 	Subscriptions []UserSubscription `json:"subscriptions,omitempty"`
+
+	// Team fields
+	TeamID   *int64 `json:"team_id,omitempty"`
+	TeamRole string `json:"team_role,omitempty"`
 }
 
 // AdminUser 是管理员接口使用的 user DTO（包含敏感/内部字段）。

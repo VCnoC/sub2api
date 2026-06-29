@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/team"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
@@ -340,6 +341,34 @@ func (_c *UserCreate) SetNillableRpmLimit(v *int) *UserCreate {
 	return _c
 }
 
+// SetTeamID sets the "team_id" field.
+func (_c *UserCreate) SetTeamID(v int64) *UserCreate {
+	_c.mutation.SetTeamID(v)
+	return _c
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_c *UserCreate) SetNillableTeamID(v *int64) *UserCreate {
+	if v != nil {
+		_c.SetTeamID(*v)
+	}
+	return _c
+}
+
+// SetTeamRole sets the "team_role" field.
+func (_c *UserCreate) SetTeamRole(v string) *UserCreate {
+	_c.mutation.SetTeamRole(v)
+	return _c
+}
+
+// SetNillableTeamRole sets the "team_role" field if the given value is not nil.
+func (_c *UserCreate) SetNillableTeamRole(v *string) *UserCreate {
+	if v != nil {
+		_c.SetTeamRole(*v)
+	}
+	return _c
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_c *UserCreate) AddAPIKeyIDs(ids ...int64) *UserCreate {
 	_c.mutation.AddAPIKeyIDs(ids...)
@@ -535,6 +564,11 @@ func (_c *UserCreate) AddPlatformQuotas(v ...*UserPlatformQuota) *UserCreate {
 	return _c.AddPlatformQuotaIDs(ids...)
 }
 
+// SetTeam sets the "team" edge to the Team entity.
+func (_c *UserCreate) SetTeam(v *Team) *UserCreate {
+	return _c.SetTeamID(v.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -638,6 +672,10 @@ func (_c *UserCreate) defaults() error {
 		v := user.DefaultRpmLimit
 		_c.mutation.SetRpmLimit(v)
 	}
+	if _, ok := _c.mutation.TeamRole(); !ok {
+		v := user.DefaultTeamRole
+		_c.mutation.SetTeamRole(v)
+	}
 	return nil
 }
 
@@ -723,6 +761,14 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.RpmLimit(); !ok {
 		return &ValidationError{Name: "rpm_limit", err: errors.New(`ent: missing required field "User.rpm_limit"`)}
+	}
+	if _, ok := _c.mutation.TeamRole(); !ok {
+		return &ValidationError{Name: "team_role", err: errors.New(`ent: missing required field "User.team_role"`)}
+	}
+	if v, ok := _c.mutation.TeamRole(); ok {
+		if err := user.TeamRoleValidator(v); err != nil {
+			return &ValidationError{Name: "team_role", err: fmt.Errorf(`ent: validator failed for field "User.team_role": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -842,6 +888,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RpmLimit(); ok {
 		_spec.SetField(user.FieldRpmLimit, field.TypeInt, value)
 		_node.RpmLimit = value
+	}
+	if value, ok := _c.mutation.TeamRole(); ok {
+		_spec.SetField(user.FieldTeamRole, field.TypeString, value)
+		_node.TeamRole = value
 	}
 	if nodes := _c.mutation.APIKeysIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1053,6 +1103,23 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.TeamTable,
+			Columns: []string{user.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.TeamID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -1434,6 +1501,36 @@ func (u *UserUpsert) UpdateRpmLimit() *UserUpsert {
 // AddRpmLimit adds v to the "rpm_limit" field.
 func (u *UserUpsert) AddRpmLimit(v int) *UserUpsert {
 	u.Add(user.FieldRpmLimit, v)
+	return u
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *UserUpsert) SetTeamID(v int64) *UserUpsert {
+	u.Set(user.FieldTeamID, v)
+	return u
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *UserUpsert) UpdateTeamID() *UserUpsert {
+	u.SetExcluded(user.FieldTeamID)
+	return u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *UserUpsert) ClearTeamID() *UserUpsert {
+	u.SetNull(user.FieldTeamID)
+	return u
+}
+
+// SetTeamRole sets the "team_role" field.
+func (u *UserUpsert) SetTeamRole(v string) *UserUpsert {
+	u.Set(user.FieldTeamRole, v)
+	return u
+}
+
+// UpdateTeamRole sets the "team_role" field to the value that was provided on create.
+func (u *UserUpsert) UpdateTeamRole() *UserUpsert {
+	u.SetExcluded(user.FieldTeamRole)
 	return u
 }
 
@@ -1864,6 +1961,41 @@ func (u *UserUpsertOne) AddRpmLimit(v int) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateRpmLimit() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateRpmLimit()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *UserUpsertOne) SetTeamID(v int64) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateTeamID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateTeamID()
+	})
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *UserUpsertOne) ClearTeamID() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearTeamID()
+	})
+}
+
+// SetTeamRole sets the "team_role" field.
+func (u *UserUpsertOne) SetTeamRole(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetTeamRole(v)
+	})
+}
+
+// UpdateTeamRole sets the "team_role" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateTeamRole() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateTeamRole()
 	})
 }
 
@@ -2460,6 +2592,41 @@ func (u *UserUpsertBulk) AddRpmLimit(v int) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateRpmLimit() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateRpmLimit()
+	})
+}
+
+// SetTeamID sets the "team_id" field.
+func (u *UserUpsertBulk) SetTeamID(v int64) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetTeamID(v)
+	})
+}
+
+// UpdateTeamID sets the "team_id" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateTeamID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateTeamID()
+	})
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (u *UserUpsertBulk) ClearTeamID() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearTeamID()
+	})
+}
+
+// SetTeamRole sets the "team_role" field.
+func (u *UserUpsertBulk) SetTeamRole(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetTeamRole(v)
+	})
+}
+
+// UpdateTeamRole sets the "team_role" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateTeamRole() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateTeamRole()
 	})
 }
 

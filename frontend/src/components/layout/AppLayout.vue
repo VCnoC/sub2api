@@ -14,21 +14,21 @@
 
     <!-- Main Content Area -->
     <div
-      class="relative transition-all duration-300"
+      class="relative flex transition-all duration-300"
       :class="[
         sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64',
-        fullHeight ? 'flex h-screen flex-col' : 'min-h-screen',
+        fullHeight ? 'h-screen flex-col' : 'min-h-screen flex-col',
       ]"
     >
       <!-- Header -->
       <AppHeader />
 
-      <!-- Main Content：fullHeight 模式下吃满剩余视口高度（全屏聊天类页面） -->
+      <!-- Main Content：吃满剩余空间，把 Footer 推到底部 -->
       <main
         :class="
           fullHeight
             ? 'flex min-h-0 flex-1 flex-col p-4 pb-0 md:p-6 md:pb-0 lg:p-8 lg:pb-0'
-            : 'p-4 md:p-6 lg:p-8'
+            : 'flex-1 p-4 md:p-6 lg:p-8'
         "
       >
         <slot />

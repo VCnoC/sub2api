@@ -451,6 +451,34 @@ export interface PaginatedResponse<T> {
   pages: number
 }
 
+export interface PaginationParams {
+  page?: number
+  page_size?: number
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
+}
+
+export interface Team {
+  id: number
+  name: string
+  owner_id: number
+  invite_code?: string
+  status: string
+  role?: 'owner' | 'member' | ''
+  created_at: string
+  updated_at: string
+}
+
+export interface TeamMember {
+  id: number
+  email: string
+  username: string
+  role: 'owner' | 'member' | ''
+  balance: number
+  total_usage: number
+  created_at: string
+}
+
 // ==================== UI State Types ====================
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'

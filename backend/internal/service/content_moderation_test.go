@@ -1837,3 +1837,15 @@ func TestContentModerationUpdateConfig_CyberPolicyExcludeFromBanCount(t *testing
 	require.NoError(t, err)
 	require.False(t, view.CyberPolicyExcludeFromBanCount)
 }
+
+func (r *contentModerationTestUserRepo) ListByTeamID(ctx context.Context, teamID int64, params pagination.PaginationParams) ([]User, *pagination.PaginationResult, error) {
+	panic("unexpected ListByTeamID call")
+}
+
+func (r *contentModerationTestUserRepo) UpdateTeamMembership(ctx context.Context, userID, teamID int64, role string) error {
+	panic("unexpected UpdateTeamMembership call")
+}
+
+func (r *contentModerationTestUserRepo) ClearTeamMembership(ctx context.Context, userID int64) error {
+	panic("unexpected ClearTeamMembership call")
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/team"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
@@ -411,6 +412,40 @@ func (_u *UserUpdate) AddRpmLimit(v int) *UserUpdate {
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *UserUpdate) SetTeamID(v int64) *UserUpdate {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableTeamID(v *int64) *UserUpdate {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (_u *UserUpdate) ClearTeamID() *UserUpdate {
+	_u.mutation.ClearTeamID()
+	return _u
+}
+
+// SetTeamRole sets the "team_role" field.
+func (_u *UserUpdate) SetTeamRole(v string) *UserUpdate {
+	_u.mutation.SetTeamRole(v)
+	return _u
+}
+
+// SetNillableTeamRole sets the "team_role" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableTeamRole(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetTeamRole(*v)
+	}
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *UserUpdate) AddAPIKeyIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -604,6 +639,11 @@ func (_u *UserUpdate) AddPlatformQuotas(v ...*UserPlatformQuota) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddPlatformQuotaIDs(ids...)
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (_u *UserUpdate) SetTeam(v *Team) *UserUpdate {
+	return _u.SetTeamID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -884,6 +924,12 @@ func (_u *UserUpdate) RemovePlatformQuotas(v ...*UserPlatformQuota) *UserUpdate 
 	return _u.RemovePlatformQuotaIDs(ids...)
 }
 
+// ClearTeam clears the "team" edge to the Team entity.
+func (_u *UserUpdate) ClearTeam() *UserUpdate {
+	_u.mutation.ClearTeam()
+	return _u
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *UserUpdate) Save(ctx context.Context) (int, error) {
 	if err := _u.defaults(); err != nil {
@@ -956,6 +1002,11 @@ func (_u *UserUpdate) check() error {
 	if v, ok := _u.mutation.SignupSource(); ok {
 		if err := user.SignupSourceValidator(v); err != nil {
 			return &ValidationError{Name: "signup_source", err: fmt.Errorf(`ent: validator failed for field "User.signup_source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.TeamRole(); ok {
+		if err := user.TeamRoleValidator(v); err != nil {
+			return &ValidationError{Name: "team_role", err: fmt.Errorf(`ent: validator failed for field "User.team_role": %w`, err)}
 		}
 	}
 	return nil
@@ -1071,6 +1122,9 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedRpmLimit(); ok {
 		_spec.AddField(user.FieldRpmLimit, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.TeamRole(); ok {
+		_spec.SetField(user.FieldTeamRole, field.TypeString, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1662,6 +1716,35 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userplatformquota.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.TeamTable,
+			Columns: []string{user.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.TeamTable,
+			Columns: []string{user.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2060,6 +2143,40 @@ func (_u *UserUpdateOne) AddRpmLimit(v int) *UserUpdateOne {
 	return _u
 }
 
+// SetTeamID sets the "team_id" field.
+func (_u *UserUpdateOne) SetTeamID(v int64) *UserUpdateOne {
+	_u.mutation.SetTeamID(v)
+	return _u
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableTeamID(v *int64) *UserUpdateOne {
+	if v != nil {
+		_u.SetTeamID(*v)
+	}
+	return _u
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (_u *UserUpdateOne) ClearTeamID() *UserUpdateOne {
+	_u.mutation.ClearTeamID()
+	return _u
+}
+
+// SetTeamRole sets the "team_role" field.
+func (_u *UserUpdateOne) SetTeamRole(v string) *UserUpdateOne {
+	_u.mutation.SetTeamRole(v)
+	return _u
+}
+
+// SetNillableTeamRole sets the "team_role" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableTeamRole(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetTeamRole(*v)
+	}
+	return _u
+}
+
 // AddAPIKeyIDs adds the "api_keys" edge to the APIKey entity by IDs.
 func (_u *UserUpdateOne) AddAPIKeyIDs(ids ...int64) *UserUpdateOne {
 	_u.mutation.AddAPIKeyIDs(ids...)
@@ -2253,6 +2370,11 @@ func (_u *UserUpdateOne) AddPlatformQuotas(v ...*UserPlatformQuota) *UserUpdateO
 		ids[i] = v[i].ID
 	}
 	return _u.AddPlatformQuotaIDs(ids...)
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (_u *UserUpdateOne) SetTeam(v *Team) *UserUpdateOne {
+	return _u.SetTeamID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -2533,6 +2655,12 @@ func (_u *UserUpdateOne) RemovePlatformQuotas(v ...*UserPlatformQuota) *UserUpda
 	return _u.RemovePlatformQuotaIDs(ids...)
 }
 
+// ClearTeam clears the "team" edge to the Team entity.
+func (_u *UserUpdateOne) ClearTeam() *UserUpdateOne {
+	_u.mutation.ClearTeam()
+	return _u
+}
+
 // Where appends a list predicates to the UserUpdate builder.
 func (_u *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
 	_u.mutation.Where(ps...)
@@ -2618,6 +2746,11 @@ func (_u *UserUpdateOne) check() error {
 	if v, ok := _u.mutation.SignupSource(); ok {
 		if err := user.SignupSourceValidator(v); err != nil {
 			return &ValidationError{Name: "signup_source", err: fmt.Errorf(`ent: validator failed for field "User.signup_source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.TeamRole(); ok {
+		if err := user.TeamRoleValidator(v); err != nil {
+			return &ValidationError{Name: "team_role", err: fmt.Errorf(`ent: validator failed for field "User.team_role": %w`, err)}
 		}
 	}
 	return nil
@@ -2750,6 +2883,9 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.AddedRpmLimit(); ok {
 		_spec.AddField(user.FieldRpmLimit, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.TeamRole(); ok {
+		_spec.SetField(user.FieldTeamRole, field.TypeString, value)
 	}
 	if _u.mutation.APIKeysCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -3341,6 +3477,35 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userplatformquota.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.TeamTable,
+			Columns: []string{user.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.TeamTable,
+			Columns: []string{user.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

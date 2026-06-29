@@ -487,3 +487,15 @@ const AdminAPIKeyPrefix = "admin-"
 // SettingKeyAllowUserViewErrorRequests controls whether end users can view
 // their own failed requests on the usage page. Default false (opt-in).
 const SettingKeyAllowUserViewErrorRequests = "allow_user_view_error_requests"
+
+// Team role constants
+const (
+	TeamRoleOwner  = domain.TeamRoleOwner
+	TeamRoleMember = domain.TeamRoleMember
+)
+
+// Team redeem type constants
+const (
+	RedeemTypeTeamTransferOut = domain.RedeemTypeTeamTransferOut
+	RedeemTypeTeamTransferIn  = domain.RedeemTypeTeamTransferIn
+)

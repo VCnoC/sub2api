@@ -767,6 +767,8 @@ func userEntityToService(u *dbent.User) *service.User {
 		CreatedAt:                  u.CreatedAt,
 		UpdatedAt:                  u.UpdatedAt,
 		DeletedAt:                  u.DeletedAt,
+		TeamID:                     u.TeamID,
+		TeamRole:                   u.TeamRole,
 	}
 	// Parse extra emails JSON (supports both old []string and new []NotifyEmailEntry format)
 	if u.BalanceNotifyExtraEmails != "" && u.BalanceNotifyExtraEmails != "[]" {

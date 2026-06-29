@@ -3254,6 +3254,18 @@ func (r *oauthPendingFlowUserRepo) GetByIDIncludeDeleted(ctx context.Context, id
 	return r.GetByID(ctx, id)
 }
 
+func (r *oauthPendingFlowUserRepo) ListByTeamID(ctx context.Context, teamID int64, params pagination.PaginationParams) ([]service.User, *pagination.PaginationResult, error) {
+	panic("unexpected ListByTeamID call")
+}
+
+func (r *oauthPendingFlowUserRepo) UpdateTeamMembership(ctx context.Context, userID, teamID int64, role string) error {
+	panic("unexpected UpdateTeamMembership call")
+}
+
+func (r *oauthPendingFlowUserRepo) ClearTeamMembership(ctx context.Context, userID int64) error {
+	panic("unexpected ClearTeamMembership call")
+}
+
 func oauthPendingFlowServiceUser(entity *dbent.User) *service.User {
 	if entity == nil {
 		return nil
