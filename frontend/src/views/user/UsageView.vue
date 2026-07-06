@@ -179,9 +179,8 @@
         </div>
 
         <!-- 用量明细表 -->
-        <!-- flex 链让 DataTable 根 .table-wrapper(flex:1)拿到有界高度以启用内部滚动。
-             虚拟化器测高 race 导致的概率空白,已在 DataTable 内用「就绪门控 + initialRect 兜底」根治。 -->
-        <div v-show="activeTab === 'usage'" class="flex min-h-0 flex-1 flex-col">
+        <!-- VC酱要求：去掉 flex-1 和 min-h-0，让表格高度自适应内容，整页滚动而不是表格内滚动 -->
+        <div v-show="activeTab === 'usage'" class="flex flex-col">
           <DataTable
           :columns="columns"
           :data="usageLogs"

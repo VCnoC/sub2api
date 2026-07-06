@@ -737,9 +737,9 @@ defineExpose({
   --select-col-width: 52px; /* 勾选列宽度：px-6 (24px*2) + checkbox (16px) */
   position: relative;
   overflow-x: auto;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
+  /* overflow-y: auto; */ /* VC酱要求：去掉纵向滚动，让表格自适应高度，随页面整体滚动 */
+  /* flex: 1; */ /* 去掉 flex:1，不再占满父容器剩余空间 */
+  /* min-height: 0; */ /* 去掉 min-height 限制 */
   isolation: isolate;
 }
 
