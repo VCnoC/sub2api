@@ -38,27 +38,35 @@ type TransferBalanceRequest struct {
 	Password string  `json:"password" binding:"required"`
 }
 
+// TeamFundRequest represents deposit/allocate fund request payload
+type TeamFundRequest struct {
+	Amount   float64 `json:"amount" binding:"required,gt=0"`
+	Password string  `json:"password" binding:"required"`
+}
+
 // TeamResponse represents the team response
 type TeamResponse struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	OwnerID    int64  `json:"owner_id"`
-	InviteCode string `json:"invite_code,omitempty"`
-	Status     string `json:"status"`
-	Role       string `json:"role,omitempty"`
-	CreatedAt  int64  `json:"created_at"`
-	UpdatedAt  int64  `json:"updated_at"`
+	ID         int64   `json:"id"`
+	Name       string  `json:"name"`
+	OwnerID    int64   `json:"owner_id"`
+	InviteCode string  `json:"invite_code,omitempty"`
+	Status     string  `json:"status"`
+	Role       string  `json:"role,omitempty"`
+	Balance    float64 `json:"balance"`
+	CreatedAt  int64   `json:"created_at"`
+	UpdatedAt  int64   `json:"updated_at"`
 }
 
 // TeamMemberResponse represents a team member response
+// Balance 为 nil 表示对请求者隐藏（非 owner 查看他人）
 type TeamMemberResponse struct {
-	ID         int64   `json:"id"`
-	Email      string  `json:"email"`
-	Username   string  `json:"username"`
-	Role       string  `json:"role"`
-	Balance    float64 `json:"balance"`
-	TotalUsage float64 `json:"total_usage"`
-	CreatedAt  int64   `json:"created_at"`
+	ID         int64    `json:"id"`
+	Email      string   `json:"email"`
+	Username   string   `json:"username"`
+	Role       string   `json:"role"`
+	Balance    *float64 `json:"balance"`
+	TotalUsage float64  `json:"total_usage"`
+	CreatedAt  int64    `json:"created_at"`
 }
 
 // CreateTeam creates a new team
@@ -291,6 +299,58 @@ func (h *TeamHandler) TransferBalance(c *gin.Context) {
 	response.Success(c, gin.H{"message": "balance transferred successfully"})
 }
 
+// DepositFund deposits the current user's balance into the team fund
+// POST /api/v1/user/team/fund/deposit
+func (h *TeamHandler) DepositFund(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	var req TeamFundRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.teamService.DepositToFund(c.Request.Context(), subject.UserID, req.Amount, req.Password); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "fund deposited successfully"})
+}
+
+// AllocateFund allocates team fund to a member (owner only)
+// POST /api/v1/user/team/members/:id/allocate
+func (h *TeamHandler) AllocateFund(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	memberID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || memberID <= 0 {
+		response.BadRequest(c, "Invalid member ID")
+		return
+	}
+
+	var req TeamFundRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	if err := h.teamService.AllocateFund(c.Request.Context(), subject.UserID, memberID, req.Amount, req.Password); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "fund allocated successfully"})
+}
+
 func teamToResponse(team *service.Team, role string) *TeamResponse {
 	if team == nil {
 		return nil
@@ -302,19 +362,24 @@ func teamToResponse(team *service.Team, role string) *TeamResponse {
 		InviteCode: team.InviteCode,
 		Status:     team.Status,
 		Role:       role,
+		Balance:    team.Balance,
 		CreatedAt:  team.CreatedAt.Unix(),
 		UpdatedAt:  team.UpdatedAt.Unix(),
 	}
 }
 
 func teamMemberToResponse(member *service.TeamMember) TeamMemberResponse {
-	return TeamMemberResponse{
+	resp := TeamMemberResponse{
 		ID:         member.ID,
 		Email:      member.Email,
 		Username:   member.Username,
 		Role:       member.TeamRole,
-		Balance:    member.Balance,
 		TotalUsage: member.TotalUsage,
 		CreatedAt:  member.CreatedAt.Unix(),
 	}
+	if member.BalanceVisible {
+		balance := member.Balance
+		resp.Balance = &balance
+	}
+	return resp
 }

@@ -1668,6 +1668,10 @@ func init() {
 	team.DefaultStatus = teamDescStatus.Default.(string)
 	// team.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	team.StatusValidator = teamDescStatus.Validators[0].(func(string) error)
+	// teamDescBalance is the schema descriptor for balance field.
+	teamDescBalance := teamFields[4].Descriptor()
+	// team.DefaultBalance holds the default value on creation for the balance field.
+	team.DefaultBalance = teamDescBalance.Default.(float64)
 	usagecleanuptaskMixin := schema.UsageCleanupTask{}.Mixin()
 	usagecleanuptaskMixinFields0 := usagecleanuptaskMixin[0].Fields()
 	_ = usagecleanuptaskMixinFields0

@@ -83,6 +83,20 @@ func (_c *TeamCreate) SetNillableStatus(v *string) *TeamCreate {
 	return _c
 }
 
+// SetBalance sets the "balance" field.
+func (_c *TeamCreate) SetBalance(v float64) *TeamCreate {
+	_c.mutation.SetBalance(v)
+	return _c
+}
+
+// SetNillableBalance sets the "balance" field if the given value is not nil.
+func (_c *TeamCreate) SetNillableBalance(v *float64) *TeamCreate {
+	if v != nil {
+		_c.SetBalance(*v)
+	}
+	return _c
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (_c *TeamCreate) SetOwner(v *User) *TeamCreate {
 	return _c.SetOwnerID(v.ID)
@@ -150,6 +164,10 @@ func (_c *TeamCreate) defaults() {
 		v := team.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.Balance(); !ok {
+		v := team.DefaultBalance
+		_c.mutation.SetBalance(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -186,6 +204,9 @@ func (_c *TeamCreate) check() error {
 		if err := team.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Team.status": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.Balance(); !ok {
+		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "Team.balance"`)}
 	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Team.owner"`)}
@@ -236,6 +257,10 @@ func (_c *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(team.FieldStatus, field.TypeString, value)
 		_node.Status = value
+	}
+	if value, ok := _c.mutation.Balance(); ok {
+		_spec.SetField(team.FieldBalance, field.TypeFloat64, value)
+		_node.Balance = value
 	}
 	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -382,6 +407,24 @@ func (u *TeamUpsert) UpdateStatus() *TeamUpsert {
 	return u
 }
 
+// SetBalance sets the "balance" field.
+func (u *TeamUpsert) SetBalance(v float64) *TeamUpsert {
+	u.Set(team.FieldBalance, v)
+	return u
+}
+
+// UpdateBalance sets the "balance" field to the value that was provided on create.
+func (u *TeamUpsert) UpdateBalance() *TeamUpsert {
+	u.SetExcluded(team.FieldBalance)
+	return u
+}
+
+// AddBalance adds v to the "balance" field.
+func (u *TeamUpsert) AddBalance(v float64) *TeamUpsert {
+	u.Add(team.FieldBalance, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -494,6 +537,27 @@ func (u *TeamUpsertOne) SetStatus(v string) *TeamUpsertOne {
 func (u *TeamUpsertOne) UpdateStatus() *TeamUpsertOne {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetBalance sets the "balance" field.
+func (u *TeamUpsertOne) SetBalance(v float64) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetBalance(v)
+	})
+}
+
+// AddBalance adds v to the "balance" field.
+func (u *TeamUpsertOne) AddBalance(v float64) *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.AddBalance(v)
+	})
+}
+
+// UpdateBalance sets the "balance" field to the value that was provided on create.
+func (u *TeamUpsertOne) UpdateBalance() *TeamUpsertOne {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateBalance()
 	})
 }
 
@@ -775,6 +839,27 @@ func (u *TeamUpsertBulk) SetStatus(v string) *TeamUpsertBulk {
 func (u *TeamUpsertBulk) UpdateStatus() *TeamUpsertBulk {
 	return u.Update(func(s *TeamUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetBalance sets the "balance" field.
+func (u *TeamUpsertBulk) SetBalance(v float64) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.SetBalance(v)
+	})
+}
+
+// AddBalance adds v to the "balance" field.
+func (u *TeamUpsertBulk) AddBalance(v float64) *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.AddBalance(v)
+	})
+}
+
+// UpdateBalance sets the "balance" field to the value that was provided on create.
+func (u *TeamUpsertBulk) UpdateBalance() *TeamUpsertBulk {
+	return u.Update(func(s *TeamUpsert) {
+		s.UpdateBalance()
 	})
 }
 

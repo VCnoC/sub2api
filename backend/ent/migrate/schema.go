@@ -1328,6 +1328,7 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 100},
 		{Name: "invite_code", Type: field.TypeString, Unique: true, Size: 32},
 		{Name: "status", Type: field.TypeString, Size: 20, Default: "active"},
+		{Name: "balance", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "owner_id", Type: field.TypeInt64},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
@@ -1338,7 +1339,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "teams_users_owner",
-				Columns:    []*schema.Column{TeamsColumns[6]},
+				Columns:    []*schema.Column{TeamsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -1347,7 +1348,7 @@ var (
 			{
 				Name:    "team_owner_id",
 				Unique:  false,
-				Columns: []*schema.Column{TeamsColumns[6]},
+				Columns: []*schema.Column{TeamsColumns[7]},
 			},
 			{
 				Name:    "team_invite_code",

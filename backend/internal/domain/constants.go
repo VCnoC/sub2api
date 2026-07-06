@@ -49,6 +49,8 @@ const (
 	RedeemTypeInvitation       = "invitation"
 	RedeemTypeTeamTransferOut  = "team_transfer_out"
 	RedeemTypeTeamTransferIn   = "team_transfer_in"
+	RedeemTypeTeamFundDeposit  = "team_fund_deposit"
+	RedeemTypeTeamFundAllocate = "team_fund_allocate"
 )
 
 // PromoCode status constants

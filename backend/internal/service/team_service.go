@@ -21,6 +21,8 @@ type TeamRepository interface {
 	UpdateInviteCode(ctx context.Context, teamID int64, code string) error
 	Update(ctx context.Context, team *Team) error
 	Delete(ctx context.Context, teamID int64) error
+	AddBalance(ctx context.Context, teamID int64, amount float64) error
+	DeductBalance(ctx context.Context, teamID int64, amount float64) error
 }
 
 // TeamService defines the business operations for teams.
@@ -34,6 +36,8 @@ type TeamService interface {
 	ListMembers(ctx context.Context, userID int64, page, pageSize int) ([]TeamMember, int64, error)
 	TransferBalance(ctx context.Context, ownerID, memberID int64, amount float64, password string) error
 	ListMemberUsage(ctx context.Context, requesterID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error)
+	DepositToFund(ctx context.Context, userID int64, amount float64, password string) error
+	AllocateFund(ctx context.Context, ownerID, memberID int64, amount float64, password string) error
 }
 
 // Team represents a team.
@@ -43,6 +47,7 @@ type Team struct {
 	OwnerID    int64
 	InviteCode string
 	Status     string
+	Balance    float64
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
@@ -51,6 +56,8 @@ type Team struct {
 type TeamMember struct {
 	User
 	TotalUsage float64
+	// BalanceVisible 余额是否对请求者可见：owner 可见全员，普通成员仅可见自己
+	BalanceVisible bool
 }
 
 type teamServiceImpl struct {
@@ -232,12 +239,23 @@ func (s *teamServiceImpl) ListMembers(ctx context.Context, userID int64, page, p
 		return nil, 0, err
 	}
 
+	viewerIsOwner := user.TeamRole == TeamRoleOwner
 	members := make([]TeamMember, 0, len(users))
 	for i := range users {
-		members = append(members, TeamMember{
-			User:       users[i],
-			TotalUsage: usageByUser[users[i].ID],
-		})
+		// 成员只能看到自己这一行，owner 可以看全员
+		if !viewerIsOwner && users[i].ID != userID {
+			continue
+		}
+		visible := viewerIsOwner || users[i].ID == userID
+		m := TeamMember{
+			User:           users[i],
+			TotalUsage:     usageByUser[users[i].ID],
+			BalanceVisible: visible,
+		}
+		if !visible {
+			m.Balance = 0
+		}
+		members = append(members, m)
 	}
 	return members, result.Total, nil
 }
@@ -333,8 +351,126 @@ func (s *teamServiceImpl) TransferBalance(ctx context.Context, ownerID, memberID
 	return nil
 }
 
-func (s *teamServiceImpl) aggregateUsageByUserIDs(ctx context.Context, userIDs []int64) (map[int64]float64, error) {
-	result := make(map[int64]float64, len(userIDs))
+// DepositToFund 成员将自己的余额存入团队资金池。
+func (s *teamServiceImpl) DepositToFund(ctx context.Context, userID int64, amount float64, password string) error {
+	if amount <= 0 {
+		return ErrInvalidFundAmount
+	}
+
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user.TeamID == nil || *user.TeamID == 0 {
+		return ErrNotInTeam
+	}
+
+	if !s.authService.CheckPassword(password, user.PasswordHash) {
+		return ErrTeamPasswordIncorrect
+	}
+	if user.Balance < amount {
+		return ErrInsufficientTeamBalance
+	}
+
+	// 先扣个人余额，再入团队资金；入账失败则尽力回滚个人余额
+	if err := s.userRepo.UpdateBalance(ctx, userID, -amount); err != nil {
+		return err
+	}
+	if err := s.teamRepo.AddBalance(ctx, *user.TeamID, amount); err != nil {
+		_ = s.userRepo.UpdateBalance(ctx, userID, amount)
+		return err
+	}
+
+	// 审计记录
+	code, _ := GenerateRedeemCode()
+	now := time.Now()
+	record := &RedeemCode{
+		Code:   code,
+		Type:   RedeemTypeTeamFundDeposit,
+		Value:  -amount,
+		Status: StatusUsed,
+		UsedBy: &userID,
+		Notes:  fmt.Sprintf("deposit to team %d fund", *user.TeamID),
+		UsedAt: &now,
+	}
+	if err := s.redeemCodeRepo.Create(ctx, record); err != nil {
+		logger.LegacyPrintf("service.team", "failed to create team fund deposit record: %v", err)
+	}
+
+	if s.billingCacheService != nil {
+		go func() {
+			cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = s.billingCacheService.InvalidateUserBalance(cacheCtx, userID)
+		}()
+	}
+
+	return nil
+}
+
+// AllocateFund owner 将团队资金分配给团队成员（含 owner 自己）。
+func (s *teamServiceImpl) AllocateFund(ctx context.Context, ownerID, memberID int64, amount float64, password string) error {
+	if amount <= 0 {
+		return ErrInvalidFundAmount
+	}
+
+	owner, err := s.userRepo.GetByID(ctx, ownerID)
+	if err != nil {
+		return err
+	}
+	if owner.TeamRole != TeamRoleOwner || owner.TeamID == nil {
+		return ErrNotTeamOwner
+	}
+
+	member, err := s.userRepo.GetByID(ctx, memberID)
+	if err != nil {
+		return err
+	}
+	if member.TeamID == nil || *member.TeamID != *owner.TeamID {
+		return ErrTeamMemberNotFound
+	}
+
+	if !s.authService.CheckPassword(password, owner.PasswordHash) {
+		return ErrTeamPasswordIncorrect
+	}
+
+	// 条件扣减团队资金（余额不足时原子失败），再给成员入账；失败则尽力回滚团队资金
+	if err := s.teamRepo.DeductBalance(ctx, *owner.TeamID, amount); err != nil {
+		return err
+	}
+	if err := s.userRepo.UpdateBalance(ctx, memberID, amount); err != nil {
+		_ = s.teamRepo.AddBalance(ctx, *owner.TeamID, amount)
+		return err
+	}
+
+	// 审计记录
+	code, _ := GenerateRedeemCode()
+	now := time.Now()
+	record := &RedeemCode{
+		Code:   code,
+		Type:   RedeemTypeTeamFundAllocate,
+		Value:  amount,
+		Status: StatusUsed,
+		UsedBy: &memberID,
+		Notes:  fmt.Sprintf("allocated from team %d fund by owner %d", *owner.TeamID, ownerID),
+		UsedAt: &now,
+	}
+	if err := s.redeemCodeRepo.Create(ctx, record); err != nil {
+		logger.LegacyPrintf("service.team", "failed to create team fund allocate record: %v", err)
+	}
+
+	if s.billingCacheService != nil {
+		go func() {
+			cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = s.billingCacheService.InvalidateUserBalance(cacheCtx, memberID)
+		}()
+	}
+
+	return nil
+}
+
+func (s *teamServiceImpl) aggregateUsageByUserIDs(ctx context.Context, userIDs []int64) (map[int64]float64, error) {	result := make(map[int64]float64, len(userIDs))
 	if len(userIDs) == 0 || s.usageLogRepo == nil {
 		return result, nil
 	}

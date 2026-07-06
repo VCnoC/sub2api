@@ -465,6 +465,8 @@ export interface Team {
   invite_code?: string
   status: string
   role?: 'owner' | 'member' | ''
+  /** 团队资金池余额 */
+  balance: number
   created_at: string
   updated_at: string
 }
@@ -474,7 +476,8 @@ export interface TeamMember {
   email: string
   username: string
   role: 'owner' | 'member' | ''
-  balance: number
+  /** null 表示无权查看（非 owner 查看他人余额） */
+  balance: number | null
   total_usage: number
   created_at: string
 }

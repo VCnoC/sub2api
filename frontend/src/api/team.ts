@@ -85,6 +85,32 @@ export async function transferBalance(
   })
 }
 
+/**
+ * Deposit current user's balance into the team fund
+ * @param amount - Amount to deposit
+ * @param password - Login password for confirmation
+ */
+export async function depositFund(amount: number, password: string): Promise<void> {
+  await apiClient.post('/user/team/fund/deposit', { amount, password })
+}
+
+/**
+ * Allocate team fund to a member (owner only)
+ * @param memberId - Member user ID
+ * @param amount - Amount to allocate
+ * @param password - Owner login password for confirmation
+ */
+export async function allocateFund(
+  memberId: number,
+  amount: number,
+  password: string
+): Promise<void> {
+  await apiClient.post(`/user/team/members/${memberId}/allocate`, {
+    amount,
+    password
+  })
+}
+
 export interface MemberUsageParams extends PaginationParams {
   start_date: string
   end_date: string

@@ -515,4 +515,7 @@ const (
 const (
 	RedeemTypeTeamTransferOut = domain.RedeemTypeTeamTransferOut
 	RedeemTypeTeamTransferIn  = domain.RedeemTypeTeamTransferIn
+
+	RedeemTypeTeamFundDeposit  = domain.RedeemTypeTeamFundDeposit
+	RedeemTypeTeamFundAllocate = domain.RedeemTypeTeamFundAllocate
 )

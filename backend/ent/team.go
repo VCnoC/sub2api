@@ -30,6 +30,8 @@ type Team struct {
 	InviteCode string `json:"invite_code,omitempty"`
 	// Status holds the value of the "status" field.
 	Status string `json:"status,omitempty"`
+	// Balance holds the value of the "balance" field.
+	Balance float64 `json:"balance,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
 	Edges        TeamEdges `json:"edges"`
@@ -72,6 +74,8 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case team.FieldBalance:
+			values[i] = new(sql.NullFloat64)
 		case team.FieldID, team.FieldOwnerID:
 			values[i] = new(sql.NullInt64)
 		case team.FieldName, team.FieldInviteCode, team.FieldStatus:
@@ -134,6 +138,12 @@ func (_m *Team) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = value.String
+			}
+		case team.FieldBalance:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field balance", values[i])
+			} else if value.Valid {
+				_m.Balance = value.Float64
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -198,6 +208,9 @@ func (_m *Team) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)
+	builder.WriteString(", ")
+	builder.WriteString("balance=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Balance))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -13,5 +13,7 @@ var (
 	ErrCannotLeaveAsOwner      = infraerrors.Forbidden("CANNOT_LEAVE_AS_OWNER", "team owner cannot leave the team")
 	ErrTeamMemberNotFound      = infraerrors.NotFound("TEAM_MEMBER_NOT_FOUND", "team member not found")
 	ErrInsufficientTeamBalance = infraerrors.BadRequest("INSUFFICIENT_TEAM_BALANCE", "insufficient balance for transfer")
+	ErrInsufficientTeamFund    = infraerrors.BadRequest("INSUFFICIENT_TEAM_FUND", "insufficient team fund balance")
+	ErrInvalidFundAmount       = infraerrors.BadRequest("INVALID_FUND_AMOUNT", "fund amount must be greater than zero")
 	ErrTeamPasswordIncorrect   = infraerrors.BadRequest("TEAM_PASSWORD_INCORRECT", "incorrect password")
 )

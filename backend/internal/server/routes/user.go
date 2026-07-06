@@ -46,6 +46,8 @@ func RegisterUserRoutes(
 				team.GET("/members/:id/usage", h.Team.GetMemberUsage)
 				team.DELETE("/members/:id", h.Team.RemoveMember)
 				team.POST("/members/:id/transfer", h.Team.TransferBalance)
+				team.POST("/fund/deposit", h.Team.DepositFund)
+				team.POST("/members/:id/allocate", h.Team.AllocateFund)
 			}
 
 			// 通知邮箱管理

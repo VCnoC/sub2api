@@ -1540,6 +1540,7 @@ export default {
       loadError: '加载成员列表失败',
       empty: '暂无团队成员',
       searchPlaceholder: '搜索成员邮箱或用户名',
+      balanceHidden: '保密',
       remove: '移除',
       removeConfirm: '确定要移除成员 {email} 吗？',
       removeSuccess: '成员已移除',
@@ -1565,6 +1566,26 @@ export default {
         cost: '费用',
         duration: '耗时'
       }
+    },
+    fund: {
+      balance: '团队资金',
+      depositButton: '存入资金',
+      depositTitle: '存入团队资金',
+      depositHint: '从你的个人余额存入团队资金池',
+      allocateButton: '分配',
+      allocateTitle: '分配团队资金',
+      allocateTo: '从团队资金分配给 {email}',
+      amount: '金额',
+      amountPlaceholder: '请输入金额',
+      password: '登录密码确认',
+      passwordPlaceholder: '输入你的登录密码',
+      confirm: '确认',
+      submitting: '处理中...',
+      depositSuccess: '已存入团队资金',
+      allocateSuccess: '分配成功',
+      error: '操作失败',
+      amountRequired: '请输入有效金额',
+      passwordRequired: '请输入登录密码'
     },
     transfer: {
       button: '划拨余额',

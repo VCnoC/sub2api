@@ -83,6 +83,15 @@
             </div>
 
             <div class="flex items-center gap-3">
+              <!-- 团队资金池：全员可见，独立于 owner 个人余额 -->
+              <div class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-900/20">
+                <span class="text-xs text-gray-500 dark:text-dark-400">{{ t('team.fund.balance') }}</span>
+                <span class="font-mono text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ formatCurrency(team.balance) }}</span>
+              </div>
+              <button class="btn btn-primary" @click="openDeposit">
+                <Icon name="creditCard" size="sm" />
+                <span>{{ t('team.fund.depositButton') }}</span>
+              </button>
               <template v-if="isOwner">
                 <div class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900">
                   <code class="text-sm font-mono font-semibold text-gray-900 dark:text-white">{{ team.invite_code }}</code>
@@ -166,19 +175,27 @@
                         </div>
                       </div>
                     </td>
-                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-900 dark:text-white">{{ formatCurrency(member.balance) }}</td>
+                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-900 dark:text-white">
+                      {{ member.balance === null ? t('team.members.balanceHidden') : formatCurrency(member.balance) }}
+                    </td>
                     <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-700 dark:text-gray-300">{{ formatCurrency(member.total_usage) }}</td>
                     <td v-if="isOwner" class="px-3 py-3 text-right">
-                      <div v-if="member.id !== currentUserId" class="flex justify-end gap-2" @click.stop>
-                        <button class="btn btn-primary btn-sm" @click="openTransfer(member)">
+                      <div class="flex justify-end gap-2" @click.stop>
+                        <button class="btn btn-secondary btn-sm" @click="openAllocate(member)">
                           <Icon name="creditCard" size="sm" />
-                          <span>{{ t('team.transfer.button') }}</span>
+                          <span>{{ t('team.fund.allocateButton') }}</span>
                         </button>
-                        <button class="btn btn-danger-outline btn-sm" :disabled="removingId === member.id" @click="handleRemove(member)">
-                          <Icon v-if="removingId === member.id" name="refresh" size="sm" class="animate-spin" />
-                          <Icon v-else name="trash" size="sm" />
-                          <span>{{ t('team.members.remove') }}</span>
-                        </button>
+                        <template v-if="member.id !== currentUserId">
+                          <button class="btn btn-primary btn-sm" @click="openTransfer(member)">
+                            <Icon name="creditCard" size="sm" />
+                            <span>{{ t('team.transfer.button') }}</span>
+                          </button>
+                          <button class="btn btn-danger-outline btn-sm" :disabled="removingId === member.id" @click="handleRemove(member)">
+                            <Icon v-if="removingId === member.id" name="refresh" size="sm" class="animate-spin" />
+                            <Icon v-else name="trash" size="sm" />
+                            <span>{{ t('team.members.remove') }}</span>
+                          </button>
+                        </template>
                       </div>
                     </td>
                   </tr>
@@ -364,6 +381,60 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Team fund modal (deposit / allocate) -->
+    <Teleport to="body">
+      <div
+        v-if="fundModalOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        @click.self="closeFund"
+      >
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-dark-800">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {{ fundMode === 'deposit' ? t('team.fund.depositTitle') : t('team.fund.allocateTitle') }}
+          </h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
+            <template v-if="fundMode === 'allocate' && fundTarget">
+              {{ t('team.fund.allocateTo', { email: fundTarget.email }) }}
+            </template>
+            <template v-else>
+              {{ t('team.fund.depositHint') }}
+            </template>
+          </p>
+
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.fund.amount') }}</label>
+              <input
+                v-model.number="fundAmount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                class="input w-full"
+                :placeholder="t('team.fund.amountPlaceholder')"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.fund.password') }}</label>
+              <input
+                v-model="fundPassword"
+                type="password"
+                class="input w-full"
+                :placeholder="t('team.fund.passwordPlaceholder')"
+              />
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="closeFund">{{ t('common.cancel') }}</button>
+            <button class="btn btn-primary" :disabled="fundSubmitting" @click="handleFundSubmit">
+              <Icon v-if="fundSubmitting" name="refresh" size="sm" class="animate-spin" />
+              <span>{{ fundSubmitting ? t('team.fund.submitting') : t('team.fund.confirm') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </AppLayout>
 </template>
 
@@ -389,7 +460,9 @@ import {
   refreshInviteCode,
   removeMember,
   transferBalance,
-  getMemberUsage
+  getMemberUsage,
+  depositFund,
+  allocateFund
 } from '@/api/team'
 import type { Team, TeamMember, UsageLog } from '@/types'
 
@@ -416,6 +489,14 @@ const transferTarget = ref<TeamMember | null>(null)
 const transferAmount = ref<number>(0)
 const transferPassword = ref('')
 const transferring = ref(false)
+
+// 团队资金弹窗状态（deposit=成员存入 / allocate=owner 分配）
+const fundModalOpen = ref(false)
+const fundMode = ref<'deposit' | 'allocate'>('deposit')
+const fundTarget = ref<TeamMember | null>(null)
+const fundAmount = ref<number>(0)
+const fundPassword = ref('')
+const fundSubmitting = ref(false)
 
 const expandedMemberId = ref<number | null>(null)
 const memberUsage = ref<Record<number, UsageLog[]>>({})
@@ -686,5 +767,57 @@ async function handleTransfer() {
 async function copyCode() {
   if (!team.value?.invite_code) return
   await copyToClipboard(team.value.invite_code, t('team.inviteCode.copied'))
+}
+
+function openDeposit() {
+  fundMode.value = 'deposit'
+  fundTarget.value = null
+  fundAmount.value = 0
+  fundPassword.value = ''
+  fundModalOpen.value = true
+}
+
+function openAllocate(member: TeamMember) {
+  fundMode.value = 'allocate'
+  fundTarget.value = member
+  fundAmount.value = 0
+  fundPassword.value = ''
+  fundModalOpen.value = true
+}
+
+function closeFund() {
+  fundModalOpen.value = false
+  fundTarget.value = null
+  fundAmount.value = 0
+  fundPassword.value = ''
+}
+
+async function handleFundSubmit() {
+  if (!fundAmount.value || fundAmount.value <= 0) {
+    appStore.showError(t('team.fund.amountRequired'))
+    return
+  }
+  if (!fundPassword.value) {
+    appStore.showError(t('team.fund.passwordRequired'))
+    return
+  }
+  fundSubmitting.value = true
+  try {
+    if (fundMode.value === 'deposit') {
+      await depositFund(fundAmount.value, fundPassword.value)
+      appStore.showSuccess(t('team.fund.depositSuccess'))
+    } else {
+      if (!fundTarget.value) return
+      await allocateFund(fundTarget.value.id, fundAmount.value, fundPassword.value)
+      appStore.showSuccess(t('team.fund.allocateSuccess'))
+    }
+    closeFund()
+    // 刷新团队资金余额 + 成员列表
+    await loadTeam()
+  } catch (err) {
+    appStore.showError(extractApiErrorMessage(err, t('team.fund.error')))
+  } finally {
+    fundSubmitting.value = false
+  }
 }
 </script>

@@ -97,6 +97,35 @@ func (r *teamRepository) Delete(ctx context.Context, teamID int64) error {
 	return nil
 }
 
+func (r *teamRepository) AddBalance(ctx context.Context, teamID int64, amount float64) error {
+	n, err := r.client.Team.Update().
+		Where(dbteam.IDEQ(teamID)).
+		AddBalance(amount).
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrTeamNotFound, nil)
+	}
+	if n == 0 {
+		return service.ErrTeamNotFound
+	}
+	return nil
+}
+
+// DeductBalance 条件扣减团队资金：balance >= amount 时原子扣减，否则返回资金不足。
+func (r *teamRepository) DeductBalance(ctx context.Context, teamID int64, amount float64) error {
+	n, err := r.client.Team.Update().
+		Where(dbteam.IDEQ(teamID), dbteam.BalanceGTE(amount)).
+		AddBalance(-amount).
+		Save(ctx)
+	if err != nil {
+		return translatePersistenceError(err, service.ErrTeamNotFound, nil)
+	}
+	if n == 0 {
+		return service.ErrInsufficientTeamFund
+	}
+	return nil
+}
+
 func teamEntityToService(t *dbent.Team) *service.Team {
 	if t == nil {
 		return nil
@@ -107,6 +136,7 @@ func teamEntityToService(t *dbent.Team) *service.Team {
 		OwnerID:    t.OwnerID,
 		InviteCode: t.InviteCode,
 		Status:     t.Status,
+		Balance:    t.Balance,
 		CreatedAt:  t.CreatedAt,
 		UpdatedAt:  t.UpdatedAt,
 	}

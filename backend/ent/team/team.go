@@ -26,6 +26,8 @@ const (
 	FieldInviteCode = "invite_code"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldBalance holds the string denoting the balance field in the database.
+	FieldBalance = "balance"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldOwnerID,
 	FieldInviteCode,
 	FieldStatus,
+	FieldBalance,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -84,6 +87,8 @@ var (
 	DefaultStatus string
 	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	StatusValidator func(string) error
+	// DefaultBalance holds the default value on creation for the "balance" field.
+	DefaultBalance float64
 )
 
 // OrderOption defines the ordering options for the Team queries.
@@ -122,6 +127,11 @@ func ByInviteCode(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByBalance orders the results by the balance field.
+func ByBalance(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBalance, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

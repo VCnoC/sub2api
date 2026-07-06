@@ -34737,6 +34737,8 @@ type TeamMutation struct {
 	name           *string
 	invite_code    *string
 	status         *string
+	balance        *float64
+	addbalance     *float64
 	clearedFields  map[string]struct{}
 	owner          *int64
 	clearedowner   bool
@@ -35062,6 +35064,62 @@ func (m *TeamMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetBalance sets the "balance" field.
+func (m *TeamMutation) SetBalance(f float64) {
+	m.balance = &f
+	m.addbalance = nil
+}
+
+// Balance returns the value of the "balance" field in the mutation.
+func (m *TeamMutation) Balance() (r float64, exists bool) {
+	v := m.balance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBalance returns the old "balance" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldBalance(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBalance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBalance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBalance: %w", err)
+	}
+	return oldValue.Balance, nil
+}
+
+// AddBalance adds f to the "balance" field.
+func (m *TeamMutation) AddBalance(f float64) {
+	if m.addbalance != nil {
+		*m.addbalance += f
+	} else {
+		m.addbalance = &f
+	}
+}
+
+// AddedBalance returns the value that was added to the "balance" field in this mutation.
+func (m *TeamMutation) AddedBalance() (r float64, exists bool) {
+	v := m.addbalance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetBalance resets all changes to the "balance" field.
+func (m *TeamMutation) ResetBalance() {
+	m.balance = nil
+	m.addbalance = nil
+}
+
 // ClearOwner clears the "owner" edge to the User entity.
 func (m *TeamMutation) ClearOwner() {
 	m.clearedowner = true
@@ -35177,7 +35235,7 @@ func (m *TeamMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, team.FieldCreatedAt)
 	}
@@ -35195,6 +35253,9 @@ func (m *TeamMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, team.FieldStatus)
+	}
+	if m.balance != nil {
+		fields = append(fields, team.FieldBalance)
 	}
 	return fields
 }
@@ -35216,6 +35277,8 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 		return m.InviteCode()
 	case team.FieldStatus:
 		return m.Status()
+	case team.FieldBalance:
+		return m.Balance()
 	}
 	return nil, false
 }
@@ -35237,6 +35300,8 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldInviteCode(ctx)
 	case team.FieldStatus:
 		return m.OldStatus(ctx)
+	case team.FieldBalance:
+		return m.OldBalance(ctx)
 	}
 	return nil, fmt.Errorf("unknown Team field %s", name)
 }
@@ -35288,6 +35353,13 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case team.FieldBalance:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBalance(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Team field %s", name)
 }
@@ -35296,6 +35368,9 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TeamMutation) AddedFields() []string {
 	var fields []string
+	if m.addbalance != nil {
+		fields = append(fields, team.FieldBalance)
+	}
 	return fields
 }
 
@@ -35304,6 +35379,8 @@ func (m *TeamMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case team.FieldBalance:
+		return m.AddedBalance()
 	}
 	return nil, false
 }
@@ -35313,6 +35390,13 @@ func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TeamMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case team.FieldBalance:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBalance(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Team numeric field %s", name)
 }
@@ -35357,6 +35441,9 @@ func (m *TeamMutation) ResetField(name string) error {
 		return nil
 	case team.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case team.FieldBalance:
+		m.ResetBalance()
 		return nil
 	}
 	return fmt.Errorf("unknown Team field %s", name)

@@ -1537,6 +1537,7 @@ export default {
       loadError: 'Failed to load members',
       empty: 'No team members yet',
       searchPlaceholder: 'Search member email or username',
+      balanceHidden: 'Hidden',
       remove: 'Remove',
       removeConfirm: 'Are you sure you want to remove member {email}?',
       removeSuccess: 'Member removed',
@@ -1562,6 +1563,26 @@ export default {
         cost: 'Cost',
         duration: 'Duration'
       }
+    },
+    fund: {
+      balance: 'Team Fund',
+      depositButton: 'Deposit',
+      depositTitle: 'Deposit to Team Fund',
+      depositHint: 'Move funds from your personal balance into the team fund',
+      allocateButton: 'Allocate',
+      allocateTitle: 'Allocate Team Fund',
+      allocateTo: 'Allocate team fund to {email}',
+      amount: 'Amount',
+      amountPlaceholder: 'Enter amount',
+      password: 'Confirm Login Password',
+      passwordPlaceholder: 'Enter your login password',
+      confirm: 'Confirm',
+      submitting: 'Processing...',
+      depositSuccess: 'Deposited to team fund',
+      allocateSuccess: 'Fund allocated successfully',
+      error: 'Operation failed',
+      amountRequired: 'Please enter a valid amount',
+      passwordRequired: 'Please enter your login password'
     },
     transfer: {
       button: 'Transfer Balance',

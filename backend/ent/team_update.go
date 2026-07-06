@@ -91,6 +91,27 @@ func (_u *TeamUpdate) SetNillableStatus(v *string) *TeamUpdate {
 	return _u
 }
 
+// SetBalance sets the "balance" field.
+func (_u *TeamUpdate) SetBalance(v float64) *TeamUpdate {
+	_u.mutation.ResetBalance()
+	_u.mutation.SetBalance(v)
+	return _u
+}
+
+// SetNillableBalance sets the "balance" field if the given value is not nil.
+func (_u *TeamUpdate) SetNillableBalance(v *float64) *TeamUpdate {
+	if v != nil {
+		_u.SetBalance(*v)
+	}
+	return _u
+}
+
+// AddBalance adds value to the "balance" field.
+func (_u *TeamUpdate) AddBalance(v float64) *TeamUpdate {
+	_u.mutation.AddBalance(v)
+	return _u
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (_u *TeamUpdate) SetOwner(v *User) *TeamUpdate {
 	return _u.SetOwnerID(v.ID)
@@ -225,6 +246,12 @@ func (_u *TeamUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(team.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Balance(); ok {
+		_spec.SetField(team.FieldBalance, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedBalance(); ok {
+		_spec.AddField(team.FieldBalance, field.TypeFloat64, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -379,6 +406,27 @@ func (_u *TeamUpdateOne) SetNillableStatus(v *string) *TeamUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetBalance sets the "balance" field.
+func (_u *TeamUpdateOne) SetBalance(v float64) *TeamUpdateOne {
+	_u.mutation.ResetBalance()
+	_u.mutation.SetBalance(v)
+	return _u
+}
+
+// SetNillableBalance sets the "balance" field if the given value is not nil.
+func (_u *TeamUpdateOne) SetNillableBalance(v *float64) *TeamUpdateOne {
+	if v != nil {
+		_u.SetBalance(*v)
+	}
+	return _u
+}
+
+// AddBalance adds value to the "balance" field.
+func (_u *TeamUpdateOne) AddBalance(v float64) *TeamUpdateOne {
+	_u.mutation.AddBalance(v)
 	return _u
 }
 
@@ -546,6 +594,12 @@ func (_u *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(team.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Balance(); ok {
+		_spec.SetField(team.FieldBalance, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedBalance(); ok {
+		_spec.AddField(team.FieldBalance, field.TypeFloat64, value)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
