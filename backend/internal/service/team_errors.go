@@ -8,6 +8,7 @@ var (
 	ErrInviteCodeInvalid       = infraerrors.BadRequest("INVITE_CODE_INVALID", "invalid invite code")
 	ErrInviteCodeExists        = infraerrors.Conflict("INVITE_CODE_EXISTS", "invite code already exists")
 	ErrNotTeamOwner            = infraerrors.Forbidden("NOT_TEAM_OWNER", "only team owner can perform this action")
+	ErrNotInTeam               = infraerrors.Forbidden("NOT_IN_TEAM", "user is not in a team")
 	ErrCannotRemoveOwner       = infraerrors.Forbidden("CANNOT_REMOVE_OWNER", "cannot remove team owner")
 	ErrCannotLeaveAsOwner      = infraerrors.Forbidden("CANNOT_LEAVE_AS_OWNER", "team owner cannot leave the team")
 	ErrTeamMemberNotFound      = infraerrors.NotFound("TEAM_MEMBER_NOT_FOUND", "team member not found")

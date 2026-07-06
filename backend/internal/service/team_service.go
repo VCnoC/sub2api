@@ -31,9 +31,9 @@ type TeamService interface {
 	JoinTeamByCode(ctx context.Context, userID int64, code string) error
 	LeaveTeam(ctx context.Context, userID int64) error
 	RemoveMember(ctx context.Context, ownerID, memberID int64) error
-	ListMembers(ctx context.Context, ownerID int64, page, pageSize int) ([]TeamMember, int64, error)
+	ListMembers(ctx context.Context, userID int64, page, pageSize int) ([]TeamMember, int64, error)
 	TransferBalance(ctx context.Context, ownerID, memberID int64, amount float64, password string) error
-	ListMemberUsage(ctx context.Context, ownerID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error)
+	ListMemberUsage(ctx context.Context, requesterID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error)
 }
 
 // Team represents a team.
@@ -204,17 +204,19 @@ func (s *teamServiceImpl) RemoveMember(ctx context.Context, ownerID, memberID in
 	return s.userRepo.ClearTeamMembership(ctx, memberID)
 }
 
-func (s *teamServiceImpl) ListMembers(ctx context.Context, ownerID int64, page, pageSize int) ([]TeamMember, int64, error) {
-	owner, err := s.userRepo.GetByID(ctx, ownerID)
+func (s *teamServiceImpl) ListMembers(ctx context.Context, userID int64, page, pageSize int) ([]TeamMember, int64, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, 0, err
 	}
-	if owner.TeamRole != TeamRoleOwner || owner.TeamID == nil {
-		return nil, 0, ErrNotTeamOwner
+	// Any team member can view the member list; owner-only actions
+	// (remove/transfer/usage) keep their own checks.
+	if user.TeamID == nil || *user.TeamID == 0 {
+		return nil, 0, ErrNotInTeam
 	}
 
 	params := pagination.PaginationParams{Page: page, PageSize: pageSize, SortBy: "created_at", SortOrder: "desc"}
-	users, result, err := s.userRepo.ListByTeamID(ctx, *owner.TeamID, params)
+	users, result, err := s.userRepo.ListByTeamID(ctx, *user.TeamID, params)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -352,12 +354,16 @@ func (s *teamServiceImpl) aggregateUsageByUserIDs(ctx context.Context, userIDs [
 	return result, nil
 }
 
-func (s *teamServiceImpl) ListMemberUsage(ctx context.Context, ownerID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error) {
-	owner, err := s.userRepo.GetByID(ctx, ownerID)
+func (s *teamServiceImpl) ListMemberUsage(ctx context.Context, requesterID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error) {
+	requester, err := s.userRepo.GetByID(ctx, requesterID)
 	if err != nil {
 		return nil, nil, err
 	}
-	if owner.TeamRole != TeamRoleOwner || owner.TeamID == nil {
+	if requester.TeamID == nil || *requester.TeamID == 0 {
+		return nil, nil, ErrNotInTeam
+	}
+	// Owner can view any member's usage; regular members can only view their own.
+	if requester.TeamRole != TeamRoleOwner && requesterID != memberID {
 		return nil, nil, ErrNotTeamOwner
 	}
 
@@ -365,7 +371,7 @@ func (s *teamServiceImpl) ListMemberUsage(ctx context.Context, ownerID, memberID
 	if err != nil {
 		return nil, nil, err
 	}
-	if member.TeamID == nil || *member.TeamID != *owner.TeamID {
+	if member.TeamID == nil || *member.TeamID != *requester.TeamID {
 		return nil, nil, ErrTeamMemberNotFound
 	}
 

@@ -186,7 +186,10 @@
                   <!-- Expanded usage panel -->
                   <tr v-if="expandedMemberId === member.id" class="border-b border-gray-100 dark:border-dark-800">
                     <td :colspan="isOwner ? 4 : 3" class="bg-gray-50/50 px-3 py-4 dark:bg-dark-900/30">
-                      <div class="space-y-4">
+                      <div v-if="!canViewUsage(member)" class="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
+                        {{ t('team.members.usage.noPermission') }}
+                      </div>
+                      <div v-else class="space-y-4">
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
                           <div class="flex flex-wrap gap-2">
                             <button
@@ -507,12 +510,17 @@ async function loadMembers() {
   }
 }
 
+// Owner can view any member's usage; regular members can only view their own.
+function canViewUsage(member: TeamMember): boolean {
+  return isOwner.value || member.id === currentUserId.value
+}
+
 function toggleMember(member: TeamMember) {
   if (expandedMemberId.value === member.id) {
     expandedMemberId.value = null
   } else {
     expandedMemberId.value = member.id
-    if (!memberUsage.value[member.id]) {
+    if (canViewUsage(member) && !memberUsage.value[member.id]) {
       loadMemberUsage(member)
     }
   }

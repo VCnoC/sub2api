@@ -1557,6 +1557,7 @@ export default {
         query: '查询消费记录',
         empty: '该时间段内没有消费记录',
         loadError: '加载消费记录失败',
+        noPermission: '无权限查看',
         time: '时间',
         model: '模型',
         type: '类型',

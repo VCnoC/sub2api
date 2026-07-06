@@ -1554,6 +1554,7 @@ export default {
         query: 'Query Usage',
         empty: 'No usage records in this period',
         loadError: 'Failed to load usage records',
+        noPermission: 'No permission to view',
         time: 'Time',
         model: 'Model',
         type: 'Type',
