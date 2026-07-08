@@ -178,7 +178,9 @@
                     <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-900 dark:text-white">
                       {{ member.balance === null ? t('team.members.balanceHidden') : formatCurrency(member.balance) }}
                     </td>
-                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-700 dark:text-gray-300">{{ formatCurrency(member.total_usage) }}</td>
+                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-700 dark:text-gray-300">
+                      {{ member.total_usage === null ? t('team.members.usageHidden') : formatCurrency(member.total_usage) }}
+                    </td>
                     <td v-if="isOwner" class="px-3 py-3 text-right">
                       <div class="flex justify-end gap-2" @click.stop>
                         <button class="btn btn-secondary btn-sm" @click="openAllocate(member)">

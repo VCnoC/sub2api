@@ -1538,6 +1538,7 @@ export default {
       empty: 'No team members yet',
       searchPlaceholder: 'Search member email or username',
       balanceHidden: 'Hidden',
+      usageHidden: 'Hidden',
       remove: 'Remove',
       removeConfirm: 'Are you sure you want to remove member {email}?',
       removeSuccess: 'Member removed',

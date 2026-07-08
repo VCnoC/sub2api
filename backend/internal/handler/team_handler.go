@@ -58,14 +58,14 @@ type TeamResponse struct {
 }
 
 // TeamMemberResponse represents a team member response
-// Balance 为 nil 表示对请求者隐藏（非 owner 查看他人）
+// Balance / TotalUsage 为 nil 表示对请求者隐藏（非 owner 查看他人）
 type TeamMemberResponse struct {
 	ID         int64    `json:"id"`
 	Email      string   `json:"email"`
 	Username   string   `json:"username"`
 	Role       string   `json:"role"`
 	Balance    *float64 `json:"balance"`
-	TotalUsage float64  `json:"total_usage"`
+	TotalUsage *float64 `json:"total_usage"`
 	CreatedAt  int64    `json:"created_at"`
 }
 
@@ -374,12 +374,16 @@ func teamMemberToResponse(member *service.TeamMember) TeamMemberResponse {
 		Email:      member.Email,
 		Username:   member.Username,
 		Role:       member.TeamRole,
-		TotalUsage: member.TotalUsage,
+		TotalUsage: nil,
 		CreatedAt:  member.CreatedAt.Unix(),
 	}
 	if member.BalanceVisible {
 		balance := member.Balance
 		resp.Balance = &balance
+	}
+	if member.UsageVisible {
+		usage := member.TotalUsage
+		resp.TotalUsage = &usage
 	}
 	return resp
 }

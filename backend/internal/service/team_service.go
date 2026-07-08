@@ -58,6 +58,8 @@ type TeamMember struct {
 	TotalUsage float64
 	// BalanceVisible 余额是否对请求者可见：owner 可见全员，普通成员仅可见自己
 	BalanceVisible bool
+	// UsageVisible 累计用量是否对请求者可见：owner 可见全员，普通成员仅可见自己
+	UsageVisible bool
 }
 
 type teamServiceImpl struct {
@@ -242,18 +244,17 @@ func (s *teamServiceImpl) ListMembers(ctx context.Context, userID int64, page, p
 	viewerIsOwner := user.TeamRole == TeamRoleOwner
 	members := make([]TeamMember, 0, len(users))
 	for i := range users {
-		// 成员只能看到自己这一行，owner 可以看全员
-		if !viewerIsOwner && users[i].ID != userID {
-			continue
-		}
+		// 全员可见成员列表；余额/累计用量仅 owner 或自己可见
 		visible := viewerIsOwner || users[i].ID == userID
 		m := TeamMember{
 			User:           users[i],
 			TotalUsage:     usageByUser[users[i].ID],
 			BalanceVisible: visible,
+			UsageVisible:   visible,
 		}
 		if !visible {
 			m.Balance = 0
+			m.TotalUsage = 0
 		}
 		members = append(members, m)
 	}

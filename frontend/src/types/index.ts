@@ -478,7 +478,8 @@ export interface TeamMember {
   role: 'owner' | 'member' | ''
   /** null 表示无权查看（非 owner 查看他人余额） */
   balance: number | null
-  total_usage: number
+  /** null 表示无权查看（非 owner 查看他人累计用量） */
+  total_usage: number | null
   created_at: string
 }
 

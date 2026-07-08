@@ -1541,6 +1541,7 @@ export default {
       empty: '暂无团队成员',
       searchPlaceholder: '搜索成员邮箱或用户名',
       balanceHidden: '保密',
+      usageHidden: '保密',
       remove: '移除',
       removeConfirm: '确定要移除成员 {email} 吗？',
       removeSuccess: '成员已移除',
