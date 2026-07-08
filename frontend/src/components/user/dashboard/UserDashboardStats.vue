@@ -2,16 +2,16 @@
   <!-- Row 1: Core Stats -->
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
     <!-- Balance -->
-    <div v-if="!isSimple" class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-colors duration-300 group-hover:bg-emerald-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div v-if="!isSimple" class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 0ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl transition-colors duration-500 group-hover:bg-emerald-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.balance') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">$<AnimatedNumber :value="balance" :format="formatBalance" /></p>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('common.available') }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.balance') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400 drop-shadow-sm">$<AnimatedNumber :value="balance" :format="formatBalance" /></p>
+          <p class="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.available') }}</p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-110">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
           </svg>
         </div>
@@ -19,53 +19,53 @@
     </div>
 
     <!-- API Keys -->
-    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl transition-colors duration-300 group-hover:bg-teal-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 50ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-teal-500/10 blur-3xl transition-colors duration-500 group-hover:bg-teal-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.apiKeys') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.total_api_keys || 0" /></p>
-          <p class="mt-1 text-xs text-emerald-600 dark:text-emerald-400">{{ stats?.active_api_keys || 0 }} {{ t('common.active') }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.apiKeys') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-gray-900 dark:text-white drop-shadow-sm"><AnimatedNumber :value="stats?.total_api_keys || 0" /></p>
+          <p class="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">{{ stats?.active_api_keys || 0 }} {{ t('common.active') }}</p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-600 text-white shadow-lg shadow-teal-500/25 transition-transform duration-300 group-hover:scale-110">
-          <Icon name="key" size="md" :stroke-width="2" />
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-600 text-white shadow-lg shadow-teal-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <Icon name="key" size="lg" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Today Requests -->
-    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 100ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-sky-500/10 blur-2xl transition-colors duration-300 group-hover:bg-sky-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 100ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl transition-colors duration-500 group-hover:bg-sky-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayRequests') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.today_requests || 0" /></p>
-          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.total_requests || 0) }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.todayRequests') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-gray-900 dark:text-white drop-shadow-sm"><AnimatedNumber :value="stats?.today_requests || 0" /></p>
+          <p class="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.total_requests || 0) }}</p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-300 group-hover:scale-110">
-          <Icon name="chart" size="md" :stroke-width="2" />
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-lg shadow-sky-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <Icon name="chart" size="lg" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Today Cost -->
-    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl transition-colors duration-300 group-hover:bg-violet-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div v-if="!isSimple" class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 150ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl transition-colors duration-500 group-hover:bg-violet-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white">
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-gray-900 dark:text-white drop-shadow-sm">
             <span class="text-violet-600 dark:text-violet-400" :title="t('dashboard.actual')">$<AnimatedNumber :value="stats?.today_actual_cost || 0" :format="formatCost" /></span>
             <span class="text-sm font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.today_cost || 0) }}</span>
           </p>
-          <p class="mt-1 text-xs tabular-nums">
+          <p class="mt-1 text-xs font-medium tabular-nums">
             <span class="text-gray-500 dark:text-gray-400">{{ t('common.total') }}: </span>
             <span class="text-violet-600 dark:text-violet-400" :title="t('dashboard.actual')">${{ formatCost(stats?.total_actual_cost || 0) }}</span>
             <span class="text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.total_cost || 0) }}</span>
           </p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg shadow-violet-500/25 transition-transform duration-300 group-hover:scale-110">
-          <Icon name="dollar" size="md" :stroke-width="2" />
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-lg shadow-violet-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <Icon name="dollar" size="lg" :stroke-width="2" />
         </div>
       </div>
     </div>
@@ -74,31 +74,31 @@
   <!-- Row 2: Token Stats -->
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
     <!-- Today Tokens -->
-    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 200ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-colors duration-300 group-hover:bg-amber-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 200ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl transition-colors duration-500 group-hover:bg-amber-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayTokens') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.today_tokens || 0" :format="formatTokens" /></p>
-          <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.todayTokens') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-gray-900 dark:text-white drop-shadow-sm"><AnimatedNumber :value="stats?.today_tokens || 0" :format="formatTokens" /></p>
+          <p class="mt-1 text-xs font-medium tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }}</p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/25 transition-transform duration-300 group-hover:scale-110">
-          <Icon name="cube" size="md" :stroke-width="2" />
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <Icon name="cube" size="lg" :stroke-width="2" />
         </div>
       </div>
     </div>
 
     <!-- Total Tokens -->
-    <div class="group card card-hover relative overflow-hidden p-5 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 250ms">
-      <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-indigo-500/10 blur-2xl transition-colors duration-300 group-hover:bg-indigo-500/20"></div>
-      <div class="relative flex items-start justify-between gap-3">
+    <div class="group spotlight-card relative overflow-hidden rounded-3xl bg-white/60 dark:bg-dark-900/60 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.16)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_16px_48px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_16px_48px_rgba(20,184,166,0.12)] p-6 animate-slide-up [animation-fill-mode:backwards]" style="animation-delay: 250ms">
+      <div class="pointer-events-none absolute -right-6 -top-6 h-32 w-32 rounded-full bg-indigo-500/10 blur-3xl transition-colors duration-500 group-hover:bg-indigo-500/20 mix-blend-multiply dark:mix-blend-screen"></div>
+      <div class="relative flex items-start justify-between gap-3 z-10">
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.totalTokens') }}</p>
-          <p class="mt-1.5 text-xl font-bold tabular-nums text-gray-900 dark:text-white"><AnimatedNumber :value="stats?.total_tokens || 0" :format="formatTokens" /></p>
-          <p class="mt-1 text-xs tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('dashboard.totalTokens') }}</p>
+          <p class="mt-2 text-3xl font-extrabold tabular-nums text-gray-900 dark:text-white drop-shadow-sm"><AnimatedNumber :value="stats?.total_tokens || 0" :format="formatTokens" /></p>
+          <p class="mt-1 text-xs font-medium tabular-nums text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }}</p>
         </div>
-        <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-400 to-blue-600 text-white shadow-lg shadow-indigo-500/25 transition-transform duration-300 group-hover:scale-110">
-          <Icon name="database" size="md" :stroke-width="2" />
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-400 to-blue-600 text-white shadow-lg shadow-indigo-500/25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+          <Icon name="database" size="lg" :stroke-width="2" />
         </div>
       </div>
     </div>

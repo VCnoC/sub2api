@@ -2,19 +2,19 @@
   <AppLayout>
     <div class="space-y-6">
       <!-- Welcome hero banner -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-teal-500 to-cyan-500 p-6 text-white shadow-glow animate-fade-in dark:from-primary-700 dark:via-teal-600 dark:to-cyan-700">
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-600 via-teal-500 to-cyan-500 p-8 text-white shadow-[0_8px_32px_rgba(20,184,166,0.25)] animate-fade-in dark:from-primary-700 dark:via-teal-600 dark:to-cyan-700">
         <!-- 装饰光斑 -->
-        <div class="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/15 blur-2xl"></div>
-        <div class="pointer-events-none absolute -bottom-20 left-1/3 h-40 w-40 rounded-full bg-cyan-300/25 blur-3xl"></div>
-        <div class="pointer-events-none absolute -left-8 -bottom-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-        <div class="relative flex flex-wrap items-end justify-between gap-4">
+        <div class="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-white/20 blur-3xl mix-blend-overlay"></div>
+        <div class="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-cyan-300/30 blur-3xl mix-blend-overlay"></div>
+        <div class="pointer-events-none absolute -left-8 -bottom-10 h-40 w-40 rounded-full bg-white/15 blur-2xl mix-blend-overlay"></div>
+        <div class="relative flex flex-wrap items-end justify-between gap-4 z-10">
           <div>
-            <h1 class="text-2xl font-bold drop-shadow-sm">
+            <h1 class="text-3xl font-extrabold tracking-tight drop-shadow-sm">
               {{ greeting }}<template v-if="displayName">，{{ displayName }}</template> 👋
             </h1>
-            <p class="mt-1 text-sm text-white/85">{{ todayLabel }} · {{ t('dashboard.welcomeMessage') }}</p>
+            <p class="mt-2 text-sm font-medium text-white/90">{{ todayLabel }} · {{ t('dashboard.welcomeMessage') }}</p>
           </div>
-          <button @click="refreshAll" :disabled="loading || loadingCharts" class="btn btn-sm border border-white/25 bg-white/15 text-white backdrop-blur-sm hover:bg-white/25" :title="t('common.refresh')">
+          <button @click="refreshAll" :disabled="loading || loadingCharts" class="btn btn-sm rounded-full border border-white/30 bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-md transition-all hover:bg-white/30 hover:scale-105 active:scale-95" :title="t('common.refresh')">
             <Icon name="refresh" size="sm" :class="loadingCharts ? 'animate-spin' : ''" />
             {{ t('common.refresh') }}
           </button>
