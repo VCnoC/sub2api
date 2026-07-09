@@ -1793,7 +1793,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_teams_members",
-				Columns:    []*schema.Column{UsersColumns[25]},
+				Columns:    []*schema.Column{UsersColumns[26]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -1812,7 +1812,7 @@ var (
 			{
 				Name:    "user_team_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[25]},
+				Columns: []*schema.Column{UsersColumns[26]},
 			},
 		},
 	}

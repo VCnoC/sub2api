@@ -2200,7 +2200,7 @@ func init() {
 	// user.DefaultRpmLimit holds the default value on creation for the rpm_limit field.
 	user.DefaultRpmLimit = userDescRpmLimit.Default.(int)
 	// userDescTeamRole is the schema descriptor for team_role field.
-	userDescTeamRole := userFields[21].Descriptor()
+	userDescTeamRole := userFields[22].Descriptor()
 	// user.DefaultTeamRole holds the default value on creation for the team_role field.
 	user.DefaultTeamRole = userDescTeamRole.Default.(string)
 	// user.TeamRoleValidator is a validator for the "team_role" field. It is called by the builders before save.
