@@ -61,6 +61,7 @@ type Handlers struct {
 	AvailableChannel       *AvailableChannelHandler
 	Playground             *PlaygroundHandler
 	PlaygroundConversation *PlaygroundConversationHandler
+	BatchImage             *BatchImageHandler
 }
 
 // BuildInfo contains build-time information

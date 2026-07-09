@@ -37,6 +37,21 @@
         />
       </button>
 
+      <button v-if="canUseBatchImage" @click="router.push('/batch-image')" class="group flex w-full items-center gap-4 rounded-2xl bg-white/40 p-4 text-left transition-all duration-300 hover:bg-white/80 hover:shadow-sm hover:-translate-y-0.5 dark:bg-dark-800/40 dark:hover:bg-dark-800/80 border border-transparent hover:border-white/60 dark:hover:border-white/10">
+        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-md shadow-sky-500/20 transition-transform group-hover:scale-110 group-hover:-rotate-3">
+          <Icon name="sparkles" size="lg" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold text-gray-900 dark:text-white">{{ t('dashboard.batchImageAgent') }}</p>
+          <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{{ t('dashboard.batchImageAgentDesc') }}</p>
+        </div>
+        <Icon
+          name="chevronRight"
+          size="md"
+          class="text-gray-400 transition-colors group-hover:text-sky-500 dark:text-dark-500"
+        />
+      </button>
+
       <button @click="router.push('/redeem')" class="group flex w-full items-center gap-4 rounded-2xl bg-white/40 p-4 text-left transition-all duration-300 hover:bg-white/80 hover:shadow-sm hover:-translate-y-0.5 dark:bg-dark-800/40 dark:hover:bg-dark-800/80 border border-transparent hover:border-white/60 dark:hover:border-white/10">
         <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md shadow-amber-500/20 transition-transform group-hover:scale-110 group-hover:rotate-3">
           <Icon name="gift" size="lg" />
@@ -56,9 +71,16 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
+import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
 const router = useRouter()
 const { t } = useI18n()
+const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
+
+onMounted(() => {
+  void refreshBatchImageAccess()
+})
 </script>
