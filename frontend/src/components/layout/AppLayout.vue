@@ -32,7 +32,7 @@
             : 'flex-1 p-4 md:p-6 lg:p-8'
         "
       >
-        <div class="mx-auto w-full max-w-7xl h-full flex flex-col">
+        <div class="w-full h-full flex flex-col">
           <slot />
         </div>
       </main>

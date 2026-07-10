@@ -3,6 +3,7 @@
     <!-- Admin: Full version badge with dropdown -->
     <template v-if="isAdmin">
       <button
+        ref="buttonRef"
         @click="toggleDropdown"
         class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors"
         :class="[
@@ -27,11 +28,13 @@
       </button>
 
       <!-- Dropdown -->
+      <Teleport to="body">
       <transition name="dropdown">
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="absolute left-0 z-50 mt-2 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
+          :style="dropdownStyle"
+          class="fixed z-[9999] overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
           :class="rollbackPanelOpen && isReleaseBuild ? 'w-80' : 'w-64'"
         >
           <!-- Header with refresh button -->
@@ -628,6 +631,7 @@
           </div>
         </div>
       </transition>
+      </Teleport>
     </template>
 
     <!-- Non-admin: Simple static version text -->
@@ -638,7 +642,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
@@ -668,6 +672,8 @@ const isAdmin = computed(() => authStore.isAdmin)
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+const buttonRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref<Record<string, string>>({})
 
 // Use store's cached version state
 const loading = computed(() => appStore.versionLoading)
@@ -731,8 +737,21 @@ const activeManualCommand = computed(() =>
 // Only show update check for release builds (binary/docker deployment)
 const isReleaseBuild = computed(() => buildType.value === 'release')
 
+function updateDropdownPosition() {
+  const el = buttonRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  dropdownStyle.value = {
+    top: `${rect.bottom + 8}px`,
+    left: `${rect.left}px`
+  }
+}
+
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value
+  if (dropdownOpen.value) {
+    void nextTick(updateDropdownPosition)
+  }
 }
 
 function closeDropdown() {
@@ -915,11 +934,19 @@ onMounted(() => {
     appStore.fetchVersion(false)
   }
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('resize', repositionIfOpen)
+  window.addEventListener('scroll', repositionIfOpen, true)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('resize', repositionIfOpen)
+  window.removeEventListener('scroll', repositionIfOpen, true)
 })
+
+function repositionIfOpen() {
+  if (dropdownOpen.value) updateDropdownPosition()
+}
 </script>
 
 <style scoped>
