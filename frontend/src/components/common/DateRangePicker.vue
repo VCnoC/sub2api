@@ -20,8 +20,9 @@
       </span>
     </button>
 
+    <Teleport to="body">
     <Transition name="date-picker-dropdown">
-      <div v-if="isOpen" class="date-picker-dropdown">
+      <div v-if="isOpen" ref="dropdownRef" :style="dropdownStyle" class="date-picker-dropdown">
         <!-- Quick presets -->
         <div class="date-picker-presets">
           <button
@@ -72,11 +73,12 @@
         </div>
       </div>
     </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 
@@ -104,6 +106,8 @@ const { t, locale } = useI18n()
 
 const isOpen = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
+const dropdownRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref<Record<string, string>>({})
 const localStartDate = ref(props.startDate)
 const localEndDate = ref(props.endDate)
 const activePreset = ref<string | null>('last24Hours')
@@ -263,8 +267,31 @@ const onDateChange = () => {
   }
 }
 
+const updateDropdownPosition = () => {
+  const el = containerRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const width = 320
+  // 右对齐触发器,防止贴右边溢出
+  let left = rect.left
+  if (left + width > window.innerWidth - 8) {
+    left = Math.max(8, rect.right - width)
+  }
+  dropdownStyle.value = {
+    top: `${rect.bottom + 8}px`,
+    left: `${left}px`
+  }
+}
+
+const repositionIfOpen = () => {
+  if (isOpen.value) updateDropdownPosition()
+}
+
 const toggle = () => {
   isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    void nextTick(updateDropdownPosition)
+  }
 }
 
 const apply = () => {
@@ -279,7 +306,10 @@ const apply = () => {
 }
 
 const handleClickOutside = (event: MouseEvent) => {
-  if (containerRef.value && !containerRef.value.contains(event.target as Node)) {
+  const target = event.target as Node
+  const inContainer = containerRef.value?.contains(target)
+  const inDropdown = dropdownRef.value?.contains(target)
+  if (!inContainer && !inDropdown) {
     isOpen.value = false
   }
 }
@@ -310,6 +340,8 @@ watch(
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('keydown', handleEscape)
+  window.addEventListener('resize', repositionIfOpen)
+  window.addEventListener('scroll', repositionIfOpen, true)
   // Initialize active preset detection
   onDateChange()
 })
@@ -317,6 +349,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleEscape)
+  window.removeEventListener('resize', repositionIfOpen)
+  window.removeEventListener('scroll', repositionIfOpen, true)
 })
 </script>
 
@@ -350,7 +384,7 @@ onUnmounted(() => {
 }
 
 .date-picker-dropdown {
-  @apply absolute left-0 z-[100] mt-2;
+  @apply fixed z-[9999];
   @apply bg-white dark:bg-dark-800;
   @apply rounded-xl;
   @apply border border-gray-200 dark:border-dark-700;
