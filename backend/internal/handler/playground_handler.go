@@ -119,6 +119,8 @@ func defaultModelsForPlatform(platform string) []string {
 			ids = append(ids, m.ID)
 		}
 		return ids
+	case service.PlatformVideo:
+		return []string{service.DefaultVideoPlatformModel, "grok-imagine-video-1.5-preview"}
 	default:
 		// Anthropic / Antigravity 等回退到 claude 默认列表
 		ids := make([]string, 0, len(claude.DefaultModels))

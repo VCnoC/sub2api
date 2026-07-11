@@ -36,7 +36,7 @@ const ContextKeyPlaygroundRequest ContextKey = "playground_request"
 //  3. 校验 group 属于用户可用分组（防越权访问）
 //  4. 加载完整 User + Group 对象
 //  5. 加载订阅（若 group 是订阅类型；订阅缺失则拒绝）
-//  6. 非订阅模式时执行余额检查
+//  6. 非订阅创建请求执行余额检查；只读状态查询不重复检查余额
 //  7. 构造虚拟 APIKey（含 User/Group 预加载）注入 ctx
 //  8. 标记 ctx 为 playground 来源便于审计
 //
@@ -45,7 +45,7 @@ const ContextKeyPlaygroundRequest ContextKey = "playground_request"
 //   - group 越权 → 403 permission_error
 //   - 用户不存在/未激活 → 401 authentication_error
 //   - 订阅类型 group 无活跃订阅 → 403 permission_error
-//   - 非订阅类型且余额 ≤0 → 403 insufficient_quota
+//   - 非订阅创建请求且余额 ≤0 → 403 insufficient_quota
 func NewPlaygroundContextMiddleware(
 	apiKeyService *service.APIKeyService,
 	userService *service.UserService,
@@ -58,30 +58,30 @@ func NewPlaygroundContextMiddleware(
 			return
 		}
 
-		// 读取请求体（一次性）
-		body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
-		if err != nil {
-			playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Failed to read request body")
-			return
-		}
-		if len(body) == 0 {
-			playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Request body is empty")
-			return
-		}
-
-		// 重置 body 流，确保下游 handler 通过 ReadRequestBodyWithPrealloc 仍可读取完整请求
-		c.Request.Body = io.NopCloser(bytes.NewReader(body))
-		c.Request.ContentLength = int64(len(body))
-
-		// 反序列化关键字段（其余 OpenAI 字段忽略，原始 body 透传给下游）
 		var req playgroundRequestEnvelope
-		if err := json.Unmarshal(body, &req); err != nil {
-			playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Failed to parse request body")
-			return
+		if c.Request.Method == http.MethodGet {
+			req.Group = c.Query("group")
+		} else {
+			body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
+			if err != nil {
+				playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Failed to read request body")
+				return
+			}
+			if len(body) == 0 {
+				playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Request body is empty")
+				return
+			}
+			// 下游媒体/聊天处理器仍需读取完整请求体。
+			c.Request.Body = io.NopCloser(bytes.NewReader(body))
+			c.Request.ContentLength = int64(len(body))
+			if err := json.Unmarshal(body, &req); err != nil {
+				playgroundError(c, http.StatusBadRequest, "invalid_request_error", "Failed to parse request body")
+				return
+			}
 		}
 		req.Model = strings.TrimSpace(req.Model)
 		req.Group = strings.TrimSpace(req.Group)
-		if req.Model == "" {
+		if c.Request.Method != http.MethodGet && req.Model == "" {
 			playgroundError(c, http.StatusBadRequest, "invalid_request_error", "model is required")
 			return
 		}
@@ -133,8 +133,8 @@ func NewPlaygroundContextMiddleware(
 			subscription = sub
 		}
 
-		// 非订阅模式：基础余额检查（订阅模式由下游 ChatCompletions 中的窗口校验接管）
-		if subscription == nil && user.Balance <= 0 {
+		// 状态查询属于已扣费任务，即使本次扣费后余额归零也必须允许查询终态。
+		if c.Request.Method != http.MethodGet && subscription == nil && user.Balance <= 0 {
 			playgroundError(c, http.StatusForbidden, "insufficient_quota", "Insufficient account balance")
 			return
 		}

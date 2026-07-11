@@ -19,3 +19,9 @@
 - `GET /v1/video/query?id=:video_id`：按查询参数查询任务。
 
 所有视频路由沿用客户端 API Key 鉴权，并使用所选视频账号的 `Authorization: Bearer <api_key>` 透明转发。创建类请求支持 `seconds`/`duration` 和 `size`/`resolution` 计费字段；查询类请求不重复计费。
+
+## 对话广场视频 API
+- `POST /api/v1/playground/videos`：JWT 用户创建视频任务，请求为 `{ model, group, prompt, input_reference?: { image_url } }`。
+- `GET /api/v1/playground/videos/:request_id?group=:group`：JWT 用户查询已创建任务，响应透传 `status`、`progress`、`video_url` 和上游错误。
+
+两个入口只允许选择 `platform=video` 的用户可用分组，不向浏览器暴露上游 API Key。基础模型可文生视频；`grok-imagine-video-1.5-preview` 在对话广场必须携带一张 `input_reference.image_url` 参考图。创建请求执行余额资格检查并计费，状态查询不重复计费，且在余额被本任务扣至零后仍可读取终态。

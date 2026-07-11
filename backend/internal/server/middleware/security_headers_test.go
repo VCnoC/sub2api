@@ -131,6 +131,18 @@ func TestSecurityHeaders(t *testing.T) {
 		assert.Contains(t, csp, CloudflareInsightsDomain)
 	})
 
+	t.Run("default_csp_allows_https_media", func(t *testing.T) {
+		middleware := SecurityHeaders(config.CSPConfig{Enabled: true, Policy: config.DefaultCSPPolicy}, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+
+		middleware(c)
+
+		assert.Contains(t, w.Header().Get("Content-Security-Policy"), "media-src 'self' blob: https:")
+	})
+
 	t.Run("api_route_skips_csp_nonce_generation", func(t *testing.T) {
 		cfg := config.CSPConfig{
 			Enabled: true,

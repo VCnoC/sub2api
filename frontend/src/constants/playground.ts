@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   AVAILABLE_MODELS: '/playground/models',
   AVAILABLE_GROUPS: '/groups/available',
   CONVERSATIONS: '/playground/conversations',
+  VIDEOS: '/playground/videos',
 } as const
 
 // 会话标题自动取首条用户消息的前 N 个字符

@@ -150,6 +150,31 @@
           </div>
         </div>
 
+        <div v-if="currentVideo" class="message-video">
+          <div class="message-video-status">
+            <span>{{ videoStatusText }}</span>
+            <span class="message-video-percent">{{ videoProgress }}%</span>
+          </div>
+          <div
+            class="message-video-progress"
+            role="progressbar"
+            :aria-label="videoStatusText"
+            :aria-valuenow="videoProgress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <span :style="{ width: `${videoProgress}%` }" />
+          </div>
+          <video
+            v-if="currentVideo.status === 'completed' && safeVideoUrl"
+            class="message-video-player"
+            :src="safeVideoUrl"
+            controls
+            playsinline
+            preload="metadata"
+          />
+        </div>
+
         <!-- 错误消息 -->
         <div v-if="message.status === 'error'" class="message-error">
           <svg
@@ -335,6 +360,7 @@ import DOMPurify from 'dompurify'
 import { useClipboard } from '@/composables/useClipboard'
 import { useAppStore } from '@/stores/app'
 import type { Message } from '@/types/playground'
+import { sanitizeUrl } from '@/utils/url'
 
 interface Props {
   message: Message
@@ -408,17 +434,30 @@ markedInstance.use({
 
 const versionCount = computed(() => props.message.versions?.length ?? 1)
 
-const currentContent = computed(
+const currentVersion = computed(
   () =>
-    props.message.versions?.[Math.min(props.activeVersionIndex, versionCount.value - 1)]
-      ?.content || ''
+    props.message.versions?.[
+      Math.min(props.activeVersionIndex, versionCount.value - 1)
+    ]
 )
+
+const currentContent = computed(() => currentVersion.value?.content || '')
+const currentVideo = computed(() => currentVersion.value?.video)
+const videoProgress = computed(() =>
+  Math.round(Math.min(100, Math.max(0, currentVideo.value?.progress ?? 0)))
+)
+const safeVideoUrl = computed(() => sanitizeUrl(currentVideo.value?.url || ''))
+const videoStatusText = computed(() => {
+  const status = currentVideo.value?.status || 'creating'
+  return t(`playground.video.status.${status}`)
+})
 
 const attachments = computed(() => props.message.attachments || [])
 
 const hasReasoning = computed(
   () =>
     props.message.from === 'assistant' &&
+    !currentVideo.value &&
     !!props.message.reasoning?.content
 )
 
@@ -427,6 +466,7 @@ const reasoningOpen = ref(true)
 const showLoader = computed(
   () =>
     props.message.from === 'assistant' &&
+    !currentVideo.value &&
     !props.message.isReasoningStreaming &&
     (props.message.status === 'loading' ||
       (props.message.status === 'streaming' && !currentContent.value))
@@ -495,11 +535,12 @@ function onSaveAndSubmit() {
 // ==================== 复制 ====================
 
 async function onCopy() {
-  if (!currentContent.value) {
+  const text = currentContent.value || safeVideoUrl.value
+  if (!text) {
     appStore.showInfo(t('playground.message.noContent'))
     return
   }
-  await copyToClipboard(currentContent.value, t('playground.message.copied'))
+  await copyToClipboard(text, t('playground.message.copied'))
 }
 </script>
 
@@ -616,6 +657,33 @@ async function onCopy() {
 .message-error {
   @apply flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700;
   @apply dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-300;
+}
+
+.message-video {
+  @apply w-full max-w-3xl space-y-2;
+}
+
+.message-video-status {
+  @apply flex min-h-6 items-center justify-between gap-3 text-sm font-medium text-gray-700;
+  @apply dark:text-gray-200;
+}
+
+.message-video-percent {
+  @apply min-w-12 text-right font-mono tabular-nums text-gray-500;
+  @apply dark:text-gray-400;
+}
+
+.message-video-progress {
+  @apply h-2 w-full overflow-hidden rounded-full bg-gray-200;
+  @apply dark:bg-dark-600;
+}
+
+.message-video-progress > span {
+  @apply block h-full rounded-full bg-primary-600 transition-[width] duration-300;
+}
+
+.message-video-player {
+  @apply aspect-video w-full rounded-lg bg-black object-contain;
 }
 
 /* Version switcher */

@@ -18,6 +18,8 @@ import type {
   CreateConversationRequest,
   PlaygroundAvailableModel,
   PlaygroundAvailableModelsResponse,
+  PlaygroundVideoRequest,
+  PlaygroundVideoResponse,
   UpdateConversationRequest,
 } from '@/types/playground'
 
@@ -44,6 +46,38 @@ export async function sendChatCompletionNonStream(
     API_ENDPOINTS.CHAT_COMPLETIONS,
     payload
   )
+  return data
+}
+
+export async function createPlaygroundVideo(
+  payload: PlaygroundVideoRequest,
+  signal?: AbortSignal
+): Promise<PlaygroundVideoResponse> {
+  const { data } = await apiClient.post<PlaygroundVideoResponse>(
+    API_ENDPOINTS.VIDEOS,
+    payload,
+    { signal, timeout: 600000 }
+  )
+  return data
+}
+
+export async function getPlaygroundVideo(
+  requestId: string,
+  group: string,
+  signal?: AbortSignal
+): Promise<PlaygroundVideoResponse> {
+  const response = await apiClient.get<PlaygroundVideoResponse>(
+    `${API_ENDPOINTS.VIDEOS}/${encodeURIComponent(requestId)}`,
+    { params: { group }, signal, validateStatus: () => true }
+  )
+  const data = response.data
+  if (response.status >= 400 && data.status?.toLowerCase() !== 'failed') {
+    throw {
+      status: response.status,
+      error: data.error,
+      message: data.message || `HTTP ${response.status}`,
+    }
+  }
   return data
 }
 
@@ -95,6 +129,8 @@ export async function deleteConversation(id: number): Promise<void> {
 export const playgroundAPI = {
   getAvailableModels,
   sendChatCompletionNonStream,
+  createPlaygroundVideo,
+  getPlaygroundVideo,
   listConversations,
   getConversation,
   createConversation,

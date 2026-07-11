@@ -13,7 +13,7 @@
  * 适配 Vue 3 Composition API + 原生 fetch（替代 sse.js）
  */
 
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { API_ENDPOINTS } from '@/constants/playground'
 import type { ChatCompletionRequest, ChatCompletionChunk } from '@/types/playground'
 
@@ -44,10 +44,13 @@ function getAuthToken(): string {
 // 流式状态与中断控制器提升到模块作用域：SSE 消费循环不依赖组件生命周期，
 // 路由切换（组件卸载）后生成继续在后台进行，重新进入页面时无缝衔接。
 const isStreaming = ref(false)
+export const playgroundVideoGenerating = ref(false)
 let abortController: AbortController | null = null
 
 /** 全局只读流式状态（供布局层显示「生成中」指示用） */
-export const playgroundStreaming = isStreaming
+export const playgroundStreaming = computed(
+  () => isStreaming.value || playgroundVideoGenerating.value
+)
 
 export function useStreamChat() {
 

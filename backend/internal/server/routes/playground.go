@@ -14,6 +14,8 @@ import (
 // 路由分组：/api/v1/playground
 //   - GET  /models                           列出指定分组下用户可用的模型
 //   - POST /chat/completions                 OpenAI Chat Completions 兼容转发
+//   - POST /videos                          创建视频任务
+//   - GET  /videos/:request_id              查询视频任务
 //   - GET  /conversations                    列出当前用户的所有会话摘要
 //   - POST /conversations                    新建会话
 //   - GET  /conversations/:id               获取会话详情（含 messages）
@@ -64,6 +66,20 @@ func RegisterPlaygroundRoutes(
 				}
 				h.Gateway.ChatCompletions(c)
 			})
+			chat.POST("/videos", func(c *gin.Context) {
+				if getGroupPlatform(c) != service.PlatformVideo {
+					playgroundVideoNotSupported(c)
+					return
+				}
+				h.OpenAIGateway.GrokVideoGeneration(c)
+			})
+			chat.GET("/videos/:request_id", func(c *gin.Context) {
+				if getGroupPlatform(c) != service.PlatformVideo {
+					playgroundVideoNotSupported(c)
+					return
+				}
+				h.OpenAIGateway.GrokVideoStatus(c)
+			})
 		}
 
 		// 会话 CRUD：使用独立子组并放宽 body 上限至 52MB（messages 上限 50MB + 包装开销）
@@ -78,4 +94,14 @@ func RegisterPlaygroundRoutes(
 			conversations.DELETE("/:id", h.PlaygroundConversation.DeleteConversation)
 		}
 	}
+}
+
+func playgroundVideoNotSupported(c *gin.Context) {
+	service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
+	c.JSON(404, gin.H{
+		"error": gin.H{
+			"type":    "not_found_error",
+			"message": "Videos API is only supported for video groups",
+		},
+	})
 }

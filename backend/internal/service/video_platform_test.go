@@ -24,6 +24,12 @@ func TestParseVideoPlatformRequestSupportsSecondsAndSize(t *testing.T) {
 	require.Equal(t, VideoBillingResolution480P, info.Resolution)
 }
 
+func TestParseVideoPlatformRequestSupportsInputReference(t *testing.T) {
+	info := ParseGrokMediaRequest("application/json", []byte(`{"input_reference":{"image_url":"data:image/png;base64,AA=="}}`))
+
+	require.Equal(t, []string{"data:image/png;base64,AA=="}, info.InputImageURLs)
+}
+
 func TestForwardVideoPlatformPreservesCPARequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	body := []byte(`{"prompt":"waves","size":"1280x720"}`)

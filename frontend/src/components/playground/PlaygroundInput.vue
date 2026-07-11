@@ -59,7 +59,7 @@
       <textarea
         ref="textareaRef"
         v-model="text"
-        :placeholder="placeholder || t('playground.input.placeholder')"
+        :placeholder="placeholder || t(videoMode ? 'playground.video.placeholder' : 'playground.input.placeholder')"
         :disabled="disabled"
         rows="1"
         class="playground-textarea"
@@ -95,6 +95,7 @@
           </button>
 
           <button
+            v-if="!videoMode"
             type="button"
             class="playground-tool-btn"
             :disabled="disabled || isProcessingAttachment"
@@ -180,7 +181,7 @@
           type="button"
           class="playground-btn playground-btn-send"
           :disabled="disabled || isProcessingAttachment || (!text.trim() && attachments.length === 0) || !modelValue"
-          :title="t('playground.input.send')"
+          :title="t(videoMode ? 'playground.video.generate' : 'playground.input.send')"
           @click="submit"
         >
           <svg
@@ -196,7 +197,9 @@
             <path d="M22 2L11 13" />
             <path d="M22 2l-7 20-4-9-9-4 20-7z" />
           </svg>
-          <span class="hidden sm:inline">{{ t('playground.input.send') }}</span>
+          <span class="hidden sm:inline">
+            {{ t(videoMode ? 'playground.video.generate' : 'playground.input.send') }}
+          </span>
         </button>
       </div>
     </div>
@@ -207,7 +210,7 @@
         {{ t('playground.input.processingAttachment') }}
       </template>
       <template v-else>
-        {{ t('playground.input.hint') }}
+        {{ videoMode ? t('playground.video.hint') : t('playground.input.hint') }}
         <span class="playground-hint-legal">· {{ t('common.legalDisclaimer') }}</span>
       </template>
     </p>
@@ -216,11 +219,12 @@
       ref="imageInputRef"
       type="file"
       accept="image/png,image/jpeg,image/webp,image/gif"
-      multiple
+      :multiple="!videoMode"
       class="hidden"
       @change="onImageInput"
     />
     <input
+      v-if="!videoMode"
       ref="documentInputRef"
       type="file"
       :accept="DOCUMENT_ACCEPT"
@@ -287,6 +291,7 @@ interface Props {
   groups: GroupOption[]
   disabled?: boolean
   isGenerating?: boolean
+  videoMode?: boolean
   placeholder?: string
 }
 
@@ -294,6 +299,7 @@ const props = withDefaults(defineProps<Props>(), {
   isModelLoading: false,
   disabled: false,
   isGenerating: false,
+  videoMode: false,
   placeholder: '',
 })
 
@@ -409,6 +415,13 @@ async function appendImageFile(file: File) {
     return
   }
   if (!canAppend(file, MAX_IMAGE_BYTES)) return
+  if (
+    props.videoMode &&
+    attachments.value.some((item) => item.kind === 'image')
+  ) {
+    appStore.showError(t('playground.video.oneImageOnly'))
+    return
+  }
   const dataUrl = await readAsDataURL(file)
   attachments.value = [
     ...attachments.value,
@@ -425,6 +438,10 @@ async function appendImageFile(file: File) {
 
 /** 追加单个文档附件（文件选择与粘贴共用） */
 async function appendDocumentFile(file: File) {
+  if (props.videoMode) {
+    appStore.showError(t('playground.video.documentsUnsupported'))
+    return
+  }
   if (!isSupportedDocument(file)) {
     appStore.showError(t('playground.input.unsupportedDocument', { name: file.name }))
     return
@@ -496,6 +513,14 @@ async function handlePaste(e: ClipboardEvent) {
 }
 
 watch(() => text.value, () => nextTick(autoResize))
+watch(
+  () => props.videoMode,
+  (enabled) => {
+    if (enabled) {
+      attachments.value = attachments.value.filter((item) => item.kind === 'image').slice(0, 1)
+    }
+  }
+)
 </script>
 
 <style scoped>

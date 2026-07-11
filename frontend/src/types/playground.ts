@@ -15,6 +15,23 @@ export interface MessageVersion {
   id: string
   /** 该版本对应的文本内容 */
   content: string
+  /** 视频状态跟随版本保存，避免重新生成后结果串位。 */
+  video?: PlaygroundVideoState
+}
+
+export type PlaygroundVideoStatus =
+  | 'creating'
+  | 'queued'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
+  | 'stopped'
+
+export interface PlaygroundVideoState {
+  id?: string
+  status: PlaygroundVideoStatus
+  progress: number
+  url?: string
 }
 
 export interface MessageReasoning {
@@ -131,6 +148,26 @@ export interface ChatCompletionResponse {
     completion_tokens: number
     total_tokens: number
   }
+}
+
+export interface PlaygroundVideoRequest {
+  model: string
+  group: string
+  prompt: string
+  input_reference?: { image_url: string }
+}
+
+export interface PlaygroundVideoResponse {
+  id: string
+  model?: string
+  object?: string
+  progress?: number | string
+  seconds?: number | string
+  status: string
+  video_url?: string | null
+  video?: { url?: string }
+  error?: string | { message?: string; error?: string; code?: string }
+  message?: string
 }
 
 // ==================== 配置 ====================

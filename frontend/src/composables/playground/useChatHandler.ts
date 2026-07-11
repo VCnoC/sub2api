@@ -13,7 +13,7 @@
  * 适配 Vue 3 Composition API
  */
 
-import type { Ref } from 'vue'
+import { computed, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   MESSAGE_ROLES,
@@ -29,8 +29,21 @@ import type {
   MessageRole,
   ContentPart,
   PlaygroundAttachment,
+  PlaygroundVideoResponse,
+  PlaygroundVideoState,
 } from '@/types/playground'
-import { useStreamChat, type StreamUpdateType } from './useStreamChat'
+import {
+  playgroundVideoGenerating,
+  useStreamChat,
+  type StreamUpdateType,
+} from './useStreamChat'
+import {
+  createPlaygroundVideo,
+  getPlaygroundVideo,
+} from '@/api/playground'
+
+const VIDEO_POLL_INTERVAL_MS = 2000
+const VIDEO_POLL_TIMEOUT_MS = 10 * 60 * 1000
 
 interface UseChatHandlerOptions {
   config: Ref<PlaygroundConfig>
@@ -63,6 +76,10 @@ export function useChatHandler(opts: UseChatHandlerOptions) {
 function createChatHandler(opts: UseChatHandlerOptions) {
   const { t, te } = useI18n()
   const { send, stop, isStreaming } = useStreamChat()
+  const isGenerating = computed(
+    () => isStreaming.value || playgroundVideoGenerating.value
+  )
+  let videoAbortController: AbortController | null = null
 
   // ==================== Payload 构造 ====================
 
@@ -116,11 +133,12 @@ function createChatHandler(opts: UseChatHandlerOptions) {
       'presence_penalty',
       'seed',
     ] as const
+    const payloadParams = payload as unknown as Record<string, unknown>
     for (const key of paramKeys) {
       if (enabled[key]) {
         const v = cfg[key]
         if (v !== undefined && v !== null) {
-          ;(payload as unknown as Record<string, unknown>)[key] = v
+          payloadParams[key] = v
         }
       }
     }
@@ -225,6 +243,25 @@ function createChatHandler(opts: UseChatHandlerOptions) {
     })
   }
 
+  function patchVideoMessage(
+    video: PlaygroundVideoState,
+    status: Message['status'],
+    content?: string
+  ) {
+    patchLastAssistant((msg) => ({
+      ...msg,
+      status,
+      versions: [
+        {
+          ...(msg.versions?.[0] || { id: 'v0', content: '' }),
+          ...(content === undefined ? {} : { content }),
+          video,
+        },
+        ...(msg.versions?.slice(1) || []),
+      ],
+    }))
+  }
+
   // ==================== 业务 API ====================
 
   /** 发送一轮对话；调用前应已把 user 消息 + loading assistant 占位添加到 messages */
@@ -282,14 +319,116 @@ function createChatHandler(opts: UseChatHandlerOptions) {
     })
   }
 
+  async function sendVideo(messagesIncludingPlaceholder: Message[]) {
+    const { model, group } = opts.config.value
+    const userMessage = messagesIncludingPlaceholder
+      .slice(0, -1)
+      .reverse()
+      .find((message) => message.from === MESSAGE_ROLES.USER)
+    const image = userMessage?.attachments?.find(
+      (item) => item.kind === 'image' && item.dataUrl
+    )
+    const controller = new AbortController()
+    videoAbortController = controller
+    playgroundVideoGenerating.value = true
+    patchVideoMessage({ status: 'creating', progress: 0 }, MESSAGE_STATUS.LOADING)
+
+    try {
+      const created = await createPlaygroundVideo(
+        {
+          model,
+          group,
+          prompt: userMessage?.versions?.[0]?.content?.trim() || '',
+          ...(image?.dataUrl
+            ? { input_reference: { image_url: image.dataUrl } }
+            : {}),
+        },
+        controller.signal
+      )
+      if (!created.id?.trim()) {
+        throw new Error(t('playground.video.missingTaskId'))
+      }
+
+      let progress = 0
+      const deadline = Date.now() + VIDEO_POLL_TIMEOUT_MS
+      let response = created
+      while (!controller.signal.aborted) {
+        const video = normalizePlaygroundVideoResponse(response)
+        progress = Math.max(progress, video.progress)
+        video.progress = progress
+
+        if (video.status === 'completed') {
+          if (!video.url) throw new Error(t('playground.video.missingUrl'))
+          patchVideoMessage(video, MESSAGE_STATUS.COMPLETE)
+          return
+        }
+        if (video.status === 'failed') {
+          patchVideoMessage(
+            video,
+            MESSAGE_STATUS.ERROR,
+            videoResponseError(response) || t('playground.video.failed')
+          )
+          return
+        }
+
+        patchVideoMessage(video, MESSAGE_STATUS.STREAMING)
+        if (Date.now() >= deadline) {
+          patchVideoMessage(
+            { ...video, status: 'stopped' },
+            MESSAGE_STATUS.ERROR,
+            t('playground.video.timeout')
+          )
+          return
+        }
+        await waitForVideoPoll(controller.signal)
+        if (controller.signal.aborted) return
+        response = await getPlaygroundVideo(
+          created.id,
+          group,
+          controller.signal
+        )
+      }
+    } catch (error) {
+      if (controller.signal.aborted) return
+      patchVideoMessage(
+        { status: 'failed', progress: currentVideoProgress(opts.messages.value) },
+        MESSAGE_STATUS.ERROR,
+        requestErrorMessage(error)
+      )
+    } finally {
+      if (videoAbortController === controller) {
+        videoAbortController = null
+        playgroundVideoGenerating.value = false
+      }
+      opts.onSettled?.()
+    }
+  }
+
   /** 中断当前生成（仅停流，最后一条消息标记为完成） */
   function stopGeneration() {
     stop()
+    const stoppedVideo = videoAbortController !== null
+    videoAbortController?.abort()
+    videoAbortController = null
+    playgroundVideoGenerating.value = false
     patchLastAssistant((m) => {
       if (
         m.status === MESSAGE_STATUS.STREAMING ||
         m.status === MESSAGE_STATUS.LOADING
       ) {
+        if (stoppedVideo && m.versions?.[0]?.video) {
+          return {
+            ...finalizeMessage(m),
+            versions: [
+              {
+                ...m.versions[0],
+                content: t('playground.video.stopped'),
+                video: { ...m.versions[0].video, status: 'stopped' },
+              },
+              ...m.versions.slice(1),
+            ],
+          }
+        }
         return finalizeMessage(m)
       }
       return m
@@ -298,9 +437,78 @@ function createChatHandler(opts: UseChatHandlerOptions) {
 
   return {
     sendChat,
+    sendVideo,
     stopGeneration,
-    isGenerating: isStreaming,
+    isGenerating,
   }
+}
+
+export function normalizePlaygroundVideoResponse(
+  response: PlaygroundVideoResponse
+): PlaygroundVideoState {
+  const rawStatus = response.status?.trim().toLowerCase()
+  const status = (() => {
+    if (['completed', 'done', 'succeeded', 'success'].includes(rawStatus)) {
+      return 'completed'
+    }
+    if (['failed', 'error', 'expired', 'cancelled', 'canceled'].includes(rawStatus)) {
+      return 'failed'
+    }
+    if (['queued', 'pending'].includes(rawStatus)) return 'queued'
+    return 'in_progress'
+  })() as PlaygroundVideoState['status']
+  const parsedProgress = Number(response.progress ?? 0)
+  const progress =
+    status === 'completed'
+      ? 100
+      : Math.min(100, Math.max(0, Number.isFinite(parsedProgress) ? parsedProgress : 0))
+
+  return {
+    id: response.id,
+    status,
+    progress,
+    url: response.video_url || response.video?.url || undefined,
+  }
+}
+
+function videoResponseError(response: PlaygroundVideoResponse): string {
+  if (typeof response.error === 'string') return response.error
+  return response.error?.message || response.error?.error || response.message || ''
+}
+
+function requestErrorMessage(error: unknown): string {
+  const value = error as {
+    message?: string
+    error?: string | { message?: string; error?: string }
+  }
+  if (typeof value?.error === 'string') return value.error
+  return value?.error?.message || value?.error?.error || value?.message || 'Video request failed'
+}
+
+function currentVideoProgress(messages: Message[]): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const progress = messages[i].versions?.[0]?.video?.progress
+    if (progress !== undefined) return progress
+  }
+  return 0
+}
+
+function waitForVideoPoll(signal: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal.aborted) {
+      resolve()
+      return
+    }
+    const onAbort = () => {
+      window.clearTimeout(timer)
+      resolve()
+    }
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }, VIDEO_POLL_INTERVAL_MS)
+    signal.addEventListener('abort', onAbort, { once: true })
+  })
 }
 
 // ==================== 工厂函数（消息创建） ====================

@@ -52,3 +52,8 @@ func TestShouldRecordGrokMediaUsage(t *testing.T) {
 		})
 	}
 }
+
+func TestGrokMediaStatusDoesNotRequireBillingEligibility(t *testing.T) {
+	require.True(t, shouldCheckGrokMediaBillingEligibility(service.GrokMediaEndpointVideosCreate))
+	require.False(t, shouldCheckGrokMediaBillingEligibility(service.GrokMediaEndpointVideoStatus))
+}

@@ -176,6 +176,7 @@
             :groups="groupOptions"
             :disabled="isGenerating"
             :is-generating="isGenerating"
+            :video-mode="isVideoGroup"
             @submit="handleSend"
             @stop="stopGeneration"
             @model-change="onModelChange"
@@ -367,7 +368,7 @@ const {
   defaultTitle: () => t('playground.conversations.defaultTitle'),
 })
 
-const { sendChat, stopGeneration, isGenerating } = useChatHandler({
+const { sendChat, sendVideo, stopGeneration, isGenerating } = useChatHandler({
   config,
   parameterEnabled,
   messages,
@@ -418,6 +419,9 @@ async function handleRemoveConversation(id: number) {
 const isLoadingModels = ref(false)
 const groupOptions = computed<GroupOption[]>(() => groups.value)
 const modelOptions = computed<ModelOption[]>(() => models.value)
+const isVideoGroup = computed(
+  () => groups.value.find((group) => group.value === config.value.group)?.platform === 'video'
+)
 
 async function loadGroups() {
   try {
@@ -489,11 +493,12 @@ const versionIndexMap = ref<Record<string, number>>({})
 
 function handleSend(text: string, attachments: PlaygroundAttachment[] = []) {
   if (!text.trim() && attachments.length === 0) return
+  if (!validateVideoInput(attachments)) return
   const userMsg = createUserMessage(text, attachments)
   const placeholder = createLoadingAssistantMessage()
   const next = [...messages.value, userMsg, placeholder]
   setMessages(next)
-  sendChat(next)
+  dispatchGeneration(next)
 }
 
 function handleRegenerate(target: Message) {
@@ -501,6 +506,7 @@ function handleRegenerate(target: Message) {
   const idx = messages.value.findIndex((m) => m.key === target.key)
   if (idx === -1) return
   const upstream = messages.value.slice(0, idx)
+  if (!validateVideoMessages(upstream)) return
   const placeholder = createLoadingAssistantMessage()
   // 把新占位的 key 替换为目标 key（保留位置 + 多版本累计）
   placeholder.key = target.key
@@ -512,7 +518,7 @@ function handleRegenerate(target: Message) {
   setMessages(next)
   // 把多版本切换索引指向新版本（0 = 最新）
   versionIndexMap.value = { ...versionIndexMap.value, [target.key]: 0 }
-  sendChat(next)
+  dispatchGeneration(next)
 }
 
 function handleEdit(target: Message) {
@@ -548,11 +554,41 @@ function handleSaveEditAndSubmit(key: string, content: string) {
       ? { ...m, versions: [{ ...m.versions[0], content }, ...m.versions.slice(1)] }
       : m
   )
+  if (!validateVideoMessages(updated)) return
   const placeholder = createLoadingAssistantMessage()
   const next = [...updated, placeholder]
   setMessages(next)
   editingKey.value = null
-  sendChat(next)
+  dispatchGeneration(next)
+}
+
+function dispatchGeneration(next: Message[]) {
+  if (isVideoGroup.value) {
+    void sendVideo(next)
+    return
+  }
+  void sendChat(next)
+}
+
+function validateVideoInput(attachments: PlaygroundAttachment[]): boolean {
+  if (!isVideoGroup.value) return true
+  if (attachments.some((item) => item.kind === 'document')) {
+    appStore.showError(t('playground.video.documentsUnsupported'))
+    return false
+  }
+  if (
+    config.value.model.toLowerCase().includes('1.5') &&
+    !attachments.some((item) => item.kind === 'image' && item.dataUrl)
+  ) {
+    appStore.showError(t('playground.video.imageRequired'))
+    return false
+  }
+  return true
+}
+
+function validateVideoMessages(items: Message[]): boolean {
+  const userMessage = [...items].reverse().find((message) => message.from === 'user')
+  return validateVideoInput(userMessage?.attachments || [])
 }
 
 function handleRemove(target: Message) {

@@ -42,6 +42,27 @@ export default {
       emptyDocument: '{name} 内容为空',
       attachmentReadFailed: '读取附件失败'
     },
+    video: {
+      placeholder: '描述你想生成的视频…',
+      generate: '生成视频',
+      hint: '输入描述，可选上传一张参考图',
+      imageRequired: '1.5 视频模型需要上传一张参考图',
+      oneImageOnly: '视频生成只支持一张参考图',
+      documentsUnsupported: '视频生成不支持文档附件',
+      missingTaskId: '上游未返回视频任务 ID',
+      missingUrl: '视频已完成，但上游未返回播放地址',
+      failed: '视频生成失败，余额将按现有规则自动退款',
+      timeout: '等待视频生成超时，任务可能仍在后台处理中',
+      stopped: '已停止等待视频生成',
+      status: {
+        creating: '正在创建视频任务',
+        queued: '任务已创建，等待生成',
+        in_progress: '正在生成视频',
+        completed: '视频生成完成',
+        failed: '视频生成失败',
+        stopped: '已停止等待'
+      }
+    },
     actions: {
       systemPrompt: '系统提示词',
       params: '参数',

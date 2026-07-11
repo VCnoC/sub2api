@@ -5,6 +5,7 @@
 ```mermaid
 flowchart LR
     Client[API 客户端] --> Gateway[Gin 网关]
+    Playground[对话广场 JWT] --> Gateway
     Admin[Vue 管理端] --> AdminAPI[管理 API]
     Gateway --> Scheduler[分组调度]
     Scheduler --> Account[上游账号]
@@ -24,9 +25,12 @@ flowchart LR
 - 视频扣余额与 `video_tasks` 写入在同一数据库事务中提交。
 - Worker 使用数据库租约领取任务；未知状态和传输错误继续重试，只有上游明确失败终态才退款。
 - 失败退款在数据库事务内锁定任务并更新余额、任务和用量记录，重复执行不重复退款。
+- 对话广场通过持久化内部 API Key 复用同一视频调度、计费和退款链路；前端只负责创建、轮询和展示。
+- 视频状态查询是已扣费任务的只读操作，保留身份与分组权限校验，不重复执行余额资格检查。
 
 ## 重大架构决策
 
 | adr_id | title | date | status | affected_modules | details |
 |--------|-------|------|--------|------------------|---------|
 | ADR-VIDEO-001 | 视频任务持久化与余额补偿 | 2026-07-11 | ✅已实施 | 账号、分组、网关、计费 | [方案](../plan/202607110153_video_platform/how.md#adr-video-001-视频任务持久化与余额补偿) |
+| ADR-20260711-PLAYGROUND-VIDEO | 对话广场复用视频网关 | 2026-07-11 | ✅已实施 | 对话广场、视频网关 | [方案](../history/2026-07/202607111841_playground_video/how.md#adr-20260711-playground-video-复用视频网关而非新建-playground-视频服务) |

@@ -242,6 +242,7 @@ func parseGrokMediaJSONRequest(body []byte, info *GrokMediaRequestInfo) {
 	}
 	appendJSONImageURLs(gjson.GetBytes(body, "image"))
 	appendJSONImageURLs(gjson.GetBytes(body, "images"))
+	appendJSONImageURLs(gjson.GetBytes(body, "input_reference"))
 	info.MaskImageURL = strings.TrimSpace(gjson.GetBytes(body, "mask.image_url").String())
 }
 
