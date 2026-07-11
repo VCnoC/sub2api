@@ -15,4 +15,4 @@
 
 ## Phase 4: Integration & Refinement
 - [x] Task 4.1: 完成退款幂等、路由、计费和前端测试
-- [ ] Task 4.2: 更新知识库、构建、推送并部署验证
+- [x] Task 4.2: 更新知识库、构建、推送并部署验证
