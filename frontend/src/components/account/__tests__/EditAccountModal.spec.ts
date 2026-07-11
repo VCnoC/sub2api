@@ -267,6 +267,22 @@ function buildGrokOAuthAccount() {
   } as any
 }
 
+function buildVideoAccount() {
+  return {
+    ...buildAccount(),
+    id: 6,
+    name: 'CPA Video',
+    platform: 'video',
+    credentials: {
+      api_key: 'video-key',
+      base_url: 'https://video.example.com',
+      model_mapping: {
+        'grok-imagine-video': 'grok-imagine-video'
+      }
+    }
+  } as any
+}
+
 function buildOpenAISetupTokenAccount() {
   return {
     ...buildAccount(),
@@ -409,6 +425,31 @@ describe('EditAccountModal', () => {
     expect(updateAccountMock).toHaveBeenCalledTimes(1)
     expect(updateAccountMock.mock.calls[0]?.[1]?.credentials?.model_mapping).toEqual({
       grok: 'grok-build-0.1'
+    })
+  })
+
+  it('loads and submits Video Base URL and model whitelist', async () => {
+    const account = buildVideoAccount()
+    updateAccountMock.mockReset()
+    checkMixedChannelRiskMock.mockReset()
+    checkMixedChannelRiskMock.mockResolvedValue({ has_risk: false })
+    updateAccountMock.mockResolvedValue(account)
+
+    const wrapper = mountModal(account)
+    const baseURLInput = wrapper.findAll('input').find(
+      (input) => (input.element as HTMLInputElement).value === 'https://video.example.com'
+    )
+
+    expect(baseURLInput).toBeTruthy()
+    expect(baseURLInput!.attributes('placeholder')).toBe('https://your-cpa-fan.example.com')
+    expect(wrapper.get('[data-testid="model-whitelist-value"]').text()).toBe('grok-imagine-video')
+
+    await wrapper.get('form#edit-account-form').trigger('submit.prevent')
+
+    expect(updateAccountMock).toHaveBeenCalledTimes(1)
+    expect(updateAccountMock.mock.calls[0]?.[1]?.credentials?.base_url).toBe('https://video.example.com')
+    expect(updateAccountMock.mock.calls[0]?.[1]?.credentials?.model_mapping).toEqual({
+      'grok-imagine-video': 'grok-imagine-video'
     })
   })
 

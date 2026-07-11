@@ -113,6 +113,7 @@ type Group struct {
 	BatchImageHoldMultiplier     float64 `json:"batch_image_hold_multiplier"`
 	VideoRateIndependent         bool    `json:"video_rate_independent"`
 	VideoRateMultiplier          float64 `json:"video_rate_multiplier"`
+	VideoBillingMode             string  `json:"video_billing_mode"`
 	// 高峰时段倍率配置
 	PeakRateEnabled    bool     `json:"peak_rate_enabled"`
 	PeakStart          string   `json:"peak_start"`

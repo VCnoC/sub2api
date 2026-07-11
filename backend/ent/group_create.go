@@ -427,6 +427,20 @@ func (_c *GroupCreate) SetNillableVideoRateMultiplier(v *float64) *GroupCreate {
 	return _c
 }
 
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (_c *GroupCreate) SetVideoBillingMode(v string) *GroupCreate {
+	_c.mutation.SetVideoBillingMode(v)
+	return _c
+}
+
+// SetNillableVideoBillingMode sets the "video_billing_mode" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableVideoBillingMode(v *string) *GroupCreate {
+	if v != nil {
+		_c.SetVideoBillingMode(*v)
+	}
+	return _c
+}
+
 // SetVideoPrice480p sets the "video_price_480p" field.
 func (_c *GroupCreate) SetVideoPrice480p(v float64) *GroupCreate {
 	_c.mutation.SetVideoPrice480p(v)
@@ -876,6 +890,10 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultVideoRateMultiplier
 		_c.mutation.SetVideoRateMultiplier(v)
 	}
+	if _, ok := _c.mutation.VideoBillingMode(); !ok {
+		v := group.DefaultVideoBillingMode
+		_c.mutation.SetVideoBillingMode(v)
+	}
 	if _, ok := _c.mutation.ClaudeCodeOnly(); !ok {
 		v := group.DefaultClaudeCodeOnly
 		_c.mutation.SetClaudeCodeOnly(v)
@@ -1021,6 +1039,14 @@ func (_c *GroupCreate) check() error {
 	}
 	if _, ok := _c.mutation.VideoRateMultiplier(); !ok {
 		return &ValidationError{Name: "video_rate_multiplier", err: errors.New(`ent: missing required field "Group.video_rate_multiplier"`)}
+	}
+	if _, ok := _c.mutation.VideoBillingMode(); !ok {
+		return &ValidationError{Name: "video_billing_mode", err: errors.New(`ent: missing required field "Group.video_billing_mode"`)}
+	}
+	if v, ok := _c.mutation.VideoBillingMode(); ok {
+		if err := group.VideoBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "video_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.video_billing_mode": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.ClaudeCodeOnly(); !ok {
 		return &ValidationError{Name: "claude_code_only", err: errors.New(`ent: missing required field "Group.claude_code_only"`)}
@@ -1205,6 +1231,10 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.VideoRateMultiplier(); ok {
 		_spec.SetField(group.FieldVideoRateMultiplier, field.TypeFloat64, value)
 		_node.VideoRateMultiplier = value
+	}
+	if value, ok := _c.mutation.VideoBillingMode(); ok {
+		_spec.SetField(group.FieldVideoBillingMode, field.TypeString, value)
+		_node.VideoBillingMode = value
 	}
 	if value, ok := _c.mutation.VideoPrice480p(); ok {
 		_spec.SetField(group.FieldVideoPrice480p, field.TypeFloat64, value)
@@ -1893,6 +1923,18 @@ func (u *GroupUpsert) UpdateVideoRateMultiplier() *GroupUpsert {
 // AddVideoRateMultiplier adds v to the "video_rate_multiplier" field.
 func (u *GroupUpsert) AddVideoRateMultiplier(v float64) *GroupUpsert {
 	u.Add(group.FieldVideoRateMultiplier, v)
+	return u
+}
+
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (u *GroupUpsert) SetVideoBillingMode(v string) *GroupUpsert {
+	u.Set(group.FieldVideoBillingMode, v)
+	return u
+}
+
+// UpdateVideoBillingMode sets the "video_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateVideoBillingMode() *GroupUpsert {
+	u.SetExcluded(group.FieldVideoBillingMode)
 	return u
 }
 
@@ -2771,6 +2813,20 @@ func (u *GroupUpsertOne) AddVideoRateMultiplier(v float64) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateVideoRateMultiplier() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateVideoRateMultiplier()
+	})
+}
+
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (u *GroupUpsertOne) SetVideoBillingMode(v string) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetVideoBillingMode(v)
+	})
+}
+
+// UpdateVideoBillingMode sets the "video_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateVideoBillingMode() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateVideoBillingMode()
 	})
 }
 
@@ -3864,6 +3920,20 @@ func (u *GroupUpsertBulk) AddVideoRateMultiplier(v float64) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateVideoRateMultiplier() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateVideoRateMultiplier()
+	})
+}
+
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (u *GroupUpsertBulk) SetVideoBillingMode(v string) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetVideoBillingMode(v)
+	})
+}
+
+// UpdateVideoBillingMode sets the "video_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateVideoBillingMode() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateVideoBillingMode()
 	})
 }
 

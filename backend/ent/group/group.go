@@ -74,6 +74,8 @@ const (
 	FieldVideoRateIndependent = "video_rate_independent"
 	// FieldVideoRateMultiplier holds the string denoting the video_rate_multiplier field in the database.
 	FieldVideoRateMultiplier = "video_rate_multiplier"
+	// FieldVideoBillingMode holds the string denoting the video_billing_mode field in the database.
+	FieldVideoBillingMode = "video_billing_mode"
 	// FieldVideoPrice480p holds the string denoting the video_price_480p field in the database.
 	FieldVideoPrice480p = "video_price_480p"
 	// FieldVideoPrice720p holds the string denoting the video_price_720p field in the database.
@@ -214,6 +216,7 @@ var Columns = []string{
 	FieldBatchImageHoldMultiplier,
 	FieldVideoRateIndependent,
 	FieldVideoRateMultiplier,
+	FieldVideoBillingMode,
 	FieldVideoPrice480p,
 	FieldVideoPrice720p,
 	FieldVideoPrice1080p,
@@ -315,6 +318,10 @@ var (
 	DefaultVideoRateIndependent bool
 	// DefaultVideoRateMultiplier holds the default value on creation for the "video_rate_multiplier" field.
 	DefaultVideoRateMultiplier float64
+	// DefaultVideoBillingMode holds the default value on creation for the "video_billing_mode" field.
+	DefaultVideoBillingMode string
+	// VideoBillingModeValidator is a validator for the "video_billing_mode" field. It is called by the builders before save.
+	VideoBillingModeValidator func(string) error
 	// DefaultClaudeCodeOnly holds the default value on creation for the "claude_code_only" field.
 	DefaultClaudeCodeOnly bool
 	// DefaultModelRoutingEnabled holds the default value on creation for the "model_routing_enabled" field.
@@ -494,6 +501,11 @@ func ByVideoRateIndependent(opts ...sql.OrderTermOption) OrderOption {
 // ByVideoRateMultiplier orders the results by the video_rate_multiplier field.
 func ByVideoRateMultiplier(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldVideoRateMultiplier, opts...).ToFunc()
+}
+
+// ByVideoBillingMode orders the results by the video_billing_mode field.
+func ByVideoBillingMode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVideoBillingMode, opts...).ToFunc()
 }
 
 // ByVideoPrice480p orders the results by the video_price_480p field.

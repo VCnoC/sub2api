@@ -47,6 +47,7 @@ type Group struct {
 	BatchImageHoldMultiplier     float64
 	VideoRateIndependent         bool
 	VideoRateMultiplier          float64
+	VideoBillingMode             string
 	VideoPrice480P               *float64
 	VideoPrice720P               *float64
 	VideoPrice1080P              *float64

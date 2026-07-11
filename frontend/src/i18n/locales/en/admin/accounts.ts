@@ -104,6 +104,7 @@ export default {
         gemini: 'Gemini',
         antigravity: 'Antigravity',
         grok: 'Grok',
+        video: 'Video',
       },
       types: {
         oauth: 'OAuth',
@@ -113,6 +114,7 @@ export default {
         codeAssist: 'Code Assist',
         antigravityOauth: 'Antigravity OAuth',
         grokOauth: 'Grok OAuth',
+        videoApi: 'Connect a video upstream with Base URL and API Key',
         antigravityApikey: 'Connect via Base URL + API Key',
         upstream: 'Upstream',
         upstreamDesc: 'Connect via Base URL + API Key'
@@ -489,6 +491,20 @@ export default {
       grok: {
         baseUrlHint: 'Grok OAuth accounts forward to the official xAI API base URL.',
         apiKeyHint: 'Grok subscription support uses OAuth refresh tokens; API keys are out of scope for this account type.'
+      },
+      video: {
+        baseUrlHint: 'Enter a Base URL compatible with the cpa-fan video API.',
+        apiKeyHint: 'Requests use Authorization: Bearer when sent to the video upstream.',
+        baseUrlRequired: 'Enter the video upstream Base URL',
+        pricingTitle: 'Video group pricing',
+        pricingHint: 'Pricing and billing mode are applied to the selected video groups.',
+        perSecond: 'Per second',
+        perRequest: 'Per request',
+        perSecondUnit: '$/second',
+        perRequestUnit: '$/request',
+        selectGroupForPricing: 'Select at least one video group before entering pricing',
+        invalidPrice: '{tier} price must be a number greater than or equal to 0',
+        pricingUpdateFailed: 'Failed to save video group pricing'
       },
       anthropic: {
         apiKeyPassthrough: 'Auto passthrough (auth only)',

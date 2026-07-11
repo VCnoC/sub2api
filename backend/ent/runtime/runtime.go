@@ -46,6 +46,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/userattributevalue"
 	"github.com/Wei-Shaw/sub2api/ent/userplatformquota"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
+	"github.com/Wei-Shaw/sub2api/ent/videotask"
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 )
 
@@ -1045,54 +1046,60 @@ func init() {
 	groupDescVideoRateMultiplier := groupFields[25].Descriptor()
 	// group.DefaultVideoRateMultiplier holds the default value on creation for the video_rate_multiplier field.
 	group.DefaultVideoRateMultiplier = groupDescVideoRateMultiplier.Default.(float64)
+	// groupDescVideoBillingMode is the schema descriptor for video_billing_mode field.
+	groupDescVideoBillingMode := groupFields[26].Descriptor()
+	// group.DefaultVideoBillingMode holds the default value on creation for the video_billing_mode field.
+	group.DefaultVideoBillingMode = groupDescVideoBillingMode.Default.(string)
+	// group.VideoBillingModeValidator is a validator for the "video_billing_mode" field. It is called by the builders before save.
+	group.VideoBillingModeValidator = groupDescVideoBillingMode.Validators[0].(func(string) error)
 	// groupDescClaudeCodeOnly is the schema descriptor for claude_code_only field.
-	groupDescClaudeCodeOnly := groupFields[29].Descriptor()
+	groupDescClaudeCodeOnly := groupFields[30].Descriptor()
 	// group.DefaultClaudeCodeOnly holds the default value on creation for the claude_code_only field.
 	group.DefaultClaudeCodeOnly = groupDescClaudeCodeOnly.Default.(bool)
 	// groupDescModelRoutingEnabled is the schema descriptor for model_routing_enabled field.
-	groupDescModelRoutingEnabled := groupFields[33].Descriptor()
+	groupDescModelRoutingEnabled := groupFields[34].Descriptor()
 	// group.DefaultModelRoutingEnabled holds the default value on creation for the model_routing_enabled field.
 	group.DefaultModelRoutingEnabled = groupDescModelRoutingEnabled.Default.(bool)
 	// groupDescMcpXMLInject is the schema descriptor for mcp_xml_inject field.
-	groupDescMcpXMLInject := groupFields[34].Descriptor()
+	groupDescMcpXMLInject := groupFields[35].Descriptor()
 	// group.DefaultMcpXMLInject holds the default value on creation for the mcp_xml_inject field.
 	group.DefaultMcpXMLInject = groupDescMcpXMLInject.Default.(bool)
 	// groupDescSupportedModelScopes is the schema descriptor for supported_model_scopes field.
-	groupDescSupportedModelScopes := groupFields[35].Descriptor()
+	groupDescSupportedModelScopes := groupFields[36].Descriptor()
 	// group.DefaultSupportedModelScopes holds the default value on creation for the supported_model_scopes field.
 	group.DefaultSupportedModelScopes = groupDescSupportedModelScopes.Default.([]string)
 	// groupDescSortOrder is the schema descriptor for sort_order field.
-	groupDescSortOrder := groupFields[36].Descriptor()
+	groupDescSortOrder := groupFields[37].Descriptor()
 	// group.DefaultSortOrder holds the default value on creation for the sort_order field.
 	group.DefaultSortOrder = groupDescSortOrder.Default.(int)
 	// groupDescAllowMessagesDispatch is the schema descriptor for allow_messages_dispatch field.
-	groupDescAllowMessagesDispatch := groupFields[37].Descriptor()
+	groupDescAllowMessagesDispatch := groupFields[38].Descriptor()
 	// group.DefaultAllowMessagesDispatch holds the default value on creation for the allow_messages_dispatch field.
 	group.DefaultAllowMessagesDispatch = groupDescAllowMessagesDispatch.Default.(bool)
 	// groupDescRequireOauthOnly is the schema descriptor for require_oauth_only field.
-	groupDescRequireOauthOnly := groupFields[38].Descriptor()
+	groupDescRequireOauthOnly := groupFields[39].Descriptor()
 	// group.DefaultRequireOauthOnly holds the default value on creation for the require_oauth_only field.
 	group.DefaultRequireOauthOnly = groupDescRequireOauthOnly.Default.(bool)
 	// groupDescRequirePrivacySet is the schema descriptor for require_privacy_set field.
-	groupDescRequirePrivacySet := groupFields[39].Descriptor()
+	groupDescRequirePrivacySet := groupFields[40].Descriptor()
 	// group.DefaultRequirePrivacySet holds the default value on creation for the require_privacy_set field.
 	group.DefaultRequirePrivacySet = groupDescRequirePrivacySet.Default.(bool)
 	// groupDescDefaultMappedModel is the schema descriptor for default_mapped_model field.
-	groupDescDefaultMappedModel := groupFields[40].Descriptor()
+	groupDescDefaultMappedModel := groupFields[41].Descriptor()
 	// group.DefaultDefaultMappedModel holds the default value on creation for the default_mapped_model field.
 	group.DefaultDefaultMappedModel = groupDescDefaultMappedModel.Default.(string)
 	// group.DefaultMappedModelValidator is a validator for the "default_mapped_model" field. It is called by the builders before save.
 	group.DefaultMappedModelValidator = groupDescDefaultMappedModel.Validators[0].(func(string) error)
 	// groupDescMessagesDispatchModelConfig is the schema descriptor for messages_dispatch_model_config field.
-	groupDescMessagesDispatchModelConfig := groupFields[41].Descriptor()
+	groupDescMessagesDispatchModelConfig := groupFields[42].Descriptor()
 	// group.DefaultMessagesDispatchModelConfig holds the default value on creation for the messages_dispatch_model_config field.
 	group.DefaultMessagesDispatchModelConfig = groupDescMessagesDispatchModelConfig.Default.(domain.OpenAIMessagesDispatchModelConfig)
 	// groupDescModelsListConfig is the schema descriptor for models_list_config field.
-	groupDescModelsListConfig := groupFields[42].Descriptor()
+	groupDescModelsListConfig := groupFields[43].Descriptor()
 	// group.DefaultModelsListConfig holds the default value on creation for the models_list_config field.
 	group.DefaultModelsListConfig = groupDescModelsListConfig.Default.(domain.GroupModelsListConfig)
 	// groupDescRpmLimit is the schema descriptor for rpm_limit field.
-	groupDescRpmLimit := groupFields[43].Descriptor()
+	groupDescRpmLimit := groupFields[44].Descriptor()
 	// group.DefaultRpmLimit holds the default value on creation for the rpm_limit field.
 	group.DefaultRpmLimit = groupDescRpmLimit.Default.(int)
 	idempotencyrecordMixin := schema.IdempotencyRecord{}.Mixin()
@@ -2438,6 +2445,72 @@ func init() {
 	usersubscriptionDescAssignedAt := usersubscriptionFields[12].Descriptor()
 	// usersubscription.DefaultAssignedAt holds the default value on creation for the assigned_at field.
 	usersubscription.DefaultAssignedAt = usersubscriptionDescAssignedAt.Default.(func() time.Time)
+	videotaskFields := schema.VideoTask{}.Fields()
+	_ = videotaskFields
+	// videotaskDescUpstreamTaskID is the schema descriptor for upstream_task_id field.
+	videotaskDescUpstreamTaskID := videotaskFields[0].Descriptor()
+	// videotask.UpstreamTaskIDValidator is a validator for the "upstream_task_id" field. It is called by the builders before save.
+	videotask.UpstreamTaskIDValidator = func() func(string) error {
+		validators := videotaskDescUpstreamTaskID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(upstream_task_id string) error {
+			for _, fn := range fns {
+				if err := fn(upstream_task_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// videotaskDescBillingRequestID is the schema descriptor for billing_request_id field.
+	videotaskDescBillingRequestID := videotaskFields[1].Descriptor()
+	// videotask.BillingRequestIDValidator is a validator for the "billing_request_id" field. It is called by the builders before save.
+	videotask.BillingRequestIDValidator = func() func(string) error {
+		validators := videotaskDescBillingRequestID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(billing_request_id string) error {
+			for _, fn := range fns {
+				if err := fn(billing_request_id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// videotaskDescRefundAmount is the schema descriptor for refund_amount field.
+	videotaskDescRefundAmount := videotaskFields[6].Descriptor()
+	// videotask.DefaultRefundAmount holds the default value on creation for the refund_amount field.
+	videotask.DefaultRefundAmount = videotaskDescRefundAmount.Default.(float64)
+	// videotaskDescStatus is the schema descriptor for status field.
+	videotaskDescStatus := videotaskFields[7].Descriptor()
+	// videotask.DefaultStatus holds the default value on creation for the status field.
+	videotask.DefaultStatus = videotaskDescStatus.Default.(string)
+	// videotask.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	videotask.StatusValidator = videotaskDescStatus.Validators[0].(func(string) error)
+	// videotaskDescNextPollAt is the schema descriptor for next_poll_at field.
+	videotaskDescNextPollAt := videotaskFields[8].Descriptor()
+	// videotask.DefaultNextPollAt holds the default value on creation for the next_poll_at field.
+	videotask.DefaultNextPollAt = videotaskDescNextPollAt.Default.(func() time.Time)
+	// videotaskDescPollAttempts is the schema descriptor for poll_attempts field.
+	videotaskDescPollAttempts := videotaskFields[10].Descriptor()
+	// videotask.DefaultPollAttempts holds the default value on creation for the poll_attempts field.
+	videotask.DefaultPollAttempts = videotaskDescPollAttempts.Default.(int)
+	// videotaskDescCreatedAt is the schema descriptor for created_at field.
+	videotaskDescCreatedAt := videotaskFields[14].Descriptor()
+	// videotask.DefaultCreatedAt holds the default value on creation for the created_at field.
+	videotask.DefaultCreatedAt = videotaskDescCreatedAt.Default.(func() time.Time)
+	// videotaskDescUpdatedAt is the schema descriptor for updated_at field.
+	videotaskDescUpdatedAt := videotaskFields[15].Descriptor()
+	// videotask.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	videotask.DefaultUpdatedAt = videotaskDescUpdatedAt.Default.(func() time.Time)
+	// videotask.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	videotask.UpdateDefaultUpdatedAt = videotaskDescUpdatedAt.UpdateDefault.(func() time.Time)
 }
 
 const (

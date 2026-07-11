@@ -39,6 +39,7 @@ type UsageBillingCommand struct {
 	APIKeyQuotaCost     float64
 	APIKeyRateLimitCost float64
 	AccountQuotaCost    float64
+	VideoTask           *VideoTaskBillingSnapshot
 }
 
 func (c *UsageBillingCommand) Normalize() {
@@ -80,6 +81,9 @@ func buildUsageBillingFingerprint(c *UsageBillingCommand) string {
 	)
 	if payloadHash := strings.TrimSpace(c.RequestPayloadHash); payloadHash != "" {
 		raw += "|" + payloadHash
+	}
+	if c.VideoTask != nil {
+		raw += fmt.Sprintf("|video:%s|%d", strings.TrimSpace(c.VideoTask.UpstreamTaskID), c.VideoTask.GroupID)
 	}
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])

@@ -139,6 +139,65 @@ func TestGatewayRoutesNonGrokVideosAreRejectedAtPlatformGate(t *testing.T) {
 	}
 }
 
+func TestGatewayRoutesVideoAllowsCPAEndpointsAndRejectsText(t *testing.T) {
+	router := newGatewayRoutesTestRouter(service.PlatformVideo)
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodPost, "/v1/videos", `{"prompt":"waves"}`},
+		{http.MethodPost, "/v1/video/create", `{"prompt":"waves"}`},
+		{http.MethodPost, "/v1/videos/generations", `{"model":"grok-imagine-video","prompt":"waves"}`},
+		{http.MethodPost, "/v1/videos/edits", `{"model":"grok-imagine-video","prompt":"waves"}`},
+		{http.MethodPost, "/v1/videos/extensions", `{"model":"grok-imagine-video","prompt":"waves"}`},
+		{http.MethodGet, "/v1/videos/request-123", ""},
+		{http.MethodGet, "/v1/video/query?id=request-123", ""},
+	} {
+		req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+		require.NotEqual(t, http.StatusNotFound, w.Code, "method=%s path=%s", tc.method, tc.path)
+		require.NotContains(t, w.Body.String(), "not supported for this platform")
+	}
+
+	for _, path := range []string{"/v1/messages", "/v1/chat/completions", "/v1/responses"} {
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"model":"grok-imagine-video"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+		require.Equal(t, http.StatusNotFound, w.Code, "path=%s", path)
+		require.Contains(t, w.Body.String(), "not supported for the video platform")
+	}
+}
+
+func TestGatewayRoutesGrokRejectsVideoPlatformOnlyEndpoints(t *testing.T) {
+	router := newGatewayRoutesTestRouter(service.PlatformGrok)
+
+	for _, tc := range []struct {
+		method string
+		path   string
+	}{
+		{http.MethodPost, "/v1/videos"},
+		{http.MethodPost, "/v1/video/create"},
+		{http.MethodPost, "/v1/videos/edits"},
+		{http.MethodPost, "/v1/videos/extensions"},
+		{http.MethodGet, "/v1/video/query?id=request-123"},
+	} {
+		req := httptest.NewRequest(tc.method, tc.path, strings.NewReader(`{"model":"grok-imagine-video","prompt":"waves"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		router.ServeHTTP(w, req)
+		require.Equal(t, http.StatusNotFound, w.Code, "method=%s path=%s", tc.method, tc.path)
+		require.Contains(t, w.Body.String(), "Videos API is not supported for this platform")
+	}
+}
+
 func TestGatewayRoutesGrokAllowsCLICompatibilityEntrypoints(t *testing.T) {
 	router := newGatewayRoutesTestRouter(service.PlatformGrok)
 

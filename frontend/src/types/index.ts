@@ -532,7 +532,7 @@ export interface PaginationConfig {
 
 // ==================== API Key & Group Types ====================
 
-export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok'
+export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'video'
 
 export type SubscriptionType = 'standard' | 'subscription'
 
@@ -568,6 +568,7 @@ export interface Group {
   image_price_4k: number | null
   video_rate_independent: boolean
   video_rate_multiplier: number
+  video_billing_mode: 'per_second' | 'per_request'
   video_price_480p: number | null
   video_price_720p: number | null
   video_price_1080p: number | null
@@ -701,6 +702,7 @@ export interface CreateGroupRequest {
   image_price_4k?: number | null
   video_rate_independent?: boolean
   video_rate_multiplier?: number
+  video_billing_mode?: 'per_second' | 'per_request'
   video_price_480p?: number | null
   video_price_720p?: number | null
   video_price_1080p?: number | null
@@ -748,6 +750,7 @@ export interface UpdateGroupRequest {
   image_price_4k?: number | null
   video_rate_independent?: boolean
   video_rate_multiplier?: number
+  video_billing_mode?: 'per_second' | 'per_request'
   video_price_480p?: number | null
   video_price_720p?: number | null
   video_price_1080p?: number | null
@@ -774,7 +777,7 @@ export interface UpdateGroupRequest {
 
 // ==================== Account & Proxy Types ====================
 
-export type AccountPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok'
+export type AccountPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'video'
 export type AccountType = 'oauth' | 'setup-token' | 'apikey' | 'upstream' | 'bedrock' | 'service_account'
 export type OAuthAddMethod = 'oauth' | 'setup-token'
 export type ProxyProtocol = 'http' | 'https' | 'socks5' | 'socks5h'

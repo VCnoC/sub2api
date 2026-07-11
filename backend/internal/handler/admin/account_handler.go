@@ -99,7 +99,7 @@ func NewAccountHandler(
 type CreateAccountRequest struct {
 	Name                    string         `json:"name" binding:"required"`
 	Notes                   *string        `json:"notes"`
-	Platform                string         `json:"platform" binding:"required"`
+	Platform                string         `json:"platform" binding:"required,oneof=anthropic openai gemini antigravity grok video"`
 	Type                    string         `json:"type" binding:"required,oneof=oauth setup-token apikey upstream bedrock service_account"`
 	Credentials             map[string]any `json:"credentials" binding:"required"`
 	Extra                   map[string]any `json:"extra"`
@@ -2382,6 +2382,24 @@ func (h *AccountHandler) GetAvailableModels(c *gin.Context) {
 				DisplayName: requestedModel,
 			})
 		}
+		response.Success(c, models)
+		return
+	}
+
+	if account.Platform == service.PlatformVideo {
+		mapping := account.GetModelMapping()
+		if len(mapping) == 0 {
+			response.Success(c, []claude.Model{
+				{ID: "grok-imagine-video", Type: "model", DisplayName: "grok-imagine-video"},
+				{ID: "grok-imagine-video-1.5-preview", Type: "model", DisplayName: "grok-imagine-video-1.5-preview"},
+			})
+			return
+		}
+		models := make([]claude.Model, 0, len(mapping))
+		for requestedModel := range mapping {
+			models = append(models, claude.Model{ID: requestedModel, Type: "model", DisplayName: requestedModel})
+		}
+		sort.Slice(models, func(i, j int) bool { return models[i].ID < models[j].ID })
 		response.Success(c, models)
 		return
 	}

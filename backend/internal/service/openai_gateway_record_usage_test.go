@@ -313,6 +313,57 @@ func TestOpenAIGatewayServiceRecordUsage_ZeroUsageStillWritesUsageLog(t *testing
 	require.Zero(t, billingRepo.lastCmd.AccountQuotaCost)
 }
 
+func TestOpenAIGatewayServiceRecordUsage_VideoUsesBalanceAndPersistsTaskSnapshot(t *testing.T) {
+	usageRepo := &openAIRecordUsageLogRepoStub{inserted: true}
+	billingRepo := &openAIRecordUsageBillingRepoStub{result: &UsageBillingApplyResult{Applied: false}}
+	svc := newOpenAIRecordUsageServiceWithBillingRepoForTest(
+		usageRepo,
+		billingRepo,
+		&openAIRecordUsageUserRepoStub{},
+		&openAIRecordUsageSubRepoStub{},
+		nil,
+	)
+	groupID := int64(44)
+	price := 0.1
+	task := &VideoTaskBillingSnapshot{UpstreamTaskID: "video-123", GroupID: groupID}
+
+	err := svc.RecordUsage(context.Background(), &OpenAIRecordUsageInput{
+		Result: &OpenAIForwardResult{
+			RequestID:            "request-123",
+			ResponseID:           "video-123",
+			Model:                DefaultVideoPlatformModel,
+			BillingModel:         DefaultVideoPlatformModel,
+			VideoCount:           1,
+			VideoResolution:      VideoBillingResolution720P,
+			VideoDurationSeconds: 4,
+		},
+		APIKey: &APIKey{
+			ID:      22,
+			GroupID: &groupID,
+			Group: &Group{
+				ID:               groupID,
+				Platform:         PlatformVideo,
+				SubscriptionType: SubscriptionTypeSubscription,
+				RateMultiplier:   1,
+				VideoBillingMode: VideoBillingModePerSecond,
+				VideoPrice720P:   &price,
+			},
+		},
+		User:         &User{ID: 11},
+		Account:      &Account{ID: 33, Type: AccountTypeAPIKey, Platform: PlatformVideo},
+		Subscription: &UserSubscription{ID: 55},
+		VideoTask:    task,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, billingRepo.calls)
+	require.NotNil(t, billingRepo.lastCmd)
+	require.Same(t, task, billingRepo.lastCmd.VideoTask)
+	require.InDelta(t, 0.4, billingRepo.lastCmd.BalanceCost, 1e-12)
+	require.Zero(t, billingRepo.lastCmd.SubscriptionCost)
+	require.Equal(t, BillingTypeBalance, usageRepo.lastLog.BillingType)
+}
+
 func TestOpenAIGatewayServiceRecordUsage_MissingPricingRecordsZeroCostUsageLog(t *testing.T) {
 	usageRepo := &openAIRecordUsageLogRepoStub{inserted: true}
 	billingRepo := &openAIRecordUsageBillingRepoStub{result: &UsageBillingApplyResult{Applied: true}}

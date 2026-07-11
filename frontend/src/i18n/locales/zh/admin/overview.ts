@@ -819,6 +819,7 @@ export default {
         gemini: 'Gemini',
         antigravity: 'Antigravity',
         grok: 'Grok',
+        video: '视频平台',
       },
       saving: '保存中...',
       noGroups: '暂无分组',
@@ -894,6 +895,7 @@ export default {
         type: '计费类型',
         typeHint: '标准计费从用户余额扣除。订阅模式使用配额限制。',
         typeNotEditable: '分组创建后无法修改计费类型。',
+        videoBalanceOnly: '视频平台仅支持余额计费。',
         standard: '标准（余额）',
         subscription: '订阅（配额）',
         dailyLimit: '每日限额（USD）',
@@ -921,13 +923,21 @@ export default {
       },
       videoPricing: {
         title: '视频生成计费',
-        description:
-          '配置 Grok 视频生成的每秒单价（USD/秒），留空则使用默认每秒价（grok-imagine-video：480p $0.05/s、720p $0.07/s；video-1.5：480p $0.08/s、720p $0.14/s、1080p $0.25/s）',
+        description: '按分辨率配置视频价格；独立视频平台可选择按秒或按次计费。',
+        billingMode: '计费方式',
+        perSecond: '按秒',
+        perRequest: '按次',
+        perSecondUnit: '$/秒',
+        perRequestUnit: '$/次',
         independentMultiplier: '视频倍率独立',
         videoMultiplier: '视频独立倍率',
         modeHint:
           '视频按秒计费：费用 = 每秒价格 × 时长（1-15 秒，未指定默认 8 秒）。默认叠加当前分组有效倍率；开启独立倍率后改用视频独立倍率。',
+        perSecondHint: '按秒计费：费用 = 分辨率单价 × 请求时长 × 有效倍率。',
+        perRequestHint: '按次计费：每个成功创建请求按分辨率价格计费一次，不乘视频时长。',
         finalPricePreview: '最终每秒价格预览',
+        finalSecondPricePreview: '最终每秒价格预览',
+        finalRequestPricePreview: '最终单次价格预览',
         notConfigured: '未配置'
       },
       peakRate: {

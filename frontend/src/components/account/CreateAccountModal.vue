@@ -160,6 +160,19 @@
             <PlatformIcon platform="grok" size="sm" />
             Grok
           </button>
+          <button
+            type="button"
+            @click="form.platform = 'video'"
+            :class="[
+              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
+              form.platform === 'video'
+                ? 'bg-white text-cyan-700 shadow-sm dark:bg-dark-600 dark:text-cyan-300'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            ]"
+          >
+            <PlatformIcon platform="video" size="sm" />
+            Video
+          </button>
         </div>
       </div>
 
@@ -385,6 +398,22 @@
         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
           {{ t('admin.accounts.oauth.grok.oauthOnlyHint') }}
         </p>
+      </div>
+
+      <!-- Account Type Selection (Video - API Key only) -->
+      <div v-if="form.platform === 'video'">
+        <label class="input-label">{{ t('admin.accounts.accountType') }}</label>
+        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" data-tour="account-form-type">
+          <div class="flex items-center gap-3 rounded-lg border-2 border-cyan-500 bg-cyan-50 p-3 dark:bg-cyan-900/20">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-600 text-white">
+              <Icon name="key" size="sm" />
+            </div>
+            <div>
+              <span class="block text-sm font-medium text-gray-900 dark:text-white">API Key</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.accounts.types.videoApi') }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Account Type Selection (Gemini) -->
@@ -1087,6 +1116,8 @@
                 ? 'https://api.openai.com'
                 : form.platform === 'gemini'
                   ? 'https://generativelanguage.googleapis.com'
+                  : form.platform === 'video'
+                    ? 'https://video.example.com'
                   : 'https://api.anthropic.com'
             "
           />
@@ -1104,6 +1135,8 @@
                 ? 'sk-proj-...'
                 : form.platform === 'gemini'
                   ? 'AIza...'
+                  : form.platform === 'video'
+                    ? 'sk-...'
                   : 'sk-ant-...'
             "
           />
@@ -3035,6 +3068,45 @@
           :mixed-scheduling="mixedScheduling"
           data-tour="account-form-groups"
         />
+
+        <div v-if="form.platform === 'video'" class="mt-4 border-t border-gray-200 pt-4 dark:border-dark-600">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <label class="input-label mb-0">{{ t('admin.accounts.video.pricingTitle') }}</label>
+            <span class="text-xs text-gray-500 dark:text-gray-400">
+              {{ t('common.selectedCount', { count: selectedVideoGroups.length }) }}
+            </span>
+          </div>
+          <div class="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 dark:bg-dark-700">
+            <button
+              v-for="mode in videoBillingModeOptions"
+              :key="mode.value"
+              type="button"
+              @click="videoBillingMode = mode.value"
+              :class="[
+                'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                videoBillingMode === mode.value
+                  ? 'bg-white text-cyan-700 shadow-sm dark:bg-dark-600 dark:text-cyan-300'
+                  : 'text-gray-600 dark:text-gray-400'
+              ]"
+            >
+              {{ mode.label }}
+            </button>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div v-for="tier in videoPriceTiers" :key="tier.key">
+              <label class="input-label">{{ tier.label }} ({{ videoPriceUnitLabel }})</label>
+              <input
+                v-model.number="videoGroupPrices[tier.key]"
+                type="number"
+                min="0"
+                step="0.001"
+                class="input"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <p class="input-hint">{{ t('admin.accounts.video.pricingHint') }}</p>
+        </div>
       </div>
 
     </form>
@@ -3418,7 +3490,8 @@ import type {
   CodexSessionImportMessage,
   OpenAICompactMode,
   OpenAIResponsesMode,
-  OpenAIEndpointCapability
+  OpenAIEndpointCapability,
+  UpdateGroupRequest
 } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
@@ -3484,6 +3557,7 @@ const baseUrlHint = computed(() => {
   if (form.platform === 'openai') return t('admin.accounts.openai.baseUrlHint')
   if (form.platform === 'gemini') return t('admin.accounts.gemini.baseUrlHint')
   if (form.platform === 'grok') return t('admin.accounts.grok.baseUrlHint')
+  if (form.platform === 'video') return t('admin.accounts.video.baseUrlHint')
   return t('admin.accounts.baseUrlHint')
 })
 
@@ -3491,6 +3565,7 @@ const apiKeyHint = computed(() => {
   if (form.platform === 'openai') return t('admin.accounts.openai.apiKeyHint')
   if (form.platform === 'gemini') return t('admin.accounts.gemini.apiKeyHint')
   if (form.platform === 'grok') return t('admin.accounts.grok.apiKeyHint')
+  if (form.platform === 'video') return t('admin.accounts.video.apiKeyHint')
   return t('admin.accounts.apiKeyHint')
 })
 
@@ -3571,6 +3646,28 @@ const accountCategory = ref<'oauth-based' | 'apikey' | 'bedrock' | 'service_acco
 const addMethod = ref<AddMethod>('oauth') // For oauth-based: 'oauth' or 'setup-token'
 const apiKeyBaseUrl = ref('https://api.anthropic.com')
 const apiKeyValue = ref('')
+type VideoBillingMode = 'per_second' | 'per_request'
+type VideoPriceKey = 'video_price_480p' | 'video_price_720p' | 'video_price_1080p'
+const videoBillingMode = ref<VideoBillingMode>('per_second')
+const videoGroupPrices = reactive<Record<VideoPriceKey, number | string | null>>({
+  video_price_480p: null,
+  video_price_720p: null,
+  video_price_1080p: null
+})
+const videoPriceTiers: { key: VideoPriceKey; label: string }[] = [
+  { key: 'video_price_480p', label: '480p' },
+  { key: 'video_price_720p', label: '720p' },
+  { key: 'video_price_1080p', label: '1080p' }
+]
+const videoBillingModeOptions = computed<{ value: VideoBillingMode; label: string }[]>(() => [
+  { value: 'per_second', label: t('admin.accounts.video.perSecond') },
+  { value: 'per_request', label: t('admin.accounts.video.perRequest') }
+])
+const videoPriceUnitLabel = computed(() =>
+  videoBillingMode.value === 'per_request'
+    ? t('admin.accounts.video.perRequestUnit')
+    : t('admin.accounts.video.perSecondUnit')
+)
 
 const syncPreviewCredentials = computed(() => {
   if (!apiKeyValue.value) return undefined
@@ -3935,6 +4032,11 @@ const form = reactive({
   expires_at: null as number | null
 })
 
+const selectedVideoGroups = computed(() => {
+  const selected = new Set(form.group_ids)
+  return props.groups.filter(group => group.platform === 'video' && selected.has(group.id))
+})
+
 // Helper to check if current type needs OAuth flow
 const isOAuthFlow = computed(() => {
   // Antigravity upstream 类型不需要 OAuth 流程
@@ -4042,6 +4144,8 @@ watch(
           ? 'https://generativelanguage.googleapis.com'
           : newPlatform === 'grok'
             ? 'https://api.x.ai/v1'
+            : newPlatform === 'video'
+              ? ''
             : 'https://api.anthropic.com'
     // Clear model-related settings
     allowedModels.value = []
@@ -4067,6 +4171,12 @@ watch(
       addMethod.value = 'oauth'
       modelRestrictionMode.value = 'mapping'
       form.concurrency = 1
+      form.load_factor = null
+    }
+    if (newPlatform === 'video') {
+      accountCategory.value = 'apikey'
+      modelRestrictionMode.value = 'whitelist'
+      form.concurrency = 10
       form.load_factor = null
     }
     if (newPlatform !== 'gemini' && newPlatform !== 'anthropic' && accountCategory.value === 'service_account') {
@@ -4472,6 +4582,10 @@ const resetForm = () => {
   addMethod.value = 'oauth'
   apiKeyBaseUrl.value = 'https://api.anthropic.com'
   apiKeyValue.value = ''
+  videoBillingMode.value = 'per_second'
+  videoGroupPrices.video_price_480p = null
+  videoGroupPrices.video_price_720p = null
+  videoGroupPrices.video_price_1080p = null
   editQuotaLimit.value = null
   editQuotaDailyLimit.value = null
   editQuotaWeeklyLimit.value = null
@@ -4646,6 +4760,9 @@ const buildAnthropicExtra = (base?: Record<string, unknown>): Record<string, unk
 
 // Helper function to create account with mixed channel warning handling
 const doCreateAccount = async (payload: CreateAccountRequest) => {
+  if (!(await applyVideoGroupPricing())) {
+    return
+  }
   const canContinue = await ensureAntigravityMixedChannelConfirmed(async () => {
     await submitCreateAccount(payload)
   })
@@ -4653,6 +4770,46 @@ const doCreateAccount = async (payload: CreateAccountRequest) => {
     return
   }
   await submitCreateAccount(payload)
+}
+
+const applyVideoGroupPricing = async (): Promise<boolean> => {
+  if (form.platform !== 'video') {
+    return true
+  }
+
+  const suppliedPrices = Object.values(videoGroupPrices).some(value => value !== null && value !== '')
+  if (selectedVideoGroups.value.length === 0) {
+    if (suppliedPrices || videoBillingMode.value !== 'per_second') {
+      appStore.showError(t('admin.accounts.video.selectGroupForPricing'))
+      return false
+    }
+    return true
+  }
+
+  const updates: UpdateGroupRequest = { video_billing_mode: videoBillingMode.value }
+  for (const tier of videoPriceTiers) {
+    const raw = videoGroupPrices[tier.key]
+    if (raw === null || raw === '') continue
+    const price = Number(raw)
+    if (!Number.isFinite(price) || price < 0) {
+      appStore.showError(t('admin.accounts.video.invalidPrice', { tier: tier.label }))
+      return false
+    }
+    updates[tier.key] = price
+  }
+
+  submitting.value = true
+  try {
+    await Promise.all(selectedVideoGroups.value.map(group => adminAPI.groups.update(group.id, updates)))
+    return true
+  } catch (error: any) {
+    appStore.showError(
+      error.response?.data?.detail || error.response?.data?.message || t('admin.accounts.video.pricingUpdateFailed')
+    )
+    return false
+  } finally {
+    submitting.value = false
+  }
 }
 
 // Handle mixed channel warning confirmation
@@ -4880,6 +5037,10 @@ const handleSubmit = async () => {
     appStore.showError(t('admin.accounts.pleaseEnterApiKey'))
     return
   }
+  if (form.platform === 'video' && !apiKeyBaseUrl.value.trim()) {
+    appStore.showError(t('admin.accounts.video.baseUrlRequired'))
+    return
+  }
 
   // Determine default base URL based on platform
   const defaultBaseUrl =
@@ -4887,6 +5048,8 @@ const handleSubmit = async () => {
       ? 'https://api.openai.com'
       : form.platform === 'gemini'
         ? 'https://generativelanguage.googleapis.com'
+        : form.platform === 'video'
+          ? ''
         : 'https://api.anthropic.com'
 
   // Build credentials with optional model mapping

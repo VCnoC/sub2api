@@ -130,6 +130,10 @@ func (Group) Fields() []ent.Field {
 			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
 			Default(1.0).
 			Comment("视频生成独立倍率，仅 video_rate_independent=true 时生效"),
+		field.String("video_billing_mode").
+			MaxLen(20).
+			Default("per_second").
+			Comment("视频生成计费模式：per_second 或 per_request"),
 		field.Float("video_price_480p").
 			Optional().
 			Nillable().

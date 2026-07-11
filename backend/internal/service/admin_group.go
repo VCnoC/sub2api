@@ -114,6 +114,8 @@ func defaultModelsListCandidateIDs(platform string) []string {
 		return ids
 	case PlatformGrok:
 		return xai.DefaultModelIDs()
+	case PlatformVideo:
+		return []string{"grok-imagine-video", "grok-imagine-video-1.5-preview"}
 	default:
 		ids := make([]string, 0, len(claude.DefaultModels))
 		for _, model := range claude.DefaultModels {
@@ -126,7 +128,7 @@ func defaultModelsListCandidateIDs(platform string) []string {
 func defaultAllowImageGenerationForPlatform(platform string) bool {
 	// Grok image and video generation routes share the legacy image-generation gate.
 	// Older clients send the false zero value, so Grok groups must default enabled.
-	return platform == PlatformGrok
+	return platform == PlatformGrok || platform == PlatformVideo
 }
 
 func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupInput) (*Group, error) {
@@ -142,6 +144,9 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	subscriptionType := input.SubscriptionType
 	if subscriptionType == "" {
 		subscriptionType = SubscriptionTypeStandard
+	}
+	if platform == PlatformVideo && subscriptionType != SubscriptionTypeStandard {
+		return nil, errors.New("video groups only support standard balance billing")
 	}
 
 	// 限额字段：nil/负数 表示"无限制"，0 表示"不允许用量"，正数表示具体限额
@@ -189,6 +194,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		}
 		videoRateMultiplier = *input.VideoRateMultiplier
 	}
+	videoBillingMode := NormalizeVideoBillingMode(input.VideoBillingMode)
 
 	peakRateMultiplier := 1.0
 	if input.PeakRateMultiplier != nil {
@@ -277,6 +283,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		BatchImageHoldMultiplier:        batchImageHoldMultiplier,
 		VideoRateIndependent:            input.VideoRateIndependent,
 		VideoRateMultiplier:             videoRateMultiplier,
+		VideoBillingMode:                 videoBillingMode,
 		PeakRateEnabled:                 peakRateEnabled,
 		PeakStart:                       peakStart,
 		PeakEnd:                         peakEnd,
@@ -455,6 +462,9 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	if input.SubscriptionType != "" {
 		group.SubscriptionType = input.SubscriptionType
 	}
+	if group.Platform == PlatformVideo && group.SubscriptionType != SubscriptionTypeStandard {
+		return nil, errors.New("video groups only support standard balance billing")
+	}
 	// 限额字段：nil/负数 表示"无限制"，0 表示"不允许用量"，正数表示具体限额
 	// 前端始终发送这三个字段，无需 nil 守卫
 	group.DailyLimitUSD = normalizeLimit(input.DailyLimitUSD)
@@ -505,6 +515,11 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 			return nil, errors.New("video_rate_multiplier must be >= 0")
 		}
 		group.VideoRateMultiplier = *input.VideoRateMultiplier
+	}
+	if input.VideoBillingMode != nil {
+		group.VideoBillingMode = NormalizeVideoBillingMode(*input.VideoBillingMode)
+	} else {
+		group.VideoBillingMode = NormalizeVideoBillingMode(group.VideoBillingMode)
 	}
 	if input.PeakRateEnabled != nil {
 		group.PeakRateEnabled = *input.PeakRateEnabled

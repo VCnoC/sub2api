@@ -156,7 +156,13 @@ const xaiModels = [
   'grok-imagine-image',
   'grok-imagine-edit',
   'grok-imagine-video',
-  'grok-imagine-video-1.5'
+  'grok-imagine-video-1.5',
+  'grok-imagine-video-1.5-preview'
+]
+
+const videoModels = [
+  'grok-imagine-video',
+  'grok-imagine-video-1.5-preview'
 ]
 
 // Cohere
@@ -420,6 +426,7 @@ export function getModelsByPlatform(platform: string): string[] {
     case 'meta': return metaModels
     case 'xai':
     case 'grok': return xaiModels
+    case 'video': return videoModels
     case 'cohere': return cohereModels
     case 'yi': return yiModels
     case 'moonshot': return moonshotModels
@@ -438,6 +445,7 @@ export function getPresetMappingsByPlatform(platform: string) {
   if (platform === 'openai') return openaiPresetMappings
   if (platform === 'gemini') return geminiPresetMappings
   if (platform === 'grok' || platform === 'xai') return grokPresetMappings
+  if (platform === 'video') return []
   if (platform === 'antigravity') return antigravityPresetMappings
   if (platform === 'bedrock') return bedrockPresetMappings
   return anthropicPresetMappings

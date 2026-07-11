@@ -84,7 +84,7 @@ func NewGroupHandler(adminService service.AdminService, dashboardService *servic
 type CreateGroupRequest struct {
 	Name             string             `json:"name" binding:"required"`
 	Description      string             `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok"`
+	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
 	RateMultiplier   float64            `json:"rate_multiplier"`
 	IsExclusive      bool               `json:"is_exclusive"`
 	SubscriptionType string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
@@ -100,6 +100,7 @@ type CreateGroupRequest struct {
 	BatchImageHoldMultiplier        *float64 `json:"batch_image_hold_multiplier"`
 	VideoRateIndependent            bool     `json:"video_rate_independent"`
 	VideoRateMultiplier             *float64 `json:"video_rate_multiplier"`
+	VideoBillingMode                string   `json:"video_billing_mode" binding:"omitempty,oneof=per_second per_request"`
 	PeakRateEnabled                 bool     `json:"peak_rate_enabled"`
 	PeakStart                       string   `json:"peak_start"`
 	PeakEnd                         string   `json:"peak_end"`
@@ -136,7 +137,7 @@ type CreateGroupRequest struct {
 type UpdateGroupRequest struct {
 	Name             string             `json:"name"`
 	Description      *string            `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok"`
+	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
 	RateMultiplier   *float64           `json:"rate_multiplier"`
 	IsExclusive      *bool              `json:"is_exclusive"`
 	Status           string             `json:"status" binding:"omitempty,oneof=active inactive"`
@@ -153,6 +154,7 @@ type UpdateGroupRequest struct {
 	BatchImageHoldMultiplier        *float64 `json:"batch_image_hold_multiplier"`
 	VideoRateIndependent            *bool    `json:"video_rate_independent"`
 	VideoRateMultiplier             *float64 `json:"video_rate_multiplier"`
+	VideoBillingMode                *string  `json:"video_billing_mode" binding:"omitempty,oneof=per_second per_request"`
 	PeakRateEnabled                 *bool    `json:"peak_rate_enabled"`
 	PeakStart                       *string  `json:"peak_start"`
 	PeakEnd                         *string  `json:"peak_end"`
@@ -324,6 +326,7 @@ func (h *GroupHandler) Create(c *gin.Context) {
 		BatchImageHoldMultiplier:        req.BatchImageHoldMultiplier,
 		VideoRateIndependent:            req.VideoRateIndependent,
 		VideoRateMultiplier:             req.VideoRateMultiplier,
+		VideoBillingMode:                req.VideoBillingMode,
 		PeakRateEnabled:                 req.PeakRateEnabled,
 		PeakStart:                       req.PeakStart,
 		PeakEnd:                         req.PeakEnd,
@@ -392,6 +395,7 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		BatchImageHoldMultiplier:        req.BatchImageHoldMultiplier,
 		VideoRateIndependent:            req.VideoRateIndependent,
 		VideoRateMultiplier:             req.VideoRateMultiplier,
+		VideoBillingMode:                req.VideoBillingMode,
 		PeakRateEnabled:                 req.PeakRateEnabled,
 		PeakStart:                       req.PeakStart,
 		PeakEnd:                         req.PeakEnd,

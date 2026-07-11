@@ -84,6 +84,24 @@ func TestBuildOpenAIModelsURL(t *testing.T) {
 	}
 }
 
+func TestBuildVideoUpstreamModelsRequestUsesBearerAuth(t *testing.T) {
+	account := &Account{
+		Platform: PlatformVideo,
+		Type:     AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"base_url": "https://video.example.com",
+			"api_key":  "video-key",
+		},
+	}
+	svc := &AccountTestService{cfg: upstreamModelSyncTestConfig()}
+
+	req, err := svc.buildUpstreamModelsRequest(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, http.MethodGet, req.Method)
+	require.Equal(t, "https://video.example.com/v1/models", req.URL.String())
+	require.Equal(t, "Bearer video-key", req.Header.Get("Authorization"))
+}
+
 func TestBuildGeminiModelsURL(t *testing.T) {
 	t.Parallel()
 

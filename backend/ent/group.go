@@ -77,6 +77,8 @@ type Group struct {
 	VideoRateIndependent bool `json:"video_rate_independent,omitempty"`
 	// 视频生成独立倍率，仅 video_rate_independent=true 时生效
 	VideoRateMultiplier float64 `json:"video_rate_multiplier,omitempty"`
+	// 视频生成计费模式：per_second 或 per_request
+	VideoBillingMode string `json:"video_billing_mode,omitempty"`
 	// VideoPrice480p holds the value of the "video_price_480p" field.
 	VideoPrice480p *float64 `json:"video_price_480p,omitempty"`
 	// VideoPrice720p holds the value of the "video_price_720p" field.
@@ -227,7 +229,7 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case group.FieldID, group.FieldDefaultValidityDays, group.FieldFallbackGroupID, group.FieldFallbackGroupIDOnInvalidRequest, group.FieldSortOrder, group.FieldRpmLimit:
 			values[i] = new(sql.NullInt64)
-		case group.FieldName, group.FieldDescription, group.FieldPeakStart, group.FieldPeakEnd, group.FieldStatus, group.FieldPlatform, group.FieldSubscriptionType, group.FieldDefaultMappedModel:
+		case group.FieldName, group.FieldDescription, group.FieldPeakStart, group.FieldPeakEnd, group.FieldStatus, group.FieldPlatform, group.FieldSubscriptionType, group.FieldVideoBillingMode, group.FieldDefaultMappedModel:
 			values[i] = new(sql.NullString)
 		case group.FieldCreatedAt, group.FieldUpdatedAt, group.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
@@ -433,6 +435,12 @@ func (_m *Group) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field video_rate_multiplier", values[i])
 			} else if value.Valid {
 				_m.VideoRateMultiplier = value.Float64
+			}
+		case group.FieldVideoBillingMode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field video_billing_mode", values[i])
+			} else if value.Valid {
+				_m.VideoBillingMode = value.String
 			}
 		case group.FieldVideoPrice480p:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -733,6 +741,9 @@ func (_m *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("video_rate_multiplier=")
 	builder.WriteString(fmt.Sprintf("%v", _m.VideoRateMultiplier))
+	builder.WriteString(", ")
+	builder.WriteString("video_billing_mode=")
+	builder.WriteString(_m.VideoBillingMode)
 	builder.WriteString(", ")
 	if v := _m.VideoPrice480p; v != nil {
 		builder.WriteString("video_price_480p=")

@@ -264,7 +264,9 @@ const PLATFORM_LABELS: Record<string, string> = {
   anthropic: 'Claude',
   openai: 'OpenAI',
   gemini: 'Gemini',
-  antigravity: 'Antigravity'
+  antigravity: 'Antigravity',
+  grok: 'Grok',
+  video: 'Video'
 }
 
 const platformLabel = (p: string) => PLATFORM_LABELS[p] ?? p
@@ -274,7 +276,9 @@ const PLATFORM_DOT_CLASSES: Record<string, string> = {
   anthropic: 'bg-orange-500',
   openai: 'bg-emerald-500',
   gemini: 'bg-blue-500',
-  antigravity: 'bg-purple-500'
+  antigravity: 'bg-purple-500',
+  grok: 'bg-zinc-700',
+  video: 'bg-cyan-600'
 }
 const platformDotClass = (p: string) => PLATFORM_DOT_CLASSES[p] ?? 'bg-gray-400'
 
@@ -300,7 +304,7 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
   // 无需显式排除；__other__ 由下方差值补差逻辑单独追加。
   const platforms = new Set<string>([...byPlat.keys(), ...byQuota.keys()])
 
-  const PLATFORM_ORDER = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok']
+  const PLATFORM_ORDER = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok', 'video']
   const cards: FusedPlatformCard[] = []
 
   for (const p of platforms) {

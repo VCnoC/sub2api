@@ -29,6 +29,7 @@ const (
 	PlatformGemini      = "gemini"
 	PlatformAntigravity = "antigravity"
 	PlatformGrok        = "grok"
+	PlatformVideo       = "video"
 )
 
 // Account type constants

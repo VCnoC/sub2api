@@ -559,6 +559,20 @@ func (_u *GroupUpdate) AddVideoRateMultiplier(v float64) *GroupUpdate {
 	return _u
 }
 
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (_u *GroupUpdate) SetVideoBillingMode(v string) *GroupUpdate {
+	_u.mutation.SetVideoBillingMode(v)
+	return _u
+}
+
+// SetNillableVideoBillingMode sets the "video_billing_mode" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableVideoBillingMode(v *string) *GroupUpdate {
+	if v != nil {
+		_u.SetVideoBillingMode(*v)
+	}
+	return _u
+}
+
 // SetVideoPrice480p sets the "video_price_480p" field.
 func (_u *GroupUpdate) SetVideoPrice480p(v float64) *GroupUpdate {
 	_u.mutation.ResetVideoPrice480p()
@@ -1181,6 +1195,11 @@ func (_u *GroupUpdate) check() error {
 			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.VideoBillingMode(); ok {
+		if err := group.VideoBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "video_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.video_billing_mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.DefaultMappedModel(); ok {
 		if err := group.DefaultMappedModelValidator(v); err != nil {
 			return &ValidationError{Name: "default_mapped_model", err: fmt.Errorf(`ent: validator failed for field "Group.default_mapped_model": %w`, err)}
@@ -1347,6 +1366,9 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedVideoRateMultiplier(); ok {
 		_spec.AddField(group.FieldVideoRateMultiplier, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.VideoBillingMode(); ok {
+		_spec.SetField(group.FieldVideoBillingMode, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.VideoPrice480p(); ok {
 		_spec.SetField(group.FieldVideoPrice480p, field.TypeFloat64, value)
@@ -2283,6 +2305,20 @@ func (_u *GroupUpdateOne) AddVideoRateMultiplier(v float64) *GroupUpdateOne {
 	return _u
 }
 
+// SetVideoBillingMode sets the "video_billing_mode" field.
+func (_u *GroupUpdateOne) SetVideoBillingMode(v string) *GroupUpdateOne {
+	_u.mutation.SetVideoBillingMode(v)
+	return _u
+}
+
+// SetNillableVideoBillingMode sets the "video_billing_mode" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableVideoBillingMode(v *string) *GroupUpdateOne {
+	if v != nil {
+		_u.SetVideoBillingMode(*v)
+	}
+	return _u
+}
+
 // SetVideoPrice480p sets the "video_price_480p" field.
 func (_u *GroupUpdateOne) SetVideoPrice480p(v float64) *GroupUpdateOne {
 	_u.mutation.ResetVideoPrice480p()
@@ -2918,6 +2954,11 @@ func (_u *GroupUpdateOne) check() error {
 			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.VideoBillingMode(); ok {
+		if err := group.VideoBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "video_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.video_billing_mode": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.DefaultMappedModel(); ok {
 		if err := group.DefaultMappedModelValidator(v); err != nil {
 			return &ValidationError{Name: "default_mapped_model", err: fmt.Errorf(`ent: validator failed for field "Group.default_mapped_model": %w`, err)}
@@ -3101,6 +3142,9 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.AddedVideoRateMultiplier(); ok {
 		_spec.AddField(group.FieldVideoRateMultiplier, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.VideoBillingMode(); ok {
+		_spec.SetField(group.FieldVideoBillingMode, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.VideoPrice480p(); ok {
 		_spec.SetField(group.FieldVideoPrice480p, field.TypeFloat64, value)

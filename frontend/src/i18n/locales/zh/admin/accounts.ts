@@ -223,6 +223,7 @@ export default {
         gemini: 'Gemini',
         antigravity: 'Antigravity',
         grok: 'Grok',
+        video: '视频平台',
       },
       types: {
         oauth: 'OAuth',
@@ -232,6 +233,7 @@ export default {
         codeAssist: 'Code Assist',
         antigravityOauth: 'Antigravity OAuth',
         grokOauth: 'Grok OAuth',
+        videoApi: '通过 Base URL + API Key 接入视频上游',
         antigravityApikey: '通过 Base URL + API Key 连接',
         upstream: '对接上游',
         upstreamDesc: '通过 Base URL + API Key 连接上游',
@@ -587,6 +589,20 @@ export default {
       grok: {
         baseUrlHint: 'Grok OAuth 账号会转发到官方 xAI API Base URL。',
         apiKeyHint: 'Grok 订阅支持使用 OAuth refresh token；API Key 账号不在本次范围内。'
+      },
+      video: {
+        baseUrlHint: '填写兼容 cpa-fan 视频接口的 Base URL。',
+        apiKeyHint: '请求将使用 Authorization: Bearer 发送到视频上游。',
+        baseUrlRequired: '请输入视频上游 Base URL',
+        pricingTitle: '视频分组价格',
+        pricingHint: '价格和计费方式将应用到当前已选的视频分组。',
+        perSecond: '按秒',
+        perRequest: '按次',
+        perSecondUnit: '$/秒',
+        perRequestUnit: '$/次',
+        selectGroupForPricing: '填写价格前请至少选择一个视频分组',
+        invalidPrice: '{tier} 价格必须是大于或等于 0 的数字',
+        pricingUpdateFailed: '视频分组价格保存失败'
       },
       anthropic: {
         apiKeyPassthrough: '自动透传（仅替换认证）',

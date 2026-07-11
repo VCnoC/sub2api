@@ -182,6 +182,9 @@ func (s *AccountService) Create(ctx context.Context, req CreateAccountRequest) (
 	} else {
 		account.AutoPauseOnExpired = true
 	}
+	if err := validateVideoAccountConfiguration(account); err != nil {
+		return nil, err
+	}
 
 	if err := s.accountRepo.Create(ctx, account); err != nil {
 		return nil, fmt.Errorf("create account: %w", err)
@@ -194,7 +197,7 @@ func (s *AccountService) Create(ctx context.Context, req CreateAccountRequest) (
 			if err != nil {
 				return nil, err
 			}
-			if g.RequireOAuthOnly && (g.Platform == PlatformOpenAI || g.Platform == PlatformAntigravity || g.Platform == PlatformAnthropic || g.Platform == PlatformGemini || g.Platform == PlatformGrok) {
+			if g.RequireOAuthOnly && (g.Platform == PlatformOpenAI || g.Platform == PlatformAntigravity || g.Platform == PlatformAnthropic || g.Platform == PlatformGemini || g.Platform == PlatformGrok || g.Platform == PlatformVideo) {
 				return nil, fmt.Errorf("分组 [%s] 仅允许 OAuth 账号，apikey 类型账号无法加入", g.Name)
 			}
 		}
@@ -297,6 +300,9 @@ func (s *AccountService) Update(ctx context.Context, id int64, req UpdateAccount
 			return nil, err
 		}
 	}
+	if err := validateVideoAccountConfiguration(account); err != nil {
+		return nil, err
+	}
 
 	// 执行更新
 	if err := s.accountRepo.Update(ctx, account); err != nil {
@@ -310,7 +316,7 @@ func (s *AccountService) Update(ctx context.Context, id int64, req UpdateAccount
 			if err != nil {
 				return nil, err
 			}
-			if g.RequireOAuthOnly && (g.Platform == PlatformOpenAI || g.Platform == PlatformAntigravity || g.Platform == PlatformAnthropic || g.Platform == PlatformGemini || g.Platform == PlatformGrok) {
+			if g.RequireOAuthOnly && (g.Platform == PlatformOpenAI || g.Platform == PlatformAntigravity || g.Platform == PlatformAnthropic || g.Platform == PlatformGemini || g.Platform == PlatformGrok || g.Platform == PlatformVideo) {
 				return nil, fmt.Errorf("分组 [%s] 仅允许 OAuth 账号，apikey 类型账号无法加入", g.Name)
 			}
 		}
@@ -324,6 +330,22 @@ func (s *AccountService) Update(ctx context.Context, id int64, req UpdateAccount
 	}
 
 	return account, nil
+}
+
+func validateVideoAccountConfiguration(account *Account) error {
+	if account == nil || !account.IsVideo() {
+		return nil
+	}
+	if account.Type != AccountTypeAPIKey {
+		return infraerrors.BadRequest("INVALID_VIDEO_ACCOUNT_TYPE", "video accounts only support apikey credentials")
+	}
+	if account.GetVideoBaseURL() == "" {
+		return infraerrors.BadRequest("VIDEO_BASE_URL_REQUIRED", "video account base_url is required")
+	}
+	if account.GetVideoAPIKey() == "" {
+		return infraerrors.BadRequest("VIDEO_API_KEY_REQUIRED", "video account api_key is required")
+	}
+	return nil
 }
 
 // Delete 删除账号
@@ -438,6 +460,9 @@ func (s *AccountService) TestCredentials(ctx context.Context, id int64) error {
 		return nil
 	case PlatformGrok:
 		// Grok OAuth credentials are validated via token exchange/refresh and request-path probes.
+		return nil
+	case PlatformVideo:
+		// Video API-key credentials are probed through model sync and video requests.
 		return nil
 	default:
 		return fmt.Errorf("unsupported platform: %s", account.Platform)

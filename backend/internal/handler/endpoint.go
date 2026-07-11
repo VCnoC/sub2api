@@ -22,7 +22,11 @@ const (
 	EndpointResponsesCompact  = "/v1/responses/compact"
 	EndpointImagesGenerations = "/v1/images/generations"
 	EndpointImagesEdits       = "/v1/images/edits"
+	EndpointVideoCreate       = "/v1/video/create"
 	EndpointVideosGenerations = "/v1/videos/generations"
+	EndpointVideosEdits       = "/v1/videos/edits"
+	EndpointVideosExtensions  = "/v1/videos/extensions"
+	EndpointVideoQuery        = "/v1/video/query"
 	EndpointVideos            = "/v1/videos"
 	EndpointGeminiModels      = "/v1beta/models"
 )
@@ -83,8 +87,16 @@ func NormalizeInboundEndpoint(path string) string {
 		return EndpointImagesGenerations
 	case strings.Contains(path, EndpointImagesEdits) || strings.Contains(path, "/images/edits"):
 		return EndpointImagesEdits
+	case strings.Contains(path, EndpointVideoCreate) || strings.Contains(path, "/video/create"):
+		return EndpointVideoCreate
 	case strings.Contains(path, EndpointVideosGenerations) || strings.Contains(path, "/videos/generations"):
 		return EndpointVideosGenerations
+	case strings.Contains(path, EndpointVideosEdits) || strings.Contains(path, "/videos/edits"):
+		return EndpointVideosEdits
+	case strings.Contains(path, EndpointVideosExtensions) || strings.Contains(path, "/videos/extensions"):
+		return EndpointVideosExtensions
+	case strings.Contains(path, EndpointVideoQuery) || strings.Contains(path, "/video/query"):
+		return EndpointVideoQuery
 	case strings.Contains(path, EndpointVideos) || strings.Contains(path, "/videos/"):
 		return EndpointVideos
 	case strings.Contains(path, EndpointResponsesCompact) || isResponsesCompactAliasPath(path):
@@ -186,6 +198,9 @@ func DeriveUpstreamEndpoint(inbound, rawRequestPath, platform string) string {
 			return EndpointResponsesCompact
 		}
 		return EndpointResponses
+
+	case service.PlatformVideo:
+		return inbound
 
 	case service.PlatformAnthropic:
 		return EndpointMessages

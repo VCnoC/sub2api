@@ -232,12 +232,16 @@ func (a *Account) IsGrok() bool {
 	return a.Platform == PlatformGrok
 }
 
+func (a *Account) IsVideo() bool {
+	return a != nil && a.Platform == PlatformVideo
+}
+
 func (a *Account) IsGrokOAuth() bool {
 	return a.IsGrok() && a.Type == AccountTypeOAuth
 }
 
 func (a *Account) IsOpenAICompatible() bool {
-	return a != nil && (a.Platform == PlatformOpenAI || a.Platform == PlatformGrok)
+	return a != nil && (a.Platform == PlatformOpenAI || a.Platform == PlatformGrok || a.Platform == PlatformVideo)
 }
 
 func (a *Account) GeminiOAuthType() string {
@@ -1259,6 +1263,20 @@ func (a *Account) GetGrokBaseURL() string {
 		return baseURL
 	}
 	return xai.DefaultBaseURL
+}
+
+func (a *Account) GetVideoBaseURL() string {
+	if !a.IsVideo() {
+		return ""
+	}
+	return strings.TrimSpace(a.GetCredential("base_url"))
+}
+
+func (a *Account) GetVideoAPIKey() string {
+	if !a.IsVideo() || a.Type != AccountTypeAPIKey {
+		return ""
+	}
+	return strings.TrimSpace(a.GetCredential("api_key"))
 }
 
 func (a *Account) GetGrokAccessToken() string {

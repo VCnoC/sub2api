@@ -209,7 +209,31 @@ func (r *usageBillingRepository) applyUsageBillingEffects(ctx context.Context, t
 		result.QuotaState = quotaState
 	}
 
+	if cmd.VideoTask != nil {
+		if err := insertUsageBillingVideoTask(ctx, tx, cmd); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func insertUsageBillingVideoTask(ctx context.Context, tx *sql.Tx, cmd *service.UsageBillingCommand) error {
+	task := cmd.VideoTask
+	if task == nil {
+		return nil
+	}
+	upstreamTaskID := strings.TrimSpace(task.UpstreamTaskID)
+	if upstreamTaskID == "" || task.GroupID <= 0 || cmd.UserID <= 0 || cmd.APIKeyID <= 0 || cmd.AccountID <= 0 {
+		return errors.New("invalid video task billing snapshot")
+	}
+	_, err := tx.ExecContext(ctx, `
+		INSERT INTO video_tasks (
+			upstream_task_id, billing_request_id, user_id, api_key_id,
+			account_id, group_id, refund_amount, status, next_poll_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW() + INTERVAL '10 seconds')
+	`, upstreamTaskID, cmd.RequestID, cmd.UserID, cmd.APIKeyID, cmd.AccountID, task.GroupID, cmd.BalanceCost)
+	return err
 }
 
 func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscriptionID int64, costUSD float64) error {

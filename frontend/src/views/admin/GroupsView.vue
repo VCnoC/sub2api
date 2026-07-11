@@ -657,9 +657,10 @@
             <Select
               v-model="createForm.subscription_type"
               :options="subscriptionTypeOptions"
+              :disabled="createForm.platform === 'video'"
             />
             <p class="input-hint">
-              {{ t("admin.groups.subscription.typeHint") }}
+              {{ createForm.platform === 'video' ? t('admin.groups.subscription.videoBalanceOnly') : t("admin.groups.subscription.typeHint") }}
             </p>
           </div>
 
@@ -982,6 +983,10 @@
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {{ t(videoPricingI18nKey("description")) }}
           </p>
+          <div v-if="createForm.platform === 'video'" class="mb-4">
+            <label class="input-label">{{ t(videoPricingI18nKey("billingMode")) }}</label>
+            <Select v-model="createForm.video_billing_mode" :options="videoBillingModeOptions" />
+          </div>
           <div class="mb-4">
             <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
@@ -1010,7 +1015,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">480p ($/s)</label>
+              <label class="input-label">480p ({{ videoPriceUnit(createForm.video_billing_mode) }})</label>
               <input
                 v-model.number="createForm.video_price_480p"
                 type="number"
@@ -1021,7 +1026,7 @@
               />
             </div>
             <div>
-              <label class="input-label">720p ($/s)</label>
+              <label class="input-label">720p ({{ videoPriceUnit(createForm.video_billing_mode) }})</label>
               <input
                 v-model.number="createForm.video_price_720p"
                 type="number"
@@ -1032,7 +1037,7 @@
               />
             </div>
             <div>
-              <label class="input-label">1080p ($/s)</label>
+              <label class="input-label">1080p ({{ videoPriceUnit(createForm.video_billing_mode) }})</label>
               <input
                 v-model.number="createForm.video_price_1080p"
                 type="number"
@@ -1044,11 +1049,11 @@
             </div>
           </div>
           <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-            {{ t(videoPricingI18nKey("modeHint")) }}
+            {{ t(videoPricingI18nKey(createForm.video_billing_mode === 'per_request' ? "perRequestHint" : "perSecondHint")) }}
           </p>
           <div class="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             <div class="mb-1 font-medium">
-              {{ t(videoPricingI18nKey("finalPricePreview")) }}
+              {{ t(videoPricingI18nKey(createForm.video_billing_mode === 'per_request' ? "finalRequestPricePreview" : "finalSecondPricePreview")) }}
             </div>
             <div class="grid grid-cols-3 gap-2">
               <div
@@ -2461,6 +2466,10 @@
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {{ t(videoPricingI18nKey("description")) }}
           </p>
+          <div v-if="editForm.platform === 'video'" class="mb-4">
+            <label class="input-label">{{ t(videoPricingI18nKey("billingMode")) }}</label>
+            <Select v-model="editForm.video_billing_mode" :options="videoBillingModeOptions" />
+          </div>
           <div class="mb-4">
             <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
@@ -2489,7 +2498,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">480p ($/s)</label>
+              <label class="input-label">480p ({{ videoPriceUnit(editForm.video_billing_mode) }})</label>
               <input
                 v-model.number="editForm.video_price_480p"
                 type="number"
@@ -2500,7 +2509,7 @@
               />
             </div>
             <div>
-              <label class="input-label">720p ($/s)</label>
+              <label class="input-label">720p ({{ videoPriceUnit(editForm.video_billing_mode) }})</label>
               <input
                 v-model.number="editForm.video_price_720p"
                 type="number"
@@ -2511,7 +2520,7 @@
               />
             </div>
             <div>
-              <label class="input-label">1080p ($/s)</label>
+              <label class="input-label">1080p ({{ videoPriceUnit(editForm.video_billing_mode) }})</label>
               <input
                 v-model.number="editForm.video_price_1080p"
                 type="number"
@@ -2523,11 +2532,11 @@
             </div>
           </div>
           <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-            {{ t(videoPricingI18nKey("modeHint")) }}
+            {{ t(videoPricingI18nKey(editForm.video_billing_mode === 'per_request' ? "perRequestHint" : "perSecondHint")) }}
           </p>
           <div class="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
             <div class="mb-1 font-medium">
-              {{ t(videoPricingI18nKey("finalPricePreview")) }}
+              {{ t(videoPricingI18nKey(editForm.video_billing_mode === 'per_request' ? "finalRequestPricePreview" : "finalSecondPricePreview")) }}
             </div>
             <div class="grid grid-cols-3 gap-2">
               <div
@@ -3673,6 +3682,7 @@ const platformOptions = computed(() => [
   { value: "gemini", label: "Gemini" },
   { value: "antigravity", label: "Antigravity" },
   { value: "grok", label: "Grok" },
+  { value: "video", label: "Video" },
 ]);
 
 const platformFilterOptions = computed(() => [
@@ -3682,6 +3692,7 @@ const platformFilterOptions = computed(() => [
   { value: "gemini", label: "Gemini" },
   { value: "antigravity", label: "Antigravity" },
   { value: "grok", label: "Grok" },
+  { value: "video", label: "Video" },
 ]);
 
 const editStatusOptions = computed(() => [
@@ -3693,6 +3704,14 @@ const subscriptionTypeOptions = computed(() => [
   { value: "standard", label: t("admin.groups.subscription.standard") },
   { value: "subscription", label: t("admin.groups.subscription.subscription") },
 ]);
+
+const videoBillingModeOptions = computed(() => [
+  { value: "per_second", label: t("admin.groups.videoPricing.perSecond") },
+  { value: "per_request", label: t("admin.groups.videoPricing.perRequest") },
+]);
+
+const videoPriceUnit = (mode: string) =>
+  mode === "per_request" ? t("admin.groups.videoPricing.perRequestUnit") : t("admin.groups.videoPricing.perSecondUnit");
 
 // 降级分组选项（创建时）- 仅包含 anthropic 平台且未启用 claude_code_only 的分组
 const fallbackGroupOptions = computed(() => {
@@ -3885,6 +3904,7 @@ const createForm = reactive({
   // 视频生成计费配置（仅 Grok 平台）
   video_rate_independent: false,
   video_rate_multiplier: 1,
+  video_billing_mode: "per_second" as "per_second" | "per_request",
   video_price_480p: null as number | null,
   video_price_720p: null as number | null,
   video_price_1080p: null as number | null,
@@ -4230,6 +4250,7 @@ const editForm = reactive({
   // 视频生成计费配置（仅 Grok 平台）
   video_rate_independent: false,
   video_rate_multiplier: 1,
+  video_billing_mode: "per_second" as "per_second" | "per_request",
   video_price_480p: null as number | null,
   video_price_720p: null as number | null,
   video_price_1080p: null as number | null,
@@ -4612,6 +4633,7 @@ const closeCreateModal = () => {
   createForm.image_price_4k = null;
   createForm.video_rate_independent = false;
   createForm.video_rate_multiplier = 1;
+  createForm.video_billing_mode = "per_second";
   createForm.video_price_480p = null;
   createForm.video_price_720p = null;
   createForm.video_price_1080p = null;
@@ -4776,6 +4798,7 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.image_price_4k = group.image_price_4k;
   editForm.video_rate_independent = group.video_rate_independent ?? false;
   editForm.video_rate_multiplier = group.video_rate_multiplier ?? 1;
+  editForm.video_billing_mode = group.video_billing_mode ?? "per_second";
   editForm.video_price_480p = group.video_price_480p;
   editForm.video_price_720p = group.video_price_720p;
   editForm.video_price_1080p = group.video_price_1080p;
@@ -4833,6 +4856,7 @@ const closeEditModal = () => {
   editForm.peak_rate_multiplier = 1.0;
   editForm.video_rate_independent = false;
   editForm.video_rate_multiplier = 1;
+  editForm.video_billing_mode = "per_second";
   editForm.video_price_480p = null;
   editForm.video_price_720p = null;
   editForm.video_price_1080p = null;
@@ -5022,6 +5046,9 @@ watch(
 watch(
   () => createForm.platform,
   (newVal) => {
+    if (newVal === "video") {
+      createForm.subscription_type = "standard";
+    }
     if (!["anthropic", "antigravity"].includes(newVal)) {
       createForm.fallback_group_id_on_invalid_request = null;
     }
@@ -5055,6 +5082,9 @@ watch(
 watch(
   () => editForm.platform,
   (newVal) => {
+    if (newVal === "video") {
+      editForm.subscription_type = "standard";
+    }
     if (!["anthropic", "antigravity"].includes(newVal)) {
       editForm.fallback_group_id_on_invalid_request = null;
     }

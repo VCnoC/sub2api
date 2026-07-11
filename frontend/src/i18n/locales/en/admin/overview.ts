@@ -892,6 +892,7 @@ export default {
         gemini: 'Gemini',
         antigravity: 'Antigravity',
         grok: 'Grok',
+        video: 'Video',
       },
       deleteConfirm:
         "Are you sure you want to delete '{name}'? All associated API keys will no longer belong to any group.",
@@ -903,6 +904,7 @@ export default {
         typeHint:
           'Standard billing deducts from user balance. Subscription mode uses quota limits instead.',
         typeNotEditable: 'Billing type cannot be changed after group creation.',
+        videoBalanceOnly: 'The video platform supports balance billing only.',
         standard: 'Standard (Balance)',
         subscription: 'Subscription (Quota)',
         dailyLimit: 'Daily Limit (USD)',
@@ -930,13 +932,21 @@ export default {
       },
       videoPricing: {
         title: 'Video Generation Pricing',
-        description:
-          'Configure Grok video generation prices in USD per second of output video. Leave empty to use the default per-second rates (grok-imagine-video: $0.05/s 480p, $0.07/s 720p; video-1.5: $0.08/s 480p, $0.14/s 720p, $0.25/s 1080p).',
+        description: 'Configure video pricing by resolution. Independent video groups can bill per second or per request.',
+        billingMode: 'Billing mode',
+        perSecond: 'Per second',
+        perRequest: 'Per request',
+        perSecondUnit: '$/second',
+        perRequestUnit: '$/request',
         independentMultiplier: 'Use independent video multiplier',
         videoMultiplier: 'Video multiplier',
         modeHint:
           'Videos are billed per second: per-second price × duration (1-15s, default 8s). By default the current effective group multiplier applies; independent mode uses the video multiplier instead.',
+        perSecondHint: 'Per-second billing: resolution price × requested duration × effective multiplier.',
+        perRequestHint: 'Per-request billing charges the resolution price once for each accepted creation request, regardless of duration.',
         finalPricePreview: 'Final per-second price preview',
+        finalSecondPricePreview: 'Final per-second price preview',
+        finalRequestPricePreview: 'Final per-request price preview',
         notConfigured: 'Not configured'
       },
       peakRate: {
