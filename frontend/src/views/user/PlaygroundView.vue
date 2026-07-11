@@ -177,10 +177,14 @@
             :disabled="isGenerating"
             :is-generating="isGenerating"
             :video-mode="isVideoGroup"
+            :video-seconds="config.videoSeconds"
+            :video-aspect-ratio="config.videoAspectRatio"
             @submit="handleSend"
             @stop="stopGeneration"
             @model-change="onModelChange"
             @group-change="onGroupChange"
+            @video-seconds-change="onVideoSecondsChange"
+            @video-aspect-ratio-change="onVideoAspectRatioChange"
           />
         </div>
         </div>
@@ -484,6 +488,12 @@ function onGroupChange(value: string) {
 }
 function onModelChange(value: string) {
   config.value.model = value
+}
+function onVideoSecondsChange(value: string) {
+  config.value.videoSeconds = value
+}
+function onVideoAspectRatioChange(value: string) {
+  config.value.videoAspectRatio = value
 }
 
 // ==================== 消息操作 ====================

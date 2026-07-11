@@ -84,6 +84,8 @@ describe('useChatHandler video flow', () => {
     const config = ref<PlaygroundConfig>({
       model: 'grok-imagine-video-1.5-preview',
       group: 'video',
+      videoSeconds: '8',
+      videoAspectRatio: '16:9',
       temperature: 1,
       top_p: 1,
       max_tokens: 4096,
@@ -136,6 +138,8 @@ describe('useChatHandler video flow', () => {
         model: 'grok-imagine-video-1.5-preview',
         group: 'video',
         prompt: 'animate this image',
+        seconds: '8',
+        aspect_ratio: '16:9',
         input_reference: { image_url: 'data:image/png;base64,aW1hZ2U=' },
       },
       expect.any(AbortSignal)

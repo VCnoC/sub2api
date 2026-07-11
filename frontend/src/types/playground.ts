@@ -154,6 +154,8 @@ export interface PlaygroundVideoRequest {
   model: string
   group: string
   prompt: string
+  seconds?: string
+  aspect_ratio?: string
   input_reference?: { image_url: string }
 }
 
@@ -175,6 +177,8 @@ export interface PlaygroundVideoResponse {
 export interface PlaygroundConfig {
   model: string
   group: string
+  videoSeconds: string
+  videoAspectRatio: string
   temperature: number
   top_p: number
   max_tokens: number

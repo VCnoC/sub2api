@@ -14,7 +14,7 @@ vi.mock('vue-i18n', async () => {
 describe('PlaygroundInput video mode', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('hides documents and keeps the reference image removable', async () => {
+  it('shows video options, hides documents, and keeps the reference image removable', async () => {
     vi.stubGlobal('FileReader', class {
       result = ''
       onload: (() => void) | null = null
@@ -32,9 +32,18 @@ describe('PlaygroundInput video mode', () => {
         groupValue: 'video',
         groups: [{ label: 'Video', value: 'video', ratio: 1, platform: 'video' }],
         videoMode: true,
+        videoSeconds: '4',
+        videoAspectRatio: '9:16',
       },
       global: { plugins: [createPinia()] },
     })
+
+    const videoSelects = wrapper.findAll('.playground-video-select')
+    expect(videoSelects).toHaveLength(2)
+    await videoSelects[0].setValue('8')
+    await videoSelects[1].setValue('16:9')
+    expect(wrapper.emitted('videoSecondsChange')?.at(-1)).toEqual(['8'])
+    expect(wrapper.emitted('videoAspectRatioChange')?.at(-1)).toEqual(['16:9'])
 
     expect(wrapper.find('[title="playground.input.attachDocument"]').exists()).toBe(false)
     expect(wrapper.find('input[accept*=".txt"]').exists()).toBe(false)
@@ -48,5 +57,8 @@ describe('PlaygroundInput video mode', () => {
     await flushPromises()
 
     expect(wrapper.find('.playground-attachment-remove').exists()).toBe(true)
+
+    await wrapper.setProps({ modelValue: 'grok-video-3-pro' })
+    expect(wrapper.find('.playground-video-options').exists()).toBe(false)
   })
 })

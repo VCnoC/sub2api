@@ -68,6 +68,35 @@
         @paste="handlePaste"
       />
 
+      <div v-if="showVideoOptions" class="playground-video-options">
+        <label class="playground-video-option">
+          <span class="playground-video-option-label">{{ t('playground.video.duration') }}</span>
+          <select
+            :value="videoSeconds"
+            :disabled="disabled"
+            class="playground-select playground-video-select"
+            @change="emitVideoSecondsChange(($event.target as HTMLSelectElement).value)"
+          >
+            <option v-for="seconds in VIDEO_SECONDS_OPTIONS" :key="seconds" :value="seconds">
+              {{ t('playground.video.seconds', { seconds }) }}
+            </option>
+          </select>
+        </label>
+        <label class="playground-video-option">
+          <span class="playground-video-option-label">{{ t('playground.video.aspectRatio') }}</span>
+          <select
+            :value="videoAspectRatio"
+            :disabled="disabled"
+            class="playground-select playground-video-select"
+            @change="emitVideoAspectRatioChange(($event.target as HTMLSelectElement).value)"
+          >
+            <option v-for="ratio in VIDEO_ASPECT_RATIO_OPTIONS" :key="ratio" :value="ratio">
+              {{ ratio }}
+            </option>
+          </select>
+        </label>
+      </div>
+
       <!-- 工具栏 -->
       <div class="playground-toolbar">
         <!-- 左侧：分组 + 模型选择 -->
@@ -236,9 +265,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+import { computed, ref, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import {
+  VIDEO_ASPECT_RATIO_OPTIONS,
+  VIDEO_SECONDS_OPTIONS,
+  isGrokImagineVideoModel,
+} from '@/constants/playground'
 import type {
   ModelOption,
   GroupOption,
@@ -292,6 +326,8 @@ interface Props {
   disabled?: boolean
   isGenerating?: boolean
   videoMode?: boolean
+  videoSeconds?: string
+  videoAspectRatio?: string
   placeholder?: string
 }
 
@@ -300,6 +336,8 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   isGenerating: false,
   videoMode: false,
+  videoSeconds: '4',
+  videoAspectRatio: '9:16',
   placeholder: '',
 })
 
@@ -308,6 +346,8 @@ const emit = defineEmits<{
   (e: 'stop'): void
   (e: 'modelChange', value: string): void
   (e: 'groupChange', value: string): void
+  (e: 'videoSecondsChange', value: string): void
+  (e: 'videoAspectRatioChange', value: string): void
 }>()
 
 const { t } = useI18n()
@@ -319,12 +359,21 @@ const imageInputRef = ref<HTMLInputElement | null>(null)
 const documentInputRef = ref<HTMLInputElement | null>(null)
 const attachments = ref<PlaygroundAttachment[]>([])
 const isProcessingAttachment = ref(false)
+const showVideoOptions = computed(
+  () => props.videoMode && isGrokImagineVideoModel(props.modelValue)
+)
 
 function emitModelChange(v: string) {
   emit('modelChange', v)
 }
 function emitGroupChange(v: string) {
   emit('groupChange', v)
+}
+function emitVideoSecondsChange(v: string) {
+  emit('videoSecondsChange', v)
+}
+function emitVideoAspectRatioChange(v: string) {
+  emit('videoAspectRatioChange', v)
 }
 
 function formatRatio(r: number): string {
@@ -593,6 +642,24 @@ watch(
 .playground-toolbar {
   @apply flex items-center justify-between gap-2 border-t border-gray-100 px-3 py-2.5;
   @apply dark:border-dark-700;
+}
+
+.playground-video-options {
+  @apply flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 px-3 py-2.5;
+  @apply dark:border-dark-700;
+}
+
+.playground-video-option {
+  @apply flex items-center gap-2;
+}
+
+.playground-video-option-label {
+  @apply text-xs font-medium text-gray-500 dark:text-gray-300;
+}
+
+.playground-video-select {
+  min-width: 84px;
+  max-width: 112px;
 }
 
 .playground-select {

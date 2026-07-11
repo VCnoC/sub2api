@@ -19,6 +19,7 @@ import {
   MESSAGE_ROLES,
   MESSAGE_STATUS,
   ERROR_CODE_I18N_MAP,
+  isGrokImagineVideoModel,
 } from '@/constants/playground'
 import type {
   Message,
@@ -320,7 +321,7 @@ function createChatHandler(opts: UseChatHandlerOptions) {
   }
 
   async function sendVideo(messagesIncludingPlaceholder: Message[]) {
-    const { model, group } = opts.config.value
+    const { model, group, videoSeconds, videoAspectRatio } = opts.config.value
     const userMessage = messagesIncludingPlaceholder
       .slice(0, -1)
       .reverse()
@@ -339,6 +340,9 @@ function createChatHandler(opts: UseChatHandlerOptions) {
           model,
           group,
           prompt: userMessage?.versions?.[0]?.content?.trim() || '',
+          ...(isGrokImagineVideoModel(model)
+            ? { seconds: videoSeconds, aspect_ratio: videoAspectRatio }
+            : {}),
           ...(image?.dataUrl
             ? { input_reference: { image_url: image.dataUrl } }
             : {}),

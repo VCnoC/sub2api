@@ -29,6 +29,7 @@
 #### 场景: 文生视频与单图生视频
 - 对话广场选择 `video` 分组后使用 JWT 视频路由，不调用 Chat Completions。
 - `grok-imagine-video` 支持文生视频；`grok-imagine-video-1.5-preview` 必须提供一张参考图。
+- `grok-imagine-video*` 在对话广场显示 1-15 秒时长和常用画面比例选择，并将 `seconds`、`aspect_ratio` 透传到创建请求；其他视频模型不显示这组控件。
 - 参考图通过 `input_reference.image_url` 透传，文档和多图不进入视频请求。
 - 前端展示创建、排队、生成、完成或失败状态，完成时固定显示 100% 并使用原生播放器。
 - 状态查询仍校验登录用户和分组权限，但不因创建扣费后余额归零而拒绝。

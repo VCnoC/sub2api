@@ -38,10 +38,37 @@ export const CONVERSATION_SAVE_DEBOUNCE_MS = 1000
 // 默认分组（兜底值）
 export const DEFAULT_GROUP = 'default' as const
 
+export const VIDEO_SECONDS_OPTIONS = Array.from(
+  { length: 15 },
+  (_, index) => String(index + 1)
+)
+
+export const VIDEO_ASPECT_RATIO_OPTIONS = [
+  '1:1',
+  '16:9',
+  '9:16',
+  '4:3',
+  '3:4',
+  '3:2',
+  '2:3',
+  '2:1',
+  '1:2',
+  '19.5:9',
+  '9:19.5',
+  '20:9',
+  '9:20',
+] as const
+
+export function isGrokImagineVideoModel(model: string): boolean {
+  return model.trim().toLowerCase().startsWith('grok-imagine-video')
+}
+
 // 默认配置
 export const DEFAULT_CONFIG: PlaygroundConfig = {
   model: '',
   group: DEFAULT_GROUP,
+  videoSeconds: '4',
+  videoAspectRatio: '9:16',
   temperature: 0.7,
   top_p: 1,
   max_tokens: 4096,
