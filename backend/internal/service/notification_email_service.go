@@ -33,6 +33,11 @@ const (
 	NotificationEmailEventCyberPolicyNotice           = "content_moderation.cyber_policy_notice"
 	NotificationEmailEventOpsAlert                    = "ops.alert"
 	NotificationEmailEventOpsScheduledReport          = "ops.scheduled_report"
+	NotificationEmailEventTicketCreated               = "ticket.created"
+	NotificationEmailEventTicketUserReply             = "ticket.user_reply"
+	NotificationEmailEventTicketAdminReply            = "ticket.admin_reply"
+	NotificationEmailEventTicketClosed                = "ticket.closed"
+	NotificationEmailEventTicketAssigned              = "ticket.assigned"
 
 	notificationEmailTemplateKeyPrefix    = "notification_email_template:"
 	notificationEmailPreferenceKeyPrefix  = "notification_email_preference:"
@@ -888,6 +893,10 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 			"report_start_time":   "2026-05-19 12:00",
 			"report_end_time":     "2026-05-20 12:00",
 			"report_html":         "<h2>日报</h2><p>请求量：1024</p>",
+			"ticket_id":           "1024",
+			"ticket_subject":      "API 调用返回错误",
+			"ticket_status":       "待管理员回复",
+			"ticket_url":          "https://example.com/tickets/1024",
 		}
 	}
 	return map[string]string{
@@ -934,6 +943,10 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 		"report_start_time":   "2026-05-19 12:00",
 		"report_end_time":     "2026-05-20 12:00",
 		"report_html":         "<h2>Daily summary</h2><p>Requests: 1024</p>",
+		"ticket_id":           "1024",
+		"ticket_subject":      "API request failed",
+		"ticket_status":       "Pending support",
+		"ticket_url":          "https://example.com/tickets/1024",
 	}
 }
 
@@ -951,6 +964,11 @@ var notificationEmailEventOrder = []string{
 	NotificationEmailEventCyberPolicyNotice,
 	NotificationEmailEventOpsAlert,
 	NotificationEmailEventOpsScheduledReport,
+	NotificationEmailEventTicketCreated,
+	NotificationEmailEventTicketUserReply,
+	NotificationEmailEventTicketAdminReply,
+	NotificationEmailEventTicketClosed,
+	NotificationEmailEventTicketAssigned,
 }
 
 var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
@@ -1063,6 +1081,26 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"report_name", "report_type", "report_start_time", "report_end_time", "report_html"),
+	},
+	NotificationEmailEventTicketCreated: {
+		Event: NotificationEmailEventTicketCreated, Label: "New support ticket", Description: "Sent to administrators when a user creates a support ticket.", Category: "support", Optional: false,
+		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "ticket_id", "ticket_subject", "ticket_status", "ticket_url"),
+	},
+	NotificationEmailEventTicketUserReply: {
+		Event: NotificationEmailEventTicketUserReply, Label: "Support ticket user reply", Description: "Sent to the assignee or administrators when a user replies.", Category: "support", Optional: false,
+		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "ticket_id", "ticket_subject", "ticket_status", "ticket_url"),
+	},
+	NotificationEmailEventTicketAdminReply: {
+		Event: NotificationEmailEventTicketAdminReply, Label: "Support ticket admin reply", Description: "Sent to a user when an administrator replies.", Category: "support", Optional: false,
+		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "ticket_id", "ticket_subject", "ticket_status", "ticket_url"),
+	},
+	NotificationEmailEventTicketClosed: {
+		Event: NotificationEmailEventTicketClosed, Label: "Support ticket closed", Description: "Sent to a user when an administrator closes a ticket.", Category: "support", Optional: false,
+		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "ticket_id", "ticket_subject", "ticket_status", "ticket_url"),
+	},
+	NotificationEmailEventTicketAssigned: {
+		Event: NotificationEmailEventTicketAssigned, Label: "Support ticket assigned", Description: "Sent to an administrator when a ticket is assigned to them.", Category: "support", Optional: false,
+		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "ticket_id", "ticket_subject", "ticket_status", "ticket_url"),
 	},
 }
 
@@ -1356,6 +1394,22 @@ var notificationEmailOfficialTemplates = map[string]map[string]notificationEmail
 <div>{{report_html}}</div>`),
 		},
 	},
+	NotificationEmailEventTicketCreated:    ticketNotificationTemplates("New support ticket", "新工单", "A user created support ticket #{{ticket_id}}.", "用户创建了工单 #{{ticket_id}}。"),
+	NotificationEmailEventTicketUserReply:  ticketNotificationTemplates("New ticket reply", "工单有新回复", "A user replied to support ticket #{{ticket_id}}.", "用户回复了工单 #{{ticket_id}}。"),
+	NotificationEmailEventTicketAdminReply: ticketNotificationTemplates("Support replied", "工单已有回复", "Support replied to ticket #{{ticket_id}}.", "管理员回复了您的工单 #{{ticket_id}}。"),
+	NotificationEmailEventTicketClosed:     ticketNotificationTemplates("Support ticket closed", "工单已关闭", "Support ticket #{{ticket_id}} was closed. Reply on the site to reopen it.", "工单 #{{ticket_id}} 已关闭；如需继续处理，请在站内回复以重新打开。"),
+	NotificationEmailEventTicketAssigned:   ticketNotificationTemplates("Ticket assigned to you", "工单已分配给您", "Support ticket #{{ticket_id}} was assigned to you.", "工单 #{{ticket_id}} 已分配给您。"),
+}
+
+func ticketNotificationTemplates(enTitle, zhTitle, enIntro, zhIntro string) map[string]notificationEmailOfficialTemplate {
+	content := func(intro string) string {
+		return `<p>Hello {{recipient_name}},</p><p>` + intro + `</p><p><strong>{{ticket_subject}}</strong></p><p>Status: {{ticket_status}}</p><p><a class="button" href="{{ticket_url}}">Open ticket</a></p>`
+	}
+	zhContent := `<p>{{recipient_name}}，您好：</p><p>` + zhIntro + `</p><p><strong>{{ticket_subject}}</strong></p><p>当前状态：{{ticket_status}}</p><p><a class="button" href="{{ticket_url}}">查看工单</a></p>`
+	return map[string]notificationEmailOfficialTemplate{
+		notificationEmailDefaultLocale: {Subject: "[{{site_name}}] " + enTitle + " #{{ticket_id}}", HTML: notificationEmailCard("#2563eb", enTitle, content(enIntro))},
+		notificationEmailLocaleChinese: {Subject: "[{{site_name}}] " + zhTitle + " #{{ticket_id}}", HTML: notificationEmailCard("#2563eb", zhTitle, zhContent)},
+	}
 }
 
 func notificationEmailCard(accent, title, content string) string {

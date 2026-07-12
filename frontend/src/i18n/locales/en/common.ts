@@ -193,6 +193,8 @@ export default {
     channelMonitor: 'Channel Monitor',
     channelStatus: 'Channel Status',
     riskControl: 'Risk Control',
+    tickets: 'My Tickets',
+    ticketManagement: 'Ticket Management',
   },
 
   // Auth

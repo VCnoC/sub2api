@@ -36,6 +36,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/subscriptionplan"
+	"github.com/Wei-Shaw/sub2api/ent/supportticket"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketread"
 	"github.com/Wei-Shaw/sub2api/ent/team"
 	"github.com/Wei-Shaw/sub2api/ent/tlsfingerprintprofile"
 	"github.com/Wei-Shaw/sub2api/ent/usagecleanuptask"
@@ -1790,6 +1794,154 @@ func init() {
 	subscriptionplan.DefaultUpdatedAt = subscriptionplanDescUpdatedAt.Default.(func() time.Time)
 	// subscriptionplan.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	subscriptionplan.UpdateDefaultUpdatedAt = subscriptionplanDescUpdatedAt.UpdateDefault.(func() time.Time)
+	supportticketFields := schema.SupportTicket{}.Fields()
+	_ = supportticketFields
+	// supportticketDescSubject is the schema descriptor for subject field.
+	supportticketDescSubject := supportticketFields[1].Descriptor()
+	// supportticket.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
+	supportticket.SubjectValidator = func() func(string) error {
+		validators := supportticketDescSubject.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(subject string) error {
+			for _, fn := range fns {
+				if err := fn(subject); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// supportticketDescCategory is the schema descriptor for category field.
+	supportticketDescCategory := supportticketFields[2].Descriptor()
+	// supportticket.DefaultCategory holds the default value on creation for the category field.
+	supportticket.DefaultCategory = supportticketDescCategory.Default.(string)
+	// supportticket.CategoryValidator is a validator for the "category" field. It is called by the builders before save.
+	supportticket.CategoryValidator = supportticketDescCategory.Validators[0].(func(string) error)
+	// supportticketDescStatus is the schema descriptor for status field.
+	supportticketDescStatus := supportticketFields[3].Descriptor()
+	// supportticket.DefaultStatus holds the default value on creation for the status field.
+	supportticket.DefaultStatus = supportticketDescStatus.Default.(string)
+	// supportticket.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	supportticket.StatusValidator = supportticketDescStatus.Validators[0].(func(string) error)
+	// supportticketDescPriority is the schema descriptor for priority field.
+	supportticketDescPriority := supportticketFields[4].Descriptor()
+	// supportticket.DefaultPriority holds the default value on creation for the priority field.
+	supportticket.DefaultPriority = supportticketDescPriority.Default.(string)
+	// supportticket.PriorityValidator is a validator for the "priority" field. It is called by the builders before save.
+	supportticket.PriorityValidator = supportticketDescPriority.Validators[0].(func(string) error)
+	// supportticketDescLastMessageAt is the schema descriptor for last_message_at field.
+	supportticketDescLastMessageAt := supportticketFields[8].Descriptor()
+	// supportticket.DefaultLastMessageAt holds the default value on creation for the last_message_at field.
+	supportticket.DefaultLastMessageAt = supportticketDescLastMessageAt.Default.(func() time.Time)
+	// supportticketDescCreatedAt is the schema descriptor for created_at field.
+	supportticketDescCreatedAt := supportticketFields[9].Descriptor()
+	// supportticket.DefaultCreatedAt holds the default value on creation for the created_at field.
+	supportticket.DefaultCreatedAt = supportticketDescCreatedAt.Default.(func() time.Time)
+	// supportticketDescUpdatedAt is the schema descriptor for updated_at field.
+	supportticketDescUpdatedAt := supportticketFields[10].Descriptor()
+	// supportticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	supportticket.DefaultUpdatedAt = supportticketDescUpdatedAt.Default.(func() time.Time)
+	// supportticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	supportticket.UpdateDefaultUpdatedAt = supportticketDescUpdatedAt.UpdateDefault.(func() time.Time)
+	supportticketattachmentFields := schema.SupportTicketAttachment{}.Fields()
+	_ = supportticketattachmentFields
+	// supportticketattachmentDescOriginalName is the schema descriptor for original_name field.
+	supportticketattachmentDescOriginalName := supportticketattachmentFields[2].Descriptor()
+	// supportticketattachment.OriginalNameValidator is a validator for the "original_name" field. It is called by the builders before save.
+	supportticketattachment.OriginalNameValidator = func() func(string) error {
+		validators := supportticketattachmentDescOriginalName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(original_name string) error {
+			for _, fn := range fns {
+				if err := fn(original_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// supportticketattachmentDescStorageKey is the schema descriptor for storage_key field.
+	supportticketattachmentDescStorageKey := supportticketattachmentFields[3].Descriptor()
+	// supportticketattachment.StorageKeyValidator is a validator for the "storage_key" field. It is called by the builders before save.
+	supportticketattachment.StorageKeyValidator = func() func(string) error {
+		validators := supportticketattachmentDescStorageKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(storage_key string) error {
+			for _, fn := range fns {
+				if err := fn(storage_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// supportticketattachmentDescMediaType is the schema descriptor for media_type field.
+	supportticketattachmentDescMediaType := supportticketattachmentFields[4].Descriptor()
+	// supportticketattachment.MediaTypeValidator is a validator for the "media_type" field. It is called by the builders before save.
+	supportticketattachment.MediaTypeValidator = func() func(string) error {
+		validators := supportticketattachmentDescMediaType.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(media_type string) error {
+			for _, fn := range fns {
+				if err := fn(media_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// supportticketattachmentDescDeleteReason is the schema descriptor for delete_reason field.
+	supportticketattachmentDescDeleteReason := supportticketattachmentFields[9].Descriptor()
+	// supportticketattachment.DeleteReasonValidator is a validator for the "delete_reason" field. It is called by the builders before save.
+	supportticketattachment.DeleteReasonValidator = supportticketattachmentDescDeleteReason.Validators[0].(func(string) error)
+	// supportticketattachmentDescCreatedAt is the schema descriptor for created_at field.
+	supportticketattachmentDescCreatedAt := supportticketattachmentFields[10].Descriptor()
+	// supportticketattachment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	supportticketattachment.DefaultCreatedAt = supportticketattachmentDescCreatedAt.Default.(func() time.Time)
+	supportticketmessageFields := schema.SupportTicketMessage{}.Fields()
+	_ = supportticketmessageFields
+	// supportticketmessageDescKind is the schema descriptor for kind field.
+	supportticketmessageDescKind := supportticketmessageFields[2].Descriptor()
+	// supportticketmessage.DefaultKind holds the default value on creation for the kind field.
+	supportticketmessage.DefaultKind = supportticketmessageDescKind.Default.(string)
+	// supportticketmessage.KindValidator is a validator for the "kind" field. It is called by the builders before save.
+	supportticketmessage.KindValidator = supportticketmessageDescKind.Validators[0].(func(string) error)
+	// supportticketmessageDescVisibility is the schema descriptor for visibility field.
+	supportticketmessageDescVisibility := supportticketmessageFields[3].Descriptor()
+	// supportticketmessage.DefaultVisibility holds the default value on creation for the visibility field.
+	supportticketmessage.DefaultVisibility = supportticketmessageDescVisibility.Default.(string)
+	// supportticketmessage.VisibilityValidator is a validator for the "visibility" field. It is called by the builders before save.
+	supportticketmessage.VisibilityValidator = supportticketmessageDescVisibility.Validators[0].(func(string) error)
+	// supportticketmessageDescBody is the schema descriptor for body field.
+	supportticketmessageDescBody := supportticketmessageFields[4].Descriptor()
+	// supportticketmessage.DefaultBody holds the default value on creation for the body field.
+	supportticketmessage.DefaultBody = supportticketmessageDescBody.Default.(string)
+	// supportticketmessageDescCreatedAt is the schema descriptor for created_at field.
+	supportticketmessageDescCreatedAt := supportticketmessageFields[6].Descriptor()
+	// supportticketmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	supportticketmessage.DefaultCreatedAt = supportticketmessageDescCreatedAt.Default.(func() time.Time)
+	supportticketreadFields := schema.SupportTicketRead{}.Fields()
+	_ = supportticketreadFields
+	// supportticketreadDescLastReadMessageID is the schema descriptor for last_read_message_id field.
+	supportticketreadDescLastReadMessageID := supportticketreadFields[2].Descriptor()
+	// supportticketread.DefaultLastReadMessageID holds the default value on creation for the last_read_message_id field.
+	supportticketread.DefaultLastReadMessageID = supportticketreadDescLastReadMessageID.Default.(int64)
+	// supportticketreadDescReadAt is the schema descriptor for read_at field.
+	supportticketreadDescReadAt := supportticketreadFields[3].Descriptor()
+	// supportticketread.DefaultReadAt holds the default value on creation for the read_at field.
+	supportticketread.DefaultReadAt = supportticketreadDescReadAt.Default.(func() time.Time)
 	tlsfingerprintprofileMixin := schema.TLSFingerprintProfile{}.Mixin()
 	tlsfingerprintprofileMixinFields0 := tlsfingerprintprofileMixin[0].Fields()
 	_ = tlsfingerprintprofileMixinFields0

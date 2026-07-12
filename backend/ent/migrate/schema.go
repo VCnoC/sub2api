@@ -1504,6 +1504,220 @@ var (
 			},
 		},
 	}
+	// SupportTicketsColumns holds the columns for the "support_tickets" table.
+	SupportTicketsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "subject", Type: field.TypeString, Size: 200},
+		{Name: "category", Type: field.TypeString, Size: 32, Default: "other"},
+		{Name: "status", Type: field.TypeString, Size: 24, Default: "pending_admin"},
+		{Name: "priority", Type: field.TypeString, Size: 16, Default: "normal"},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "last_message_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "assignee_id", Type: field.TypeInt64, Nullable: true},
+		{Name: "closed_by", Type: field.TypeInt64, Nullable: true},
+	}
+	// SupportTicketsTable holds the schema information for the "support_tickets" table.
+	SupportTicketsTable = &schema.Table{
+		Name:       "support_tickets",
+		Columns:    SupportTicketsColumns,
+		PrimaryKey: []*schema.Column{SupportTicketsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "support_tickets_users_support_tickets",
+				Columns:    []*schema.Column{SupportTicketsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "support_tickets_users_assigned_support_tickets",
+				Columns:    []*schema.Column{SupportTicketsColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "support_tickets_users_closed_support_tickets",
+				Columns:    []*schema.Column{SupportTicketsColumns[11]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "supportticket_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketsColumns[9], SupportTicketsColumns[7]},
+			},
+			{
+				Name:    "supportticket_user_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketsColumns[9], SupportTicketsColumns[3]},
+			},
+			{
+				Name:    "supportticket_status_priority_last_message_at",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketsColumns[3], SupportTicketsColumns[4], SupportTicketsColumns[6]},
+			},
+			{
+				Name:    "supportticket_assignee_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketsColumns[10], SupportTicketsColumns[3]},
+			},
+			{
+				Name:    "supportticket_category_status",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketsColumns[2], SupportTicketsColumns[3]},
+			},
+		},
+	}
+	// SupportTicketAttachmentsColumns holds the columns for the "support_ticket_attachments" table.
+	SupportTicketAttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "original_name", Type: field.TypeString, Size: 255},
+		{Name: "storage_key", Type: field.TypeString, Unique: true, Size: 255},
+		{Name: "media_type", Type: field.TypeString, Size: 100},
+		{Name: "size_bytes", Type: field.TypeInt64},
+		{Name: "delete_after", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "delete_reason", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "message_id", Type: field.TypeInt64},
+		{Name: "uploader_id", Type: field.TypeInt64},
+		{Name: "deleted_by", Type: field.TypeInt64, Nullable: true},
+	}
+	// SupportTicketAttachmentsTable holds the schema information for the "support_ticket_attachments" table.
+	SupportTicketAttachmentsTable = &schema.Table{
+		Name:       "support_ticket_attachments",
+		Columns:    SupportTicketAttachmentsColumns,
+		PrimaryKey: []*schema.Column{SupportTicketAttachmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "support_ticket_attachments_support_ticket_messages_attachments",
+				Columns:    []*schema.Column{SupportTicketAttachmentsColumns[9]},
+				RefColumns: []*schema.Column{SupportTicketMessagesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "support_ticket_attachments_users_support_ticket_attachments",
+				Columns:    []*schema.Column{SupportTicketAttachmentsColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "support_ticket_attachments_users_deleted_support_ticket_attachments",
+				Columns:    []*schema.Column{SupportTicketAttachmentsColumns[11]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "supportticketattachment_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketAttachmentsColumns[9]},
+			},
+			{
+				Name:    "supportticketattachment_delete_after_deleted_at",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketAttachmentsColumns[5], SupportTicketAttachmentsColumns[6]},
+			},
+			{
+				Name:    "supportticketattachment_uploader_id",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketAttachmentsColumns[10]},
+			},
+		},
+	}
+	// SupportTicketMessagesColumns holds the columns for the "support_ticket_messages" table.
+	SupportTicketMessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "kind", Type: field.TypeString, Size: 16, Default: "public"},
+		{Name: "visibility", Type: field.TypeString, Size: 16, Default: "user"},
+		{Name: "body", Type: field.TypeString, Default: "", SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "ticket_id", Type: field.TypeInt64},
+		{Name: "author_id", Type: field.TypeInt64, Nullable: true},
+	}
+	// SupportTicketMessagesTable holds the schema information for the "support_ticket_messages" table.
+	SupportTicketMessagesTable = &schema.Table{
+		Name:       "support_ticket_messages",
+		Columns:    SupportTicketMessagesColumns,
+		PrimaryKey: []*schema.Column{SupportTicketMessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "support_ticket_messages_support_tickets_messages",
+				Columns:    []*schema.Column{SupportTicketMessagesColumns[6]},
+				RefColumns: []*schema.Column{SupportTicketsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "support_ticket_messages_users_support_ticket_messages",
+				Columns:    []*schema.Column{SupportTicketMessagesColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "supportticketmessage_ticket_id_id",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketMessagesColumns[6], SupportTicketMessagesColumns[0]},
+			},
+			{
+				Name:    "supportticketmessage_ticket_id_visibility_id",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketMessagesColumns[6], SupportTicketMessagesColumns[2], SupportTicketMessagesColumns[0]},
+			},
+			{
+				Name:    "supportticketmessage_author_id",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketMessagesColumns[7]},
+			},
+		},
+	}
+	// SupportTicketReadsColumns holds the columns for the "support_ticket_reads" table.
+	SupportTicketReadsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "last_read_message_id", Type: field.TypeInt64, Default: 0},
+		{Name: "read_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "ticket_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// SupportTicketReadsTable holds the schema information for the "support_ticket_reads" table.
+	SupportTicketReadsTable = &schema.Table{
+		Name:       "support_ticket_reads",
+		Columns:    SupportTicketReadsColumns,
+		PrimaryKey: []*schema.Column{SupportTicketReadsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "support_ticket_reads_support_tickets_reads",
+				Columns:    []*schema.Column{SupportTicketReadsColumns[3]},
+				RefColumns: []*schema.Column{SupportTicketsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "support_ticket_reads_users_support_ticket_reads",
+				Columns:    []*schema.Column{SupportTicketReadsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "supportticketread_ticket_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{SupportTicketReadsColumns[3], SupportTicketReadsColumns[4]},
+			},
+			{
+				Name:    "supportticketread_user_id_read_at",
+				Unique:  false,
+				Columns: []*schema.Column{SupportTicketReadsColumns[4], SupportTicketReadsColumns[2]},
+			},
+		},
+	}
 	// TLSFingerprintProfilesColumns holds the columns for the "tls_fingerprint_profiles" table.
 	TLSFingerprintProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -2157,6 +2371,10 @@ var (
 		SecuritySecretsTable,
 		SettingsTable,
 		SubscriptionPlansTable,
+		SupportTicketsTable,
+		SupportTicketAttachmentsTable,
+		SupportTicketMessagesTable,
+		SupportTicketReadsTable,
 		TLSFingerprintProfilesTable,
 		TeamsTable,
 		UsageCleanupTasksTable,
@@ -2283,6 +2501,28 @@ func init() {
 	}
 	SubscriptionPlansTable.Annotation = &entsql.Annotation{
 		Table: "subscription_plans",
+	}
+	SupportTicketsTable.ForeignKeys[0].RefTable = UsersTable
+	SupportTicketsTable.ForeignKeys[1].RefTable = UsersTable
+	SupportTicketsTable.ForeignKeys[2].RefTable = UsersTable
+	SupportTicketsTable.Annotation = &entsql.Annotation{
+		Table: "support_tickets",
+	}
+	SupportTicketAttachmentsTable.ForeignKeys[0].RefTable = SupportTicketMessagesTable
+	SupportTicketAttachmentsTable.ForeignKeys[1].RefTable = UsersTable
+	SupportTicketAttachmentsTable.ForeignKeys[2].RefTable = UsersTable
+	SupportTicketAttachmentsTable.Annotation = &entsql.Annotation{
+		Table: "support_ticket_attachments",
+	}
+	SupportTicketMessagesTable.ForeignKeys[0].RefTable = SupportTicketsTable
+	SupportTicketMessagesTable.ForeignKeys[1].RefTable = UsersTable
+	SupportTicketMessagesTable.Annotation = &entsql.Annotation{
+		Table: "support_ticket_messages",
+	}
+	SupportTicketReadsTable.ForeignKeys[0].RefTable = SupportTicketsTable
+	SupportTicketReadsTable.ForeignKeys[1].RefTable = UsersTable
+	SupportTicketReadsTable.Annotation = &entsql.Annotation{
+		Table: "support_ticket_reads",
 	}
 	TLSFingerprintProfilesTable.Annotation = &entsql.Annotation{
 		Table: "tls_fingerprint_profiles",

@@ -55,6 +55,12 @@ func ProvideBatchImageCleanupService(repo BatchImageRepository, accountRepo Acco
 	return svc
 }
 
+func ProvideTicketAttachmentCleanupService(ticketService *TicketService) *TicketAttachmentCleanupService {
+	svc := NewTicketAttachmentCleanupService(ticketService)
+	svc.Start()
+	return svc
+}
+
 // ProvideOpenAIOAuthService creates OpenAIOAuthService with privacy/account enrichment support.
 func ProvideOpenAIOAuthService(
 	proxyRepo ProxyRepository,
@@ -617,6 +623,9 @@ var ProviderSet = wire.NewSet(
 	ProvideOpsScheduledReportService,
 	NewEmailService,
 	NewNotificationEmailService,
+	NewTicketFileStore,
+	NewTicketService,
+	ProvideTicketAttachmentCleanupService,
 	ProvideEmailQueueService,
 	NewTurnstileService,
 	NewSubscriptionService,

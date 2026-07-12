@@ -88,6 +88,20 @@ type UserEdges struct {
 	AssignedSubscriptions []*UserSubscription `json:"assigned_subscriptions,omitempty"`
 	// AnnouncementReads holds the value of the announcement_reads edge.
 	AnnouncementReads []*AnnouncementRead `json:"announcement_reads,omitempty"`
+	// SupportTickets holds the value of the support_tickets edge.
+	SupportTickets []*SupportTicket `json:"support_tickets,omitempty"`
+	// AssignedSupportTickets holds the value of the assigned_support_tickets edge.
+	AssignedSupportTickets []*SupportTicket `json:"assigned_support_tickets,omitempty"`
+	// ClosedSupportTickets holds the value of the closed_support_tickets edge.
+	ClosedSupportTickets []*SupportTicket `json:"closed_support_tickets,omitempty"`
+	// SupportTicketMessages holds the value of the support_ticket_messages edge.
+	SupportTicketMessages []*SupportTicketMessage `json:"support_ticket_messages,omitempty"`
+	// SupportTicketAttachments holds the value of the support_ticket_attachments edge.
+	SupportTicketAttachments []*SupportTicketAttachment `json:"support_ticket_attachments,omitempty"`
+	// DeletedSupportTicketAttachments holds the value of the deleted_support_ticket_attachments edge.
+	DeletedSupportTicketAttachments []*SupportTicketAttachment `json:"deleted_support_ticket_attachments,omitempty"`
+	// SupportTicketReads holds the value of the support_ticket_reads edge.
+	SupportTicketReads []*SupportTicketRead `json:"support_ticket_reads,omitempty"`
 	// AllowedGroups holds the value of the allowed_groups edge.
 	AllowedGroups []*Group `json:"allowed_groups,omitempty"`
 	// UsageLogs holds the value of the usage_logs edge.
@@ -110,7 +124,7 @@ type UserEdges struct {
 	UserAllowedGroups []*UserAllowedGroup `json:"user_allowed_groups,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [15]bool
+	loadedTypes [22]bool
 }
 
 // APIKeysOrErr returns the APIKeys value or an error if the edge
@@ -158,10 +172,73 @@ func (e UserEdges) AnnouncementReadsOrErr() ([]*AnnouncementRead, error) {
 	return nil, &NotLoadedError{edge: "announcement_reads"}
 }
 
+// SupportTicketsOrErr returns the SupportTickets value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SupportTicketsOrErr() ([]*SupportTicket, error) {
+	if e.loadedTypes[5] {
+		return e.SupportTickets, nil
+	}
+	return nil, &NotLoadedError{edge: "support_tickets"}
+}
+
+// AssignedSupportTicketsOrErr returns the AssignedSupportTickets value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AssignedSupportTicketsOrErr() ([]*SupportTicket, error) {
+	if e.loadedTypes[6] {
+		return e.AssignedSupportTickets, nil
+	}
+	return nil, &NotLoadedError{edge: "assigned_support_tickets"}
+}
+
+// ClosedSupportTicketsOrErr returns the ClosedSupportTickets value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ClosedSupportTicketsOrErr() ([]*SupportTicket, error) {
+	if e.loadedTypes[7] {
+		return e.ClosedSupportTickets, nil
+	}
+	return nil, &NotLoadedError{edge: "closed_support_tickets"}
+}
+
+// SupportTicketMessagesOrErr returns the SupportTicketMessages value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SupportTicketMessagesOrErr() ([]*SupportTicketMessage, error) {
+	if e.loadedTypes[8] {
+		return e.SupportTicketMessages, nil
+	}
+	return nil, &NotLoadedError{edge: "support_ticket_messages"}
+}
+
+// SupportTicketAttachmentsOrErr returns the SupportTicketAttachments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SupportTicketAttachmentsOrErr() ([]*SupportTicketAttachment, error) {
+	if e.loadedTypes[9] {
+		return e.SupportTicketAttachments, nil
+	}
+	return nil, &NotLoadedError{edge: "support_ticket_attachments"}
+}
+
+// DeletedSupportTicketAttachmentsOrErr returns the DeletedSupportTicketAttachments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) DeletedSupportTicketAttachmentsOrErr() ([]*SupportTicketAttachment, error) {
+	if e.loadedTypes[10] {
+		return e.DeletedSupportTicketAttachments, nil
+	}
+	return nil, &NotLoadedError{edge: "deleted_support_ticket_attachments"}
+}
+
+// SupportTicketReadsOrErr returns the SupportTicketReads value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SupportTicketReadsOrErr() ([]*SupportTicketRead, error) {
+	if e.loadedTypes[11] {
+		return e.SupportTicketReads, nil
+	}
+	return nil, &NotLoadedError{edge: "support_ticket_reads"}
+}
+
 // AllowedGroupsOrErr returns the AllowedGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) AllowedGroupsOrErr() ([]*Group, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[12] {
 		return e.AllowedGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "allowed_groups"}
@@ -170,7 +247,7 @@ func (e UserEdges) AllowedGroupsOrErr() ([]*Group, error) {
 // UsageLogsOrErr returns the UsageLogs value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) UsageLogsOrErr() ([]*UsageLog, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[13] {
 		return e.UsageLogs, nil
 	}
 	return nil, &NotLoadedError{edge: "usage_logs"}
@@ -179,7 +256,7 @@ func (e UserEdges) UsageLogsOrErr() ([]*UsageLog, error) {
 // AttributeValuesOrErr returns the AttributeValues value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) AttributeValuesOrErr() ([]*UserAttributeValue, error) {
-	if e.loadedTypes[7] {
+	if e.loadedTypes[14] {
 		return e.AttributeValues, nil
 	}
 	return nil, &NotLoadedError{edge: "attribute_values"}
@@ -188,7 +265,7 @@ func (e UserEdges) AttributeValuesOrErr() ([]*UserAttributeValue, error) {
 // PromoCodeUsagesOrErr returns the PromoCodeUsages value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) PromoCodeUsagesOrErr() ([]*PromoCodeUsage, error) {
-	if e.loadedTypes[8] {
+	if e.loadedTypes[15] {
 		return e.PromoCodeUsages, nil
 	}
 	return nil, &NotLoadedError{edge: "promo_code_usages"}
@@ -197,7 +274,7 @@ func (e UserEdges) PromoCodeUsagesOrErr() ([]*PromoCodeUsage, error) {
 // PaymentOrdersOrErr returns the PaymentOrders value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) PaymentOrdersOrErr() ([]*PaymentOrder, error) {
-	if e.loadedTypes[9] {
+	if e.loadedTypes[16] {
 		return e.PaymentOrders, nil
 	}
 	return nil, &NotLoadedError{edge: "payment_orders"}
@@ -206,7 +283,7 @@ func (e UserEdges) PaymentOrdersOrErr() ([]*PaymentOrder, error) {
 // AuthIdentitiesOrErr returns the AuthIdentities value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) AuthIdentitiesOrErr() ([]*AuthIdentity, error) {
-	if e.loadedTypes[10] {
+	if e.loadedTypes[17] {
 		return e.AuthIdentities, nil
 	}
 	return nil, &NotLoadedError{edge: "auth_identities"}
@@ -215,7 +292,7 @@ func (e UserEdges) AuthIdentitiesOrErr() ([]*AuthIdentity, error) {
 // PendingAuthSessionsOrErr returns the PendingAuthSessions value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) PendingAuthSessionsOrErr() ([]*PendingAuthSession, error) {
-	if e.loadedTypes[11] {
+	if e.loadedTypes[18] {
 		return e.PendingAuthSessions, nil
 	}
 	return nil, &NotLoadedError{edge: "pending_auth_sessions"}
@@ -224,7 +301,7 @@ func (e UserEdges) PendingAuthSessionsOrErr() ([]*PendingAuthSession, error) {
 // PlatformQuotasOrErr returns the PlatformQuotas value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) PlatformQuotasOrErr() ([]*UserPlatformQuota, error) {
-	if e.loadedTypes[12] {
+	if e.loadedTypes[19] {
 		return e.PlatformQuotas, nil
 	}
 	return nil, &NotLoadedError{edge: "platform_quotas"}
@@ -235,7 +312,7 @@ func (e UserEdges) PlatformQuotasOrErr() ([]*UserPlatformQuota, error) {
 func (e UserEdges) TeamOrErr() (*Team, error) {
 	if e.Team != nil {
 		return e.Team, nil
-	} else if e.loadedTypes[13] {
+	} else if e.loadedTypes[20] {
 		return nil, &NotFoundError{label: team.Label}
 	}
 	return nil, &NotLoadedError{edge: "team"}
@@ -244,7 +321,7 @@ func (e UserEdges) TeamOrErr() (*Team, error) {
 // UserAllowedGroupsOrErr returns the UserAllowedGroups value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) UserAllowedGroupsOrErr() ([]*UserAllowedGroup, error) {
-	if e.loadedTypes[14] {
+	if e.loadedTypes[21] {
 		return e.UserAllowedGroups, nil
 	}
 	return nil, &NotLoadedError{edge: "user_allowed_groups"}
@@ -485,6 +562,41 @@ func (_m *User) QueryAssignedSubscriptions() *UserSubscriptionQuery {
 // QueryAnnouncementReads queries the "announcement_reads" edge of the User entity.
 func (_m *User) QueryAnnouncementReads() *AnnouncementReadQuery {
 	return NewUserClient(_m.config).QueryAnnouncementReads(_m)
+}
+
+// QuerySupportTickets queries the "support_tickets" edge of the User entity.
+func (_m *User) QuerySupportTickets() *SupportTicketQuery {
+	return NewUserClient(_m.config).QuerySupportTickets(_m)
+}
+
+// QueryAssignedSupportTickets queries the "assigned_support_tickets" edge of the User entity.
+func (_m *User) QueryAssignedSupportTickets() *SupportTicketQuery {
+	return NewUserClient(_m.config).QueryAssignedSupportTickets(_m)
+}
+
+// QueryClosedSupportTickets queries the "closed_support_tickets" edge of the User entity.
+func (_m *User) QueryClosedSupportTickets() *SupportTicketQuery {
+	return NewUserClient(_m.config).QueryClosedSupportTickets(_m)
+}
+
+// QuerySupportTicketMessages queries the "support_ticket_messages" edge of the User entity.
+func (_m *User) QuerySupportTicketMessages() *SupportTicketMessageQuery {
+	return NewUserClient(_m.config).QuerySupportTicketMessages(_m)
+}
+
+// QuerySupportTicketAttachments queries the "support_ticket_attachments" edge of the User entity.
+func (_m *User) QuerySupportTicketAttachments() *SupportTicketAttachmentQuery {
+	return NewUserClient(_m.config).QuerySupportTicketAttachments(_m)
+}
+
+// QueryDeletedSupportTicketAttachments queries the "deleted_support_ticket_attachments" edge of the User entity.
+func (_m *User) QueryDeletedSupportTicketAttachments() *SupportTicketAttachmentQuery {
+	return NewUserClient(_m.config).QueryDeletedSupportTicketAttachments(_m)
+}
+
+// QuerySupportTicketReads queries the "support_ticket_reads" edge of the User entity.
+func (_m *User) QuerySupportTicketReads() *SupportTicketReadQuery {
+	return NewUserClient(_m.config).QuerySupportTicketReads(_m)
 }
 
 // QueryAllowedGroups queries the "allowed_groups" edge of the User entity.

@@ -193,6 +193,8 @@ export default {
     channelMonitor: '渠道监控',
     channelStatus: '渠道状态',
     riskControl: '风控中心',
+    tickets: '我的工单',
+    ticketManagement: '工单管理',
   },
 
   // Auth

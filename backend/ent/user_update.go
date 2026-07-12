@@ -20,6 +20,10 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/supportticket"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
+	"github.com/Wei-Shaw/sub2api/ent/supportticketread"
 	"github.com/Wei-Shaw/sub2api/ent/team"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
@@ -542,6 +546,111 @@ func (_u *UserUpdate) AddAnnouncementReads(v ...*AnnouncementRead) *UserUpdate {
 	return _u.AddAnnouncementReadIDs(ids...)
 }
 
+// AddSupportTicketIDs adds the "support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdate) AddSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddSupportTickets adds the "support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) AddSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketIDs(ids...)
+}
+
+// AddAssignedSupportTicketIDs adds the "assigned_support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdate) AddAssignedSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddAssignedSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddAssignedSupportTickets adds the "assigned_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) AddAssignedSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignedSupportTicketIDs(ids...)
+}
+
+// AddClosedSupportTicketIDs adds the "closed_support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdate) AddClosedSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddClosedSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddClosedSupportTickets adds the "closed_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) AddClosedSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddClosedSupportTicketIDs(ids...)
+}
+
+// AddSupportTicketMessageIDs adds the "support_ticket_messages" edge to the SupportTicketMessage entity by IDs.
+func (_u *UserUpdate) AddSupportTicketMessageIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddSupportTicketMessageIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketMessages adds the "support_ticket_messages" edges to the SupportTicketMessage entity.
+func (_u *UserUpdate) AddSupportTicketMessages(v ...*SupportTicketMessage) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketMessageIDs(ids...)
+}
+
+// AddSupportTicketAttachmentIDs adds the "support_ticket_attachments" edge to the SupportTicketAttachment entity by IDs.
+func (_u *UserUpdate) AddSupportTicketAttachmentIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketAttachments adds the "support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdate) AddSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketAttachmentIDs(ids...)
+}
+
+// AddDeletedSupportTicketAttachmentIDs adds the "deleted_support_ticket_attachments" edge to the SupportTicketAttachment entity by IDs.
+func (_u *UserUpdate) AddDeletedSupportTicketAttachmentIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddDeletedSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// AddDeletedSupportTicketAttachments adds the "deleted_support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdate) AddDeletedSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDeletedSupportTicketAttachmentIDs(ids...)
+}
+
+// AddSupportTicketReadIDs adds the "support_ticket_reads" edge to the SupportTicketRead entity by IDs.
+func (_u *UserUpdate) AddSupportTicketReadIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddSupportTicketReadIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketReads adds the "support_ticket_reads" edges to the SupportTicketRead entity.
+func (_u *UserUpdate) AddSupportTicketReads(v ...*SupportTicketRead) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketReadIDs(ids...)
+}
+
 // AddAllowedGroupIDs adds the "allowed_groups" edge to the Group entity by IDs.
 func (_u *UserUpdate) AddAllowedGroupIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddAllowedGroupIDs(ids...)
@@ -775,6 +884,153 @@ func (_u *UserUpdate) RemoveAnnouncementReads(v ...*AnnouncementRead) *UserUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAnnouncementReadIDs(ids...)
+}
+
+// ClearSupportTickets clears all "support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) ClearSupportTickets() *UserUpdate {
+	_u.mutation.ClearSupportTickets()
+	return _u
+}
+
+// RemoveSupportTicketIDs removes the "support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdate) RemoveSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTickets removes "support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdate) RemoveSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketIDs(ids...)
+}
+
+// ClearAssignedSupportTickets clears all "assigned_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) ClearAssignedSupportTickets() *UserUpdate {
+	_u.mutation.ClearAssignedSupportTickets()
+	return _u
+}
+
+// RemoveAssignedSupportTicketIDs removes the "assigned_support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdate) RemoveAssignedSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveAssignedSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveAssignedSupportTickets removes "assigned_support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdate) RemoveAssignedSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignedSupportTicketIDs(ids...)
+}
+
+// ClearClosedSupportTickets clears all "closed_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdate) ClearClosedSupportTickets() *UserUpdate {
+	_u.mutation.ClearClosedSupportTickets()
+	return _u
+}
+
+// RemoveClosedSupportTicketIDs removes the "closed_support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdate) RemoveClosedSupportTicketIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveClosedSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveClosedSupportTickets removes "closed_support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdate) RemoveClosedSupportTickets(v ...*SupportTicket) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveClosedSupportTicketIDs(ids...)
+}
+
+// ClearSupportTicketMessages clears all "support_ticket_messages" edges to the SupportTicketMessage entity.
+func (_u *UserUpdate) ClearSupportTicketMessages() *UserUpdate {
+	_u.mutation.ClearSupportTicketMessages()
+	return _u
+}
+
+// RemoveSupportTicketMessageIDs removes the "support_ticket_messages" edge to SupportTicketMessage entities by IDs.
+func (_u *UserUpdate) RemoveSupportTicketMessageIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveSupportTicketMessageIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketMessages removes "support_ticket_messages" edges to SupportTicketMessage entities.
+func (_u *UserUpdate) RemoveSupportTicketMessages(v ...*SupportTicketMessage) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketMessageIDs(ids...)
+}
+
+// ClearSupportTicketAttachments clears all "support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdate) ClearSupportTicketAttachments() *UserUpdate {
+	_u.mutation.ClearSupportTicketAttachments()
+	return _u
+}
+
+// RemoveSupportTicketAttachmentIDs removes the "support_ticket_attachments" edge to SupportTicketAttachment entities by IDs.
+func (_u *UserUpdate) RemoveSupportTicketAttachmentIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketAttachments removes "support_ticket_attachments" edges to SupportTicketAttachment entities.
+func (_u *UserUpdate) RemoveSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketAttachmentIDs(ids...)
+}
+
+// ClearDeletedSupportTicketAttachments clears all "deleted_support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdate) ClearDeletedSupportTicketAttachments() *UserUpdate {
+	_u.mutation.ClearDeletedSupportTicketAttachments()
+	return _u
+}
+
+// RemoveDeletedSupportTicketAttachmentIDs removes the "deleted_support_ticket_attachments" edge to SupportTicketAttachment entities by IDs.
+func (_u *UserUpdate) RemoveDeletedSupportTicketAttachmentIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveDeletedSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// RemoveDeletedSupportTicketAttachments removes "deleted_support_ticket_attachments" edges to SupportTicketAttachment entities.
+func (_u *UserUpdate) RemoveDeletedSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDeletedSupportTicketAttachmentIDs(ids...)
+}
+
+// ClearSupportTicketReads clears all "support_ticket_reads" edges to the SupportTicketRead entity.
+func (_u *UserUpdate) ClearSupportTicketReads() *UserUpdate {
+	_u.mutation.ClearSupportTicketReads()
+	return _u
+}
+
+// RemoveSupportTicketReadIDs removes the "support_ticket_reads" edge to SupportTicketRead entities by IDs.
+func (_u *UserUpdate) RemoveSupportTicketReadIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveSupportTicketReadIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketReads removes "support_ticket_reads" edges to SupportTicketRead entities.
+func (_u *UserUpdate) RemoveSupportTicketReads(v ...*SupportTicketRead) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketReadIDs(ids...)
 }
 
 // ClearAllowedGroups clears all "allowed_groups" edges to the Group entity.
@@ -1371,6 +1627,321 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(announcementread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AssignedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.AssignedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignedSupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ClosedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedClosedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.ClosedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ClosedSupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketMessagesIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketMessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketAttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DeletedSupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDeletedSupportTicketAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.DeletedSupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DeletedSupportTicketAttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketReadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketReadsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketReadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketReadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2300,6 +2871,111 @@ func (_u *UserUpdateOne) AddAnnouncementReads(v ...*AnnouncementRead) *UserUpdat
 	return _u.AddAnnouncementReadIDs(ids...)
 }
 
+// AddSupportTicketIDs adds the "support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdateOne) AddSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddSupportTickets adds the "support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) AddSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketIDs(ids...)
+}
+
+// AddAssignedSupportTicketIDs adds the "assigned_support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdateOne) AddAssignedSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddAssignedSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddAssignedSupportTickets adds the "assigned_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) AddAssignedSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignedSupportTicketIDs(ids...)
+}
+
+// AddClosedSupportTicketIDs adds the "closed_support_tickets" edge to the SupportTicket entity by IDs.
+func (_u *UserUpdateOne) AddClosedSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddClosedSupportTicketIDs(ids...)
+	return _u
+}
+
+// AddClosedSupportTickets adds the "closed_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) AddClosedSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddClosedSupportTicketIDs(ids...)
+}
+
+// AddSupportTicketMessageIDs adds the "support_ticket_messages" edge to the SupportTicketMessage entity by IDs.
+func (_u *UserUpdateOne) AddSupportTicketMessageIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddSupportTicketMessageIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketMessages adds the "support_ticket_messages" edges to the SupportTicketMessage entity.
+func (_u *UserUpdateOne) AddSupportTicketMessages(v ...*SupportTicketMessage) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketMessageIDs(ids...)
+}
+
+// AddSupportTicketAttachmentIDs adds the "support_ticket_attachments" edge to the SupportTicketAttachment entity by IDs.
+func (_u *UserUpdateOne) AddSupportTicketAttachmentIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketAttachments adds the "support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdateOne) AddSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketAttachmentIDs(ids...)
+}
+
+// AddDeletedSupportTicketAttachmentIDs adds the "deleted_support_ticket_attachments" edge to the SupportTicketAttachment entity by IDs.
+func (_u *UserUpdateOne) AddDeletedSupportTicketAttachmentIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddDeletedSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// AddDeletedSupportTicketAttachments adds the "deleted_support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdateOne) AddDeletedSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDeletedSupportTicketAttachmentIDs(ids...)
+}
+
+// AddSupportTicketReadIDs adds the "support_ticket_reads" edge to the SupportTicketRead entity by IDs.
+func (_u *UserUpdateOne) AddSupportTicketReadIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddSupportTicketReadIDs(ids...)
+	return _u
+}
+
+// AddSupportTicketReads adds the "support_ticket_reads" edges to the SupportTicketRead entity.
+func (_u *UserUpdateOne) AddSupportTicketReads(v ...*SupportTicketRead) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSupportTicketReadIDs(ids...)
+}
+
 // AddAllowedGroupIDs adds the "allowed_groups" edge to the Group entity by IDs.
 func (_u *UserUpdateOne) AddAllowedGroupIDs(ids ...int64) *UserUpdateOne {
 	_u.mutation.AddAllowedGroupIDs(ids...)
@@ -2533,6 +3209,153 @@ func (_u *UserUpdateOne) RemoveAnnouncementReads(v ...*AnnouncementRead) *UserUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAnnouncementReadIDs(ids...)
+}
+
+// ClearSupportTickets clears all "support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) ClearSupportTickets() *UserUpdateOne {
+	_u.mutation.ClearSupportTickets()
+	return _u
+}
+
+// RemoveSupportTicketIDs removes the "support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdateOne) RemoveSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTickets removes "support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdateOne) RemoveSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketIDs(ids...)
+}
+
+// ClearAssignedSupportTickets clears all "assigned_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) ClearAssignedSupportTickets() *UserUpdateOne {
+	_u.mutation.ClearAssignedSupportTickets()
+	return _u
+}
+
+// RemoveAssignedSupportTicketIDs removes the "assigned_support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdateOne) RemoveAssignedSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveAssignedSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveAssignedSupportTickets removes "assigned_support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdateOne) RemoveAssignedSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignedSupportTicketIDs(ids...)
+}
+
+// ClearClosedSupportTickets clears all "closed_support_tickets" edges to the SupportTicket entity.
+func (_u *UserUpdateOne) ClearClosedSupportTickets() *UserUpdateOne {
+	_u.mutation.ClearClosedSupportTickets()
+	return _u
+}
+
+// RemoveClosedSupportTicketIDs removes the "closed_support_tickets" edge to SupportTicket entities by IDs.
+func (_u *UserUpdateOne) RemoveClosedSupportTicketIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveClosedSupportTicketIDs(ids...)
+	return _u
+}
+
+// RemoveClosedSupportTickets removes "closed_support_tickets" edges to SupportTicket entities.
+func (_u *UserUpdateOne) RemoveClosedSupportTickets(v ...*SupportTicket) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveClosedSupportTicketIDs(ids...)
+}
+
+// ClearSupportTicketMessages clears all "support_ticket_messages" edges to the SupportTicketMessage entity.
+func (_u *UserUpdateOne) ClearSupportTicketMessages() *UserUpdateOne {
+	_u.mutation.ClearSupportTicketMessages()
+	return _u
+}
+
+// RemoveSupportTicketMessageIDs removes the "support_ticket_messages" edge to SupportTicketMessage entities by IDs.
+func (_u *UserUpdateOne) RemoveSupportTicketMessageIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveSupportTicketMessageIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketMessages removes "support_ticket_messages" edges to SupportTicketMessage entities.
+func (_u *UserUpdateOne) RemoveSupportTicketMessages(v ...*SupportTicketMessage) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketMessageIDs(ids...)
+}
+
+// ClearSupportTicketAttachments clears all "support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdateOne) ClearSupportTicketAttachments() *UserUpdateOne {
+	_u.mutation.ClearSupportTicketAttachments()
+	return _u
+}
+
+// RemoveSupportTicketAttachmentIDs removes the "support_ticket_attachments" edge to SupportTicketAttachment entities by IDs.
+func (_u *UserUpdateOne) RemoveSupportTicketAttachmentIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketAttachments removes "support_ticket_attachments" edges to SupportTicketAttachment entities.
+func (_u *UserUpdateOne) RemoveSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketAttachmentIDs(ids...)
+}
+
+// ClearDeletedSupportTicketAttachments clears all "deleted_support_ticket_attachments" edges to the SupportTicketAttachment entity.
+func (_u *UserUpdateOne) ClearDeletedSupportTicketAttachments() *UserUpdateOne {
+	_u.mutation.ClearDeletedSupportTicketAttachments()
+	return _u
+}
+
+// RemoveDeletedSupportTicketAttachmentIDs removes the "deleted_support_ticket_attachments" edge to SupportTicketAttachment entities by IDs.
+func (_u *UserUpdateOne) RemoveDeletedSupportTicketAttachmentIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveDeletedSupportTicketAttachmentIDs(ids...)
+	return _u
+}
+
+// RemoveDeletedSupportTicketAttachments removes "deleted_support_ticket_attachments" edges to SupportTicketAttachment entities.
+func (_u *UserUpdateOne) RemoveDeletedSupportTicketAttachments(v ...*SupportTicketAttachment) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDeletedSupportTicketAttachmentIDs(ids...)
+}
+
+// ClearSupportTicketReads clears all "support_ticket_reads" edges to the SupportTicketRead entity.
+func (_u *UserUpdateOne) ClearSupportTicketReads() *UserUpdateOne {
+	_u.mutation.ClearSupportTicketReads()
+	return _u
+}
+
+// RemoveSupportTicketReadIDs removes the "support_ticket_reads" edge to SupportTicketRead entities by IDs.
+func (_u *UserUpdateOne) RemoveSupportTicketReadIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveSupportTicketReadIDs(ids...)
+	return _u
+}
+
+// RemoveSupportTicketReads removes "support_ticket_reads" edges to SupportTicketRead entities.
+func (_u *UserUpdateOne) RemoveSupportTicketReads(v ...*SupportTicketRead) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSupportTicketReadIDs(ids...)
 }
 
 // ClearAllowedGroups clears all "allowed_groups" edges to the Group entity.
@@ -3159,6 +3982,321 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(announcementread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketsTable,
+			Columns: []string{user.SupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AssignedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.AssignedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignedSupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedSupportTicketsTable,
+			Columns: []string{user.AssignedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ClosedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedClosedSupportTicketsIDs(); len(nodes) > 0 && !_u.mutation.ClosedSupportTicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ClosedSupportTicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ClosedSupportTicketsTable,
+			Columns: []string{user.ClosedSupportTicketsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticket.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketMessagesIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketMessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketMessagesTable,
+			Columns: []string{user.SupportTicketMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketmessage.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketAttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketAttachmentsTable,
+			Columns: []string{user.SupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DeletedSupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDeletedSupportTicketAttachmentsIDs(); len(nodes) > 0 && !_u.mutation.DeletedSupportTicketAttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DeletedSupportTicketAttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.DeletedSupportTicketAttachmentsTable,
+			Columns: []string{user.DeletedSupportTicketAttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketattachment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SupportTicketReadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSupportTicketReadsIDs(); len(nodes) > 0 && !_u.mutation.SupportTicketReadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SupportTicketReadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SupportTicketReadsTable,
+			Columns: []string{user.SupportTicketReadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(supportticketread.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

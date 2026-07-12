@@ -25,3 +25,25 @@
 - `GET /api/v1/playground/videos/:request_id?group=:group`：JWT 用户查询已创建任务，响应透传 `status`、`progress`、`video_url` 和上游错误。
 
 两个入口只允许选择 `platform=video` 的用户可用分组，不向浏览器暴露上游 API Key。`grok-imagine-video*` 可传 1-15 秒的 `seconds` 和常用预设 `aspect_ratio`；基础模型可文生视频，`grok-imagine-video-1.5-preview` 在对话广场必须携带一张 `input_reference.image_url` 参考图。创建请求执行余额资格检查并计费，状态查询不重复计费，且在余额被本任务扣至零后仍可读取终态。
+
+## 站内工单 API
+
+用户接口使用登录 JWT，且只能访问本人资源：
+
+- `GET /api/v1/tickets`：按 `page`、`page_size`、`status`、`category` 分页查询本人工单。
+- `POST /api/v1/tickets`：以 `multipart/form-data` 提交 `subject`、`category`、`body` 和最多 5 个 `files`。
+- `GET /api/v1/tickets/:id`：读取本人工单详情并推进个人已读游标。
+- `POST /api/v1/tickets/:id/replies`：提交公开回复和附件；回复已关闭工单会原子重开。
+- `GET /api/v1/tickets/unread-count`：返回 `{ count }`。
+- `GET /api/v1/ticket-attachments/:id`：鉴权打开图片或下载文本附件。
+
+管理员接口使用管理员 JWT：
+
+- `GET /api/v1/admin/tickets`：支持状态、分类、优先级、`mine`/`unassigned` 负责人和关键词筛选。
+- `GET /api/v1/admin/tickets/:id`：读取公开消息、内部备注和系统审计事件。
+- `POST /api/v1/admin/tickets/:id/replies`：`multipart/form-data` 公开回复；`internal=true` 时添加无附件的内部备注。
+- `PATCH /api/v1/admin/tickets/:id`：更新 `priority`、`assignee_id` 或 `closed`。
+- `GET /api/v1/admin/tickets/unread-count`：返回当前管理员个人未读工单数。
+- `DELETE /api/v1/admin/ticket-attachments/:id`：以 `{ "reason": "..." }` 删除附件并保留审计元数据。
+
+主要业务错误为 `TICKET_NOT_FOUND`、`TICKET_INVALID_INPUT`、`TICKET_ATTACHMENT_INVALID`、`TICKET_OPEN_LIMIT_REACHED`、`TICKET_DAILY_LIMIT_REACHED`、`TICKET_ASSIGNEE_INVALID` 和 `TICKET_ATTACHMENT_NOT_FOUND`。用户越权读取统一使用不存在错误，避免泄露资源是否存在。

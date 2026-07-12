@@ -105,6 +105,7 @@ func provideCleanup(
 	channelMonitorRunner *service.ChannelMonitorRunner,
 	quotaFlusher *service.UserPlatformQuotaUsageFlusher,
 	playgroundConversationCleanup *service.PlaygroundConversationCleanupService,
+	ticketAttachmentCleanup *service.TicketAttachmentCleanupService,
 ) func() {
 	return func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -174,6 +175,12 @@ func provideCleanup(
 			{"BatchImageCleanupService", func() error {
 				if batchImageCleanup != nil {
 					batchImageCleanup.Stop()
+				}
+				return nil
+			}},
+			{"TicketAttachmentCleanupService", func() error {
+				if ticketAttachmentCleanup != nil {
+					ticketAttachmentCleanup.Stop()
 				}
 				return nil
 			}},

@@ -14,6 +14,7 @@ func ProvideAdminHandlers(
 	groupHandler *admin.GroupHandler,
 	accountHandler *admin.AccountHandler,
 	announcementHandler *admin.AnnouncementHandler,
+	supportTicketHandler *admin.SupportTicketHandler,
 	dataManagementHandler *admin.DataManagementHandler,
 	backupHandler *admin.BackupHandler,
 	oauthHandler *admin.OAuthHandler,
@@ -48,6 +49,7 @@ func ProvideAdminHandlers(
 		Group:                  groupHandler,
 		Account:                accountHandler,
 		Announcement:           announcementHandler,
+		SupportTicket:          supportTicketHandler,
 		DataManagement:         dataManagementHandler,
 		Backup:                 backupHandler,
 		OAuth:                  oauthHandler,
@@ -107,6 +109,7 @@ func ProvideHandlers(
 	redeemHandler *RedeemHandler,
 	subscriptionHandler *SubscriptionHandler,
 	announcementHandler *AnnouncementHandler,
+	supportTicketHandler *SupportTicketHandler,
 	channelMonitorUserHandler *ChannelMonitorUserHandler,
 	adminHandlers *AdminHandlers,
 	gatewayHandler *GatewayHandler,
@@ -131,6 +134,7 @@ func ProvideHandlers(
 		Redeem:                 redeemHandler,
 		Subscription:           subscriptionHandler,
 		Announcement:           announcementHandler,
+		SupportTicket:          supportTicketHandler,
 		ChannelMonitor:         channelMonitorUserHandler,
 		Admin:                  adminHandlers,
 		Gateway:                gatewayHandler,
@@ -143,7 +147,6 @@ func ProvideHandlers(
 		Playground:             playgroundHandler,
 		PlaygroundConversation: playgroundConversationHandler,
 		BatchImage:             batchImageHandler,
-
 	}
 }
 
@@ -158,6 +161,7 @@ var ProviderSet = wire.NewSet(
 	NewRedeemHandler,
 	NewSubscriptionHandler,
 	NewAnnouncementHandler,
+	NewSupportTicketHandler,
 	NewChannelMonitorUserHandler,
 	NewGatewayHandler,
 	NewOpenAIGatewayHandler,
@@ -176,6 +180,7 @@ var ProviderSet = wire.NewSet(
 	admin.NewGroupHandler,
 	admin.NewAccountHandler,
 	admin.NewAnnouncementHandler,
+	admin.NewSupportTicketHandler,
 	admin.NewDataManagementHandler,
 	admin.NewBackupHandler,
 	admin.NewOAuthHandler,

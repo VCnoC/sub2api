@@ -117,6 +117,8 @@ func RegisterUserRoutes(
 			announcements.POST("/:id/read", h.Announcement.MarkRead)
 		}
 
+		registerUserSupportTicketRoutes(authenticated, h)
+
 		// 卡密兑换
 		redeem := authenticated.Group("/redeem")
 		{
@@ -140,4 +142,16 @@ func RegisterUserRoutes(
 			monitors.GET("/:id/status", h.ChannelMonitor.GetStatus)
 		}
 	}
+}
+
+func registerUserSupportTicketRoutes(authenticated *gin.RouterGroup, h *handler.Handlers) {
+	tickets := authenticated.Group("/tickets")
+	{
+		tickets.GET("", h.SupportTicket.List)
+		tickets.POST("", h.SupportTicket.Create)
+		tickets.GET("/unread-count", h.SupportTicket.UnreadCount)
+		tickets.GET("/:id", h.SupportTicket.Get)
+		tickets.POST("/:id/replies", h.SupportTicket.Reply)
+	}
+	authenticated.GET("/ticket-attachments/:id", h.SupportTicket.DownloadAttachment)
 }

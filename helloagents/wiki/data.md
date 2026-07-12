@@ -27,3 +27,19 @@
 
 ### user_platform_quotas
 平台约束已包含 `video`，用于管理端配额展示；视频请求本身固定从用户余额扣费，不消费订阅额度。
+
+### support_tickets
+保存工单所有者、标题、分类、状态、优先级、可选负责人、关闭人、关闭时间和最后消息时间。
+
+- 状态为 `pending_admin`、`pending_user` 或 `closed`。
+- 分类为 `account`、`billing`、`api`、`model` 或 `other`；优先级为 `normal`、`high` 或 `urgent`。
+- 以用户与创建时间、用户与状态、全局处理队列、负责人和分类建立索引。
+
+### support_ticket_messages
+保存不可变的公开回复、内部备注和系统事件。公开消息对用户和管理员可见，内部备注及管理员审计事件只对管理员可见；`metadata` 保存状态、负责人和优先级变化的最小 JSON 审计信息。
+
+### support_ticket_attachments
+保存附件名称、随机存储键、服务端探测 MIME、大小、清理计划和删除审计信息。文件本体位于私有目录；工单关闭时设置 `delete_after`，物理删除后保留元数据。
+
+### support_ticket_reads
+以 `(ticket_id, user_id)` 唯一记录每位用户或管理员的最后已读消息 ID。用户游标只推进到公开消息，管理员游标包含内部消息和管理员事件。
