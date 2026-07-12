@@ -105,6 +105,26 @@ describe('API Client', () => {
       expect(config.params?.timezone).toBeUndefined()
     })
 
+    it('根据请求体自动设置 Content-Type', async () => {
+      const adapter = vi.fn().mockResolvedValue({
+        status: 200,
+        data: { code: 0, data: {} },
+        headers: {},
+        config: {},
+        statusText: 'OK',
+      })
+      apiClient.defaults.adapter = adapter
+
+      await apiClient.post('/json', { foo: 'bar' })
+      const form = new FormData()
+      form.append('body', 'test')
+      await apiClient.post('/multipart', form)
+
+      expect(adapter.mock.calls[0][0].headers.get('Content-Type')).toBe('application/json')
+      expect(adapter.mock.calls[1][0].data).toBe(form)
+      expect(adapter.mock.calls[1][0].headers.get('Content-Type')).not.toBe('application/json')
+    })
+
     it('请求默认带 withCredentials 以支持跨域 cookie', async () => {
       const adapter = vi.fn().mockResolvedValue({
         status: 200,

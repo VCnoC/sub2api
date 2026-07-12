@@ -59,5 +59,9 @@
 - `NotificationEmailService` 和邮件队列
 - `/app/data` 持久化卷
 
+## 已知问题与注意事项
+- 附件是可选项。共享 Axios 客户端不得固定 `Content-Type: application/json`；否则 Axios 会将 `FormData` 序列化为 JSON，导致后端 multipart 解析失败并返回附件校验错误。
+
 ## 变更历史
+- [202607121308_ticket_optional_attachments](../../history/2026-07/202607121308_ticket_optional_attachments/) - 修复零附件工单被误判为附件无效。
 - [202607120533_support_tickets](../../history/2026-07/202607120533_support_tickets/) - 完成首版开发、生产部署、迁移与健康验收，待真实用户流程验收。
