@@ -1,6 +1,6 @@
 # Task Breakdown & Execution Board: 站内工单系统 (Tasks)
 
-> 开发实现和本地自动化验证已完成；生产备份、SMTP 冒烟及部署后验收尚未执行，因此规格保持 `in_progress`。
+> 开发、自动化验证、生产备份、迁移和健康检查已完成；真实用户流程、SMTP 和清理任务冒烟待验收，因此规格保持 `in_progress`。
 
 ## Phase 1: Domain, Schema & Migration
 - [x] Task 1.1: 在 `backend/internal/domain/` 定义工单状态、分类、优先级、消息类型和附件限制常量
@@ -48,5 +48,5 @@
 - [x] Task 7.1: 完成后端单元/集成测试、前端组件测试、TypeScript、ESLint 和生产构建
 - [x] Task 7.2: 执行安全检查：IDOR、存储型 XSS、上传绕过、路径穿越、敏感日志、并发限流和越权附件访问
 - [x] Task 7.3: 更新 `helloagents/wiki/api.md`、`helloagents/wiki/data.md`、模块文档和 `helloagents/CHANGELOG.md`
-- [ ] Task 7.4: 备份数据库和 `/app/data`，执行迁移、持久化目录权限、SMTP 和清理任务冒烟验证
-- [ ] Task 7.5: 部署后验证用户/管理员完整流程，并将 `spec.md` 与 `sdd/project.md` 状态更新为 `completed`
+- [x] Task 7.4: 备份数据库和 `/app/data`，执行迁移，验证持久化目录权限和生产健康状态
+- [ ] Task 7.5: 部署后验证用户/管理员完整流程、SMTP 和清理任务，并将 `spec.md` 与 `sdd/project.md` 状态更新为 `completed`
