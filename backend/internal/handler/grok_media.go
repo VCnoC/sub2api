@@ -42,6 +42,16 @@ func (h *OpenAIGatewayHandler) GrokVideoGeneration(c *gin.Context) {
 	h.handleGrokMedia(c, endpoint, "")
 }
 
+// GrokVideoEdit handles asynchronous xAI video edits through Grok groups.
+func (h *OpenAIGatewayHandler) GrokVideoEdit(c *gin.Context) {
+	h.handleGrokMedia(c, service.GrokMediaEndpointVideosEdits, "")
+}
+
+// GrokVideoExtension handles asynchronous xAI video extensions through Grok groups.
+func (h *OpenAIGatewayHandler) GrokVideoExtension(c *gin.Context) {
+	h.handleGrokMedia(c, service.GrokMediaEndpointVideosExtensions, "")
+}
+
 // GrokVideoStatus handles xAI video status retrieval through Grok groups.
 func (h *OpenAIGatewayHandler) GrokVideoStatus(c *gin.Context) {
 	if strings.HasSuffix(c.Request.URL.Path, "/video/query") {
