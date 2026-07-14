@@ -14,6 +14,7 @@ import (
 // 路由分组：/api/v1/playground
 //   - GET  /models                           列出指定分组下用户可用的模型
 //   - POST /chat/completions                 OpenAI Chat Completions 兼容转发
+//   - POST /images/generations               OpenAI Images Generations 兼容转发
 //   - POST /videos                          创建视频任务
 //   - GET  /videos/:request_id              查询视频任务
 //   - GET  /conversations                    列出当前用户的所有会话摘要
@@ -66,6 +67,13 @@ func RegisterPlaygroundRoutes(
 				}
 				h.Gateway.ChatCompletions(c)
 			})
+			chat.POST("/images/generations", func(c *gin.Context) {
+				if getGroupPlatform(c) != service.PlatformOpenAI {
+					playgroundImagesNotSupported(c)
+					return
+				}
+				h.OpenAIGateway.Images(c)
+			})
 			chat.POST("/videos", func(c *gin.Context) {
 				if getGroupPlatform(c) != service.PlatformVideo {
 					playgroundVideoNotSupported(c)
@@ -94,6 +102,16 @@ func RegisterPlaygroundRoutes(
 			conversations.DELETE("/:id", h.PlaygroundConversation.DeleteConversation)
 		}
 	}
+}
+
+func playgroundImagesNotSupported(c *gin.Context) {
+	service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
+	c.JSON(404, gin.H{
+		"error": gin.H{
+			"type":    "not_found_error",
+			"message": "Images API is only supported for OpenAI groups",
+		},
+	})
 }
 
 func playgroundVideoNotSupported(c *gin.Context) {

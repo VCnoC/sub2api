@@ -172,6 +172,31 @@ export interface PlaygroundVideoResponse {
   message?: string
 }
 
+export interface PlaygroundImageRequest {
+  model: string
+  group: string
+  prompt: string
+  n?: number
+  size: string
+  image?: string | string[] | Record<string, unknown>
+  quality?: string
+  response_format?: string
+  style?: string
+  background?: string
+  watermark?: boolean
+}
+
+export interface PlaygroundImageResponse {
+  created?: number
+  data?: Array<{
+    url?: string
+    b64_json?: string
+    revised_prompt?: string
+  }>
+  error?: string | { message?: string; error?: string; code?: string }
+  message?: string
+}
+
 // ==================== 配置 ====================
 
 export interface PlaygroundConfig {
@@ -179,6 +204,12 @@ export interface PlaygroundConfig {
   group: string
   videoSeconds: string
   videoAspectRatio: string
+  imageSize: string
+  imageQuality: string
+  imageResponseFormat: string
+  imageStyle: string
+  imageBackground: string
+  imageWatermark: boolean
   temperature: number
   top_p: number
   max_tokens: number
@@ -196,6 +227,11 @@ export interface ParameterEnabled {
   frequency_penalty: boolean
   presence_penalty: boolean
   seed: boolean
+  imageQuality: boolean
+  imageResponseFormat: boolean
+  imageStyle: boolean
+  imageBackground: boolean
+  imageWatermark: boolean
 }
 
 // ==================== 模型/分组 ====================

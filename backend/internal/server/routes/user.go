@@ -119,6 +119,13 @@ func RegisterUserRoutes(
 
 		registerUserSupportTicketRoutes(authenticated, h)
 
+		lottery := authenticated.Group("/lottery")
+		{
+			lottery.GET("", h.Lottery.Summary)
+			lottery.GET("/history", h.Lottery.History)
+			lottery.POST("/pools/:key/draw", h.Lottery.Draw)
+		}
+
 		// 卡密兑换
 		redeem := authenticated.Group("/redeem")
 		{

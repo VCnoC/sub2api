@@ -559,6 +559,11 @@ func (s *PaymentService) markRefundOk(ctx context.Context, p *RefundPlan) (*Refu
 		fs = OrderStatusPartiallyRefunded
 	}
 	now := time.Now()
+	if s.lotteryChanceService != nil {
+		if err := s.lotteryChanceService.ReverseRecharge(ctx, p.Order.UserID, p.OrderID, p.Order.Amount, p.RefundAmount); err != nil {
+			return nil, fmt.Errorf("reverse lottery recharge chance: %w", err)
+		}
+	}
 	_, err := s.entClient.PaymentOrder.UpdateOneID(p.OrderID).SetStatus(fs).SetRefundAmount(p.RefundAmount).SetRefundReason(p.Reason).SetRefundAt(now).SetForceRefund(p.Force).Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("mark refund: %w", err)

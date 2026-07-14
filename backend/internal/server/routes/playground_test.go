@@ -36,6 +36,7 @@ func TestPlaygroundVideoRoutesAreRegistered(t *testing.T) {
 	for _, route := range router.Routes() {
 		routes[route.Method+" "+route.Path] = true
 	}
+	require.True(t, routes["POST /api/v1/playground/images/generations"])
 	require.True(t, routes["POST /api/v1/playground/videos"])
 	require.True(t, routes["GET /api/v1/playground/videos/:request_id"])
 }

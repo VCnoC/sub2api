@@ -222,6 +222,12 @@ type AffiliateService struct {
 	settingService       *SettingService
 	authCacheInvalidator APIKeyAuthCacheInvalidator
 	billingCacheService  *BillingCacheService
+	lotteryChanceService *LotteryChanceService
+}
+
+// SetLotteryChanceService 注入邀请关系绑定后的抽奖机会处理。
+func (s *AffiliateService) SetLotteryChanceService(chanceService *LotteryChanceService) {
+	s.lotteryChanceService = chanceService
 }
 
 func NewAffiliateService(repo AffiliateRepository, settingService *SettingService, authCacheInvalidator APIKeyAuthCacheInvalidator, billingCacheService *BillingCacheService) *AffiliateService {
@@ -334,6 +340,11 @@ func (s *AffiliateService) BindInviterByCode(ctx context.Context, userID int64, 
 	// 绑定成功后立即尝试发放「注册双向奖励」。
 	// 失败仅记录日志、绝不阻断 — 余额奖励是增量功能，不能影响注册主流程。
 	s.tryGrantSignupBonus(ctx, inviterSummary.UserID, userID)
+	if s.lotteryChanceService != nil {
+		if err := s.lotteryChanceService.GrantSignup(ctx, inviterSummary.UserID, userID); err != nil {
+			logger.LegacyPrintf("service.affiliate", "[Affiliate] grant lottery signup chance failed: inviter=%d invitee=%d err=%v", inviterSummary.UserID, userID, err)
+		}
+	}
 
 	return nil
 }

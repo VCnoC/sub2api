@@ -39,6 +39,7 @@ type AdminHandlers struct {
 	Payment                *admin.PaymentHandler
 	Affiliate              *admin.AffiliateHandler
 	Compliance             *admin.ComplianceHandler
+	Lottery                *admin.LotteryHandler
 }
 
 // Handlers contains all HTTP handlers
@@ -64,6 +65,7 @@ type Handlers struct {
 	Playground             *PlaygroundHandler
 	PlaygroundConversation *PlaygroundConversationHandler
 	BatchImage             *BatchImageHandler
+	Lottery                *LotteryHandler
 }
 
 // BuildInfo contains build-time information

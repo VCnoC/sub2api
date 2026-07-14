@@ -32,6 +32,7 @@ import type {
   PlaygroundAttachment,
   PlaygroundVideoResponse,
   PlaygroundVideoState,
+  PlaygroundImageResponse,
 } from '@/types/playground'
 import {
   playgroundVideoGenerating,
@@ -39,6 +40,7 @@ import {
   type StreamUpdateType,
 } from './useStreamChat'
 import {
+  createPlaygroundImage,
   createPlaygroundVideo,
   getPlaygroundVideo,
 } from '@/api/playground'
@@ -81,6 +83,7 @@ function createChatHandler(opts: UseChatHandlerOptions) {
     () => isStreaming.value || playgroundVideoGenerating.value
   )
   let videoAbortController: AbortController | null = null
+  let imageAbortController: AbortController | null = null
 
   // ==================== Payload 构造 ====================
 
@@ -408,9 +411,76 @@ function createChatHandler(opts: UseChatHandlerOptions) {
     }
   }
 
+  async function sendImage(messagesIncludingPlaceholder: Message[]) {
+    const cfg = opts.config.value
+    const enabled = opts.parameterEnabled.value
+    const userMessage = messagesIncludingPlaceholder
+      .slice(0, -1)
+      .reverse()
+      .find((message) => message.from === MESSAGE_ROLES.USER)
+    const images = (userMessage?.attachments || [])
+      .filter((item) => item.kind === 'image' && item.dataUrl)
+      .map((item) => item.dataUrl!)
+    const controller = new AbortController()
+    imageAbortController = controller
+    playgroundVideoGenerating.value = true
+
+    try {
+      const response = await createPlaygroundImage(
+        {
+          model: cfg.model,
+          group: cfg.group,
+          prompt: userMessage?.versions?.[0]?.content?.trim() || '',
+          n: 1,
+          size: cfg.imageSize,
+          ...(images.length === 1 ? { image: images[0] } : {}),
+          ...(images.length > 1 ? { image: images } : {}),
+          ...(enabled.imageQuality && cfg.imageQuality ? { quality: cfg.imageQuality } : {}),
+          ...(enabled.imageResponseFormat && cfg.imageResponseFormat ? { response_format: cfg.imageResponseFormat } : {}),
+          ...(enabled.imageStyle && cfg.imageStyle ? { style: cfg.imageStyle } : {}),
+          ...(enabled.imageBackground && cfg.imageBackground ? { background: cfg.imageBackground } : {}),
+          ...(enabled.imageWatermark ? { watermark: cfg.imageWatermark } : {}),
+        },
+        controller.signal
+      )
+      patchLastAssistant((msg) => ({
+        ...msg,
+        status: MESSAGE_STATUS.COMPLETE,
+        isContentComplete: true,
+        versions: [
+          {
+            ...(msg.versions?.[0] || { id: 'v0', content: '' }),
+            content: imageResponseMarkdown(response),
+          },
+          ...(msg.versions?.slice(1) || []),
+        ],
+      }))
+    } catch (error) {
+      if (controller.signal.aborted) return
+      patchLastAssistant((m) => ({
+        ...m,
+        status: MESSAGE_STATUS.ERROR,
+        versions: [
+          {
+            ...(m.versions?.[0] || { id: 'v0', content: '' }),
+            content: requestErrorMessage(error),
+          },
+        ],
+      }))
+    } finally {
+      if (imageAbortController === controller) {
+        imageAbortController = null
+        playgroundVideoGenerating.value = false
+      }
+      opts.onSettled?.()
+    }
+  }
+
   /** 中断当前生成（仅停流，最后一条消息标记为完成） */
   function stopGeneration() {
     stop()
+    imageAbortController?.abort()
+    imageAbortController = null
     const stoppedVideo = videoAbortController !== null
     videoAbortController?.abort()
     videoAbortController = null
@@ -441,10 +511,25 @@ function createChatHandler(opts: UseChatHandlerOptions) {
 
   return {
     sendChat,
+    sendImage,
     sendVideo,
     stopGeneration,
     isGenerating,
   }
+}
+
+function imageResponseMarkdown(response: PlaygroundImageResponse): string {
+  const items = response.data || []
+  const lines = items.flatMap((item, index) => {
+    const src = item.url || (item.b64_json ? `data:image/png;base64,${item.b64_json}` : '')
+    if (!src) return []
+    const title = item.revised_prompt?.trim()
+    return [
+      `![image-${index + 1}](${src})`,
+      ...(title ? [`> ${title}`] : []),
+    ]
+  })
+  return lines.join('\n\n') || 'Image generated, but no image URL was returned.'
 }
 
 export function normalizePlaygroundVideoResponse(

@@ -59,7 +59,7 @@
       <textarea
         ref="textareaRef"
         v-model="text"
-        :placeholder="placeholder || t(videoMode ? 'playground.video.placeholder' : 'playground.input.placeholder')"
+        :placeholder="placeholder || inputPlaceholder"
         :disabled="disabled"
         rows="1"
         class="playground-textarea"
@@ -124,7 +124,7 @@
           </button>
 
           <button
-            v-if="!videoMode"
+            v-if="!mediaMode"
             type="button"
             class="playground-tool-btn"
             :disabled="disabled || isProcessingAttachment"
@@ -210,7 +210,7 @@
           type="button"
           class="playground-btn playground-btn-send"
           :disabled="disabled || isProcessingAttachment || (!text.trim() && attachments.length === 0) || !modelValue"
-          :title="t(videoMode ? 'playground.video.generate' : 'playground.input.send')"
+          :title="submitText"
           @click="submit"
         >
           <svg
@@ -227,7 +227,7 @@
             <path d="M22 2l-7 20-4-9-9-4 20-7z" />
           </svg>
           <span class="hidden sm:inline">
-            {{ t(videoMode ? 'playground.video.generate' : 'playground.input.send') }}
+            {{ submitText }}
           </span>
         </button>
       </div>
@@ -239,7 +239,7 @@
         {{ t('playground.input.processingAttachment') }}
       </template>
       <template v-else>
-        {{ videoMode ? t('playground.video.hint') : t('playground.input.hint') }}
+        {{ inputHint }}
         <span class="playground-hint-legal">· {{ t('common.legalDisclaimer') }}</span>
       </template>
     </p>
@@ -248,12 +248,12 @@
       ref="imageInputRef"
       type="file"
       accept="image/png,image/jpeg,image/webp,image/gif"
-      :multiple="!videoMode"
+      :multiple="!mediaMode"
       class="hidden"
       @change="onImageInput"
     />
     <input
-      v-if="!videoMode"
+      v-if="!mediaMode"
       ref="documentInputRef"
       type="file"
       :accept="DOCUMENT_ACCEPT"
@@ -326,6 +326,7 @@ interface Props {
   disabled?: boolean
   isGenerating?: boolean
   videoMode?: boolean
+  imageMode?: boolean
   videoSeconds?: string
   videoAspectRatio?: string
   placeholder?: string
@@ -336,6 +337,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   isGenerating: false,
   videoMode: false,
+  imageMode: false,
   videoSeconds: '4',
   videoAspectRatio: '9:16',
   placeholder: '',
@@ -362,6 +364,22 @@ const isProcessingAttachment = ref(false)
 const showVideoOptions = computed(
   () => props.videoMode && isGrokImagineVideoModel(props.modelValue)
 )
+const mediaMode = computed(() => props.videoMode || props.imageMode)
+const inputPlaceholder = computed(() => {
+  if (props.videoMode) return t('playground.video.placeholder')
+  if (props.imageMode) return t('playground.image.placeholder')
+  return t('playground.input.placeholder')
+})
+const inputHint = computed(() => {
+  if (props.videoMode) return t('playground.video.hint')
+  if (props.imageMode) return t('playground.image.hint')
+  return t('playground.input.hint')
+})
+const submitText = computed(() => {
+  if (props.videoMode) return t('playground.video.generate')
+  if (props.imageMode) return t('playground.image.generate')
+  return t('playground.input.send')
+})
 
 function emitModelChange(v: string) {
   emit('modelChange', v)

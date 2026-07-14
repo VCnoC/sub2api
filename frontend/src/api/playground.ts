@@ -4,6 +4,7 @@
  * 端点：
  *   GET  /api/v1/playground/models?group={name}   返回该分组下用户可用模型
  *   POST /api/v1/playground/chat/completions      OpenAI 兼容流式聊天
+ *   POST /api/v1/playground/images/generations    OpenAI 兼容生图
  *
  * 流式请求不走 axios（无法处理 SSE）→ 见 composables/playground/useStreamChat.ts
  */
@@ -18,6 +19,8 @@ import type {
   CreateConversationRequest,
   PlaygroundAvailableModel,
   PlaygroundAvailableModelsResponse,
+  PlaygroundImageRequest,
+  PlaygroundImageResponse,
   PlaygroundVideoRequest,
   PlaygroundVideoResponse,
   UpdateConversationRequest,
@@ -55,6 +58,18 @@ export async function createPlaygroundVideo(
 ): Promise<PlaygroundVideoResponse> {
   const { data } = await apiClient.post<PlaygroundVideoResponse>(
     API_ENDPOINTS.VIDEOS,
+    payload,
+    { signal, timeout: 600000 }
+  )
+  return data
+}
+
+export async function createPlaygroundImage(
+  payload: PlaygroundImageRequest,
+  signal?: AbortSignal
+): Promise<PlaygroundImageResponse> {
+  const { data } = await apiClient.post<PlaygroundImageResponse>(
+    `${API_ENDPOINTS.IMAGES}/generations`,
     payload,
     { signal, timeout: 600000 }
   )
@@ -129,6 +144,7 @@ export async function deleteConversation(id: number): Promise<void> {
 export const playgroundAPI = {
   getAvailableModels,
   sendChatCompletionNonStream,
+  createPlaygroundImage,
   createPlaygroundVideo,
   getPlaygroundVideo,
   listConversations,

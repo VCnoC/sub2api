@@ -177,6 +177,7 @@
             :disabled="isGenerating"
             :is-generating="isGenerating"
             :video-mode="isVideoGroup"
+            :image-mode="isImageModel"
             :video-seconds="config.videoSeconds"
             :video-aspect-ratio="config.videoAspectRatio"
             @submit="handleSend"
@@ -225,50 +226,116 @@
           <p class="dialog-desc">{{ t('playground.params.desc') }}</p>
 
           <div class="dialog-params">
-            <ParamSlider
-              v-model:value="config.temperature"
-              v-model:enabled="parameterEnabled.temperature"
-              :label="t('playground.params.temperature')"
-              :min="0"
-              :max="2"
-              :step="0.01"
-            />
-            <ParamSlider
-              v-model:value="config.top_p"
-              v-model:enabled="parameterEnabled.top_p"
-              :label="t('playground.params.topP')"
-              :min="0"
-              :max="1"
-              :step="0.01"
-            />
-            <ParamSlider
-              v-model:value="config.max_tokens"
-              v-model:enabled="parameterEnabled.max_tokens"
-              :label="t('playground.params.maxTokens')"
-              :min="1"
-              :max="32768"
-              :step="1"
-              integer
-            />
-            <ParamSlider
-              v-model:value="config.frequency_penalty"
-              v-model:enabled="parameterEnabled.frequency_penalty"
-              :label="t('playground.params.frequencyPenalty')"
-              :min="-2"
-              :max="2"
-              :step="0.01"
-            />
-            <ParamSlider
-              v-model:value="config.presence_penalty"
-              v-model:enabled="parameterEnabled.presence_penalty"
-              :label="t('playground.params.presencePenalty')"
-              :min="-2"
-              :max="2"
-              :step="0.01"
-            />
+            <template v-if="isImageModel">
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageSize') }}</span>
+                <select v-model="config.imageSize" class="dialog-select">
+                  <option v-for="item in GPT_IMAGE_2_SIZE_OPTIONS" :key="item.value" :value="item.value">
+                    {{ item.label }} · {{ item.value }}
+                  </option>
+                </select>
+              </label>
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageQuality') }}</span>
+                <select v-model="config.imageQuality" class="dialog-select" :disabled="!parameterEnabled.imageQuality">
+                  <option v-for="item in GPT_IMAGE_2_QUALITY_OPTIONS" :key="item" :value="item">{{ item }}</option>
+                </select>
+                <input v-model="parameterEnabled.imageQuality" type="checkbox" />
+              </label>
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageResponseFormat') }}</span>
+                <select v-model="config.imageResponseFormat" class="dialog-select" :disabled="!parameterEnabled.imageResponseFormat">
+                  <option value="">{{ t('playground.params.notSent') }}</option>
+                  <option v-for="item in GPT_IMAGE_2_RESPONSE_FORMAT_OPTIONS" :key="item" :value="item">{{ item }}</option>
+                </select>
+                <input v-model="parameterEnabled.imageResponseFormat" type="checkbox" />
+              </label>
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageBackground') }}</span>
+                <select v-model="config.imageBackground" class="dialog-select" :disabled="!parameterEnabled.imageBackground">
+                  <option value="">{{ t('playground.params.notSent') }}</option>
+                  <option v-for="item in GPT_IMAGE_2_BACKGROUND_OPTIONS" :key="item" :value="item">{{ item }}</option>
+                </select>
+                <input v-model="parameterEnabled.imageBackground" type="checkbox" />
+              </label>
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageStyle') }}</span>
+                <input v-model.trim="config.imageStyle" class="dialog-input" :disabled="!parameterEnabled.imageStyle" />
+                <input v-model="parameterEnabled.imageStyle" type="checkbox" />
+              </label>
+              <div class="dialog-toggle-row">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {{ t('playground.params.imageWatermark') }}
+                </label>
+                <button
+                  type="button"
+                  class="toggle-switch"
+                  :class="{ 'toggle-switch-on': parameterEnabled.imageWatermark }"
+                  @click="parameterEnabled.imageWatermark = !parameterEnabled.imageWatermark"
+                >
+                  <span class="toggle-knob" />
+                </button>
+              </div>
+              <div v-if="parameterEnabled.imageWatermark" class="dialog-toggle-row">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {{ t('playground.params.imageWatermarkValue') }}
+                </label>
+                <button
+                  type="button"
+                  class="toggle-switch"
+                  :class="{ 'toggle-switch-on': config.imageWatermark }"
+                  @click="config.imageWatermark = !config.imageWatermark"
+                >
+                  <span class="toggle-knob" />
+                </button>
+              </div>
+            </template>
+            <template v-else>
+              <ParamSlider
+                v-model:value="config.temperature"
+                v-model:enabled="parameterEnabled.temperature"
+                :label="t('playground.params.temperature')"
+                :min="0"
+                :max="2"
+                :step="0.01"
+              />
+              <ParamSlider
+                v-model:value="config.top_p"
+                v-model:enabled="parameterEnabled.top_p"
+                :label="t('playground.params.topP')"
+                :min="0"
+                :max="1"
+                :step="0.01"
+              />
+              <ParamSlider
+                v-model:value="config.max_tokens"
+                v-model:enabled="parameterEnabled.max_tokens"
+                :label="t('playground.params.maxTokens')"
+                :min="1"
+                :max="32768"
+                :step="1"
+                integer
+              />
+              <ParamSlider
+                v-model:value="config.frequency_penalty"
+                v-model:enabled="parameterEnabled.frequency_penalty"
+                :label="t('playground.params.frequencyPenalty')"
+                :min="-2"
+                :max="2"
+                :step="0.01"
+              />
+              <ParamSlider
+                v-model:value="config.presence_penalty"
+                v-model:enabled="parameterEnabled.presence_penalty"
+                :label="t('playground.params.presencePenalty')"
+                :min="-2"
+                :max="2"
+                :step="0.01"
+              />
+            </template>
 
             <!-- Stream toggle -->
-            <div class="dialog-toggle-row">
+            <div v-if="!isImageModel" class="dialog-toggle-row">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {{ t('playground.params.stream') }}
               </label>
@@ -319,6 +386,13 @@ import ConversationSidebar from '@/components/playground/ConversationSidebar.vue
 import ParamSlider from '@/components/playground/ParamSlider.vue'
 import { usePlaygroundState } from '@/composables/playground/usePlaygroundState'
 import { useConversations } from '@/composables/playground/useConversations'
+import {
+  GPT_IMAGE_2_BACKGROUND_OPTIONS,
+  GPT_IMAGE_2_QUALITY_OPTIONS,
+  GPT_IMAGE_2_RESPONSE_FORMAT_OPTIONS,
+  GPT_IMAGE_2_SIZE_OPTIONS,
+  isGptImage2VipModel,
+} from '@/constants/playground'
 import {
   useChatHandler,
   createUserMessage,
@@ -372,7 +446,7 @@ const {
   defaultTitle: () => t('playground.conversations.defaultTitle'),
 })
 
-const { sendChat, sendVideo, stopGeneration, isGenerating } = useChatHandler({
+const { sendChat, sendImage, sendVideo, stopGeneration, isGenerating } = useChatHandler({
   config,
   parameterEnabled,
   messages,
@@ -426,6 +500,7 @@ const modelOptions = computed<ModelOption[]>(() => models.value)
 const isVideoGroup = computed(
   () => groups.value.find((group) => group.value === config.value.group)?.platform === 'video'
 )
+const isImageModel = computed(() => isGptImage2VipModel(config.value.model))
 
 async function loadGroups() {
   try {
@@ -573,6 +648,10 @@ function handleSaveEditAndSubmit(key: string, content: string) {
 }
 
 function dispatchGeneration(next: Message[]) {
+  if (isImageModel.value) {
+    void sendImage(next)
+    return
+  }
   if (isVideoGroup.value) {
     void sendVideo(next)
     return
@@ -787,6 +866,18 @@ function onExport() {
 
 .dialog-toggle-row {
   @apply flex items-center justify-between;
+}
+
+.dialog-field {
+  @apply grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] items-center gap-3 text-sm font-medium text-gray-700;
+  @apply dark:text-gray-200;
+}
+
+.dialog-select,
+.dialog-input {
+  @apply h-9 min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-sm font-normal text-gray-800 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400;
+  @apply disabled:cursor-not-allowed disabled:opacity-60;
+  @apply dark:border-dark-600 dark:bg-dark-700 dark:text-gray-100;
 }
 
 .msg-btn {

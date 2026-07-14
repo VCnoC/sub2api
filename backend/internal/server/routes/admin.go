@@ -109,6 +109,27 @@ func RegisterAdminRoutes(
 
 		// 邀请返利（专属用户管理）
 		registerAffiliateRoutes(admin, h)
+
+		// 双奖池抽奖管理
+		registerLotteryRoutes(admin, h)
+	}
+}
+
+func registerLotteryRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	lottery := admin.Group("/lottery")
+	{
+		lottery.GET("/pools", h.Admin.Lottery.ListPools)
+		lottery.PATCH("/pools/:key", h.Admin.Lottery.UpdatePool)
+		lottery.GET("/prizes", h.Admin.Lottery.ListPrizes)
+		lottery.POST("/prizes", h.Admin.Lottery.CreatePrize)
+		lottery.PATCH("/prizes/:id", h.Admin.Lottery.UpdatePrize)
+		lottery.DELETE("/prizes/:id", h.Admin.Lottery.DeletePrize)
+		lottery.GET("/rules", h.Admin.Lottery.ListRules)
+		lottery.POST("/rules", h.Admin.Lottery.CreateRule)
+		lottery.PATCH("/rules/:id", h.Admin.Lottery.UpdateRule)
+		lottery.DELETE("/rules/:id", h.Admin.Lottery.DeleteRule)
+		lottery.GET("/draws", h.Admin.Lottery.ListDraws)
+		lottery.GET("/chance-ledger", h.Admin.Lottery.ListLedger)
 	}
 }
 

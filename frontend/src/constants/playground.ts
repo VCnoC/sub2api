@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   AVAILABLE_MODELS: '/playground/models',
   AVAILABLE_GROUPS: '/groups/available',
   CONVERSATIONS: '/playground/conversations',
+  IMAGES: '/playground/images',
   VIDEOS: '/playground/videos',
 } as const
 
@@ -59,8 +60,45 @@ export const VIDEO_ASPECT_RATIO_OPTIONS = [
   '9:20',
 ] as const
 
+export const GPT_IMAGE_2_VIP_MODEL = 'gpt-image-2-vip'
+
+export const GPT_IMAGE_2_SIZE_OPTIONS = [
+  { label: '1:1', value: '1024x1024' },
+  { label: '4:3', value: '1024x768' },
+  { label: '3:4', value: '768x1024' },
+  { label: '3:2', value: '1008x672' },
+  { label: '2:3', value: '672x1008' },
+  { label: '16:9', value: '1280x720' },
+  { label: '9:16', value: '720x1280' },
+  { label: '21:9', value: '1344x576' },
+  { label: '1:1(2K)', value: '2048x2048' },
+  { label: '4:3(2K)', value: '2304x1728' },
+  { label: '3:4(2K)', value: '1728x2304' },
+  { label: '3:2(2K)', value: '2496x1664' },
+  { label: '2:3(2K)', value: '1664x2496' },
+  { label: '16:9(2K)', value: '2560x1440' },
+  { label: '9:16(2K)', value: '1440x2560' },
+  { label: '21:9(2K)', value: '3024x1296' },
+  { label: '1:1(4K)', value: '2880x2880' },
+  { label: '4:3(4K)', value: '3264x2448' },
+  { label: '3:4(4K)', value: '2448x3264' },
+  { label: '3:2(4K)', value: '3504x2336' },
+  { label: '2:3(4K)', value: '2336x3504' },
+  { label: '16:9(4K)', value: '3840x2160' },
+  { label: '9:16(4K)', value: '2160x3840' },
+  { label: '21:9(4K)', value: '3808x1632' },
+] as const
+
+export const GPT_IMAGE_2_QUALITY_OPTIONS = ['auto', 'low', 'medium', 'high'] as const
+export const GPT_IMAGE_2_RESPONSE_FORMAT_OPTIONS = ['url', 'b64_json'] as const
+export const GPT_IMAGE_2_BACKGROUND_OPTIONS = ['auto', 'transparent', 'opaque'] as const
+
 export function isGrokImagineVideoModel(model: string): boolean {
   return model.trim().toLowerCase().startsWith('grok-imagine-video')
+}
+
+export function isGptImage2VipModel(model: string): boolean {
+  return model.trim().toLowerCase() === GPT_IMAGE_2_VIP_MODEL
 }
 
 // 默认配置
@@ -69,6 +107,12 @@ export const DEFAULT_CONFIG: PlaygroundConfig = {
   group: DEFAULT_GROUP,
   videoSeconds: '4',
   videoAspectRatio: '9:16',
+  imageSize: '1024x1024',
+  imageQuality: 'high',
+  imageResponseFormat: '',
+  imageStyle: '',
+  imageBackground: '',
+  imageWatermark: false,
   temperature: 0.7,
   top_p: 1,
   max_tokens: 4096,
@@ -87,6 +131,11 @@ export const DEFAULT_PARAMETER_ENABLED: ParameterEnabled = {
   frequency_penalty: true,
   presence_penalty: true,
   seed: false,
+  imageQuality: true,
+  imageResponseFormat: false,
+  imageStyle: false,
+  imageBackground: false,
+  imageWatermark: false,
 }
 
 // localStorage 键（分治三套独立持久化）

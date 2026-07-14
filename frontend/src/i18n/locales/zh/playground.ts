@@ -66,6 +66,11 @@ export default {
         stopped: '已停止等待'
       }
     },
+    image: {
+      placeholder: '描述你想生成的图片…',
+      generate: '生成图片',
+      hint: '输入图片描述，可选上传参考图'
+    },
     actions: {
       systemPrompt: '系统提示词',
       params: '参数',
@@ -94,6 +99,14 @@ export default {
       presencePenalty: '存在惩罚',
       seed: '随机种子',
       stream: '流式输出',
+      imageSize: '图片尺寸',
+      imageQuality: '质量',
+      imageResponseFormat: '返回格式',
+      imageBackground: '背景',
+      imageStyle: '风格',
+      imageWatermark: '发送水印参数',
+      imageWatermarkValue: '水印开关值',
+      notSent: '不发送',
       reset: '恢复默认',
       resetDone: '参数已恢复默认'
     },

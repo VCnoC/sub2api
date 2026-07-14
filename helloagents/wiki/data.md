@@ -43,3 +43,21 @@
 
 ### support_ticket_reads
 以 `(ticket_id, user_id)` 唯一记录每位用户或管理员的最后已读消息 ID。用户游标只推进到公开消息，管理员游标包含内部消息和管理员事件。
+
+### lottery_pools
+保存固定 `normal`、`luxury` 双奖池的名称、启停、每日/每周周期次数及可选活动时间；迁移默认创建两条停用配置。
+
+### lottery_prizes
+保存奖品所属奖池、余额或订阅权益、百万分比概率、可选库存、排序和 Data URL 卡面；软删除保留历史引用。
+
+### lottery_rules
+保存 `signup`、`redeem`、`recharge` 固定事件的受益人、双奖池机会数、单笔/累计充值门槛及重复模式；产生流水后的核心行为不可修改。
+
+### lottery_user_chances
+以 `(user_id, pool_id)` 唯一保存当前周期键、基础剩余次数和长期额外次数。基础次数惰性刷新且优先消耗，额外次数跨周期保留。
+
+### lottery_chance_ledger
+保存机会发放、退款冲正和抽奖扣减的不可变审计流水；`dedupe_key` 唯一，`balance_after` 和 `metadata` 保存当时快照。
+
+### lottery_draws
+保存用户、奖池、幂等键、中奖结果、次数来源、奖品/兑换码引用及奖品快照；`(user_id, pool_id, idempotency_key)` 唯一。

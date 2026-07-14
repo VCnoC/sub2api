@@ -6,6 +6,7 @@ import misc from './misc'
 import playground from './playground'
 import team from './team'
 import tickets from './tickets'
+import lottery from './lottery'
 
 export default {
   ...landing,
@@ -16,4 +17,5 @@ export default {
   ...playground,
   ...team,
   ...tickets,
+  ...lottery,
 }

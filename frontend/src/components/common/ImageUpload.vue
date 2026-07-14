@@ -81,6 +81,7 @@ const props = withDefaults(defineProps<{
   removeLabel?: string
   hint?: string
   maxSize?: number // bytes
+  accept?: string
 }>(), {
   mode: 'image',
   size: 'md',
@@ -88,6 +89,7 @@ const props = withDefaults(defineProps<{
   removeLabel: 'Remove',
   hint: '',
   maxSize: 300 * 1024,
+  accept: '',
 })
 
 const emit = defineEmits<{
@@ -96,7 +98,7 @@ const emit = defineEmits<{
 
 const error = ref('')
 
-const acceptTypes = computed(() => props.mode === 'svg' ? '.svg' : 'image/*')
+const acceptTypes = computed(() => props.accept || (props.mode === 'svg' ? '.svg' : 'image/*'))
 
 const sanitizedValue = computed(() =>
   props.mode === 'svg' ? sanitizeSvg(props.modelValue ?? '') : ''

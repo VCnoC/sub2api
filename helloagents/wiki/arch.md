@@ -22,6 +22,11 @@ flowchart LR
     TicketService --> PG
     TicketService --> TicketFiles[私有附件目录]
     TicketService --> Mail[通知邮件]
+    UserUI --> LotteryAPI[抽奖 API]
+    Admin --> LotteryAPI
+    LotteryAPI --> LotteryService[抽奖服务]
+    LotteryService --> PG
+    LotteryService --> Billing
 ```
 
 ## 核心约束
@@ -35,6 +40,8 @@ flowchart LR
 - 视频状态查询是已扣费任务的只读操作，保留身份与分组权限校验，不重复执行余额资格检查。
 - 工单用户接口始终按登录用户附加所有权边界，越权的工单和附件统一返回不存在；管理员负责人只用于协作和邮件收件人选择，不形成独占权限。
 - 工单正文和系统事件不可变，附件保存在非静态目录并通过鉴权接口访问；关闭 30 天后只物理清理附件，文字和删除元数据长期保留。
+- 抽奖使用固定普通/豪华双奖池；服务端以百万分比安全随机决定结果，前端轮带只展示已确定结果。
+- 抽奖在单个数据库事务内锁定次数与库存并完成余额或订阅发奖；邀请、兑换、充值及退款通过幂等流水发放或冲正额外次数。
 
 ## 重大架构决策
 
@@ -43,3 +50,6 @@ flowchart LR
 | ADR-004 | 在现有单体内建立工单模块 | 2026-07-12 | ✅已实施 | 工单、权限、邮件、私有附件 | [方案](../history/2026-07/202607120533_support_tickets/how.md#adr-004-在现有单体内建立工单模块) |
 | ADR-VIDEO-001 | 视频任务持久化与余额补偿 | 2026-07-11 | ✅已实施 | 账号、分组、网关、计费 | [方案](../plan/202607110153_video_platform/how.md#adr-video-001-视频任务持久化与余额补偿) |
 | ADR-20260711-PLAYGROUND-VIDEO | 对话广场复用视频网关 | 2026-07-11 | ✅已实施 | 对话广场、视频网关 | [方案](../history/2026-07/202607111841_playground_video/how.md#adr-20260711-playground-video-复用视频网关而非新建-playground-视频服务) |
+| ADR-LOTTERY-001 | 使用领域专用表和固定事件类型 | 2026-07-12 | ✅已实施 | 抽奖、邀请、充值、兑换码 | [方案](../history/2026-07/202607121617_lottery_system/how.md#adr-lottery-001-使用领域专用表和固定事件类型) |
+| ADR-LOTTERY-002 | 抽奖结果由服务端安全随机确定 | 2026-07-12 | ✅已实施 | 抽奖、前端 | [方案](../history/2026-07/202607121617_lottery_system/how.md#adr-lottery-002-抽奖结果由服务端安全随机确定) |
+| ADR-LOTTERY-003 | 兑换码核心支持复用外层事务 | 2026-07-12 | ✅已实施 | 抽奖、兑换码、订阅 | [方案](../history/2026-07/202607121617_lottery_system/how.md#adr-lottery-003-兑换码核心支持复用外层事务) |

@@ -142,6 +142,12 @@ type RedeemService struct {
 	entClient            *dbent.Client
 	authCacheInvalidator APIKeyAuthCacheInvalidator
 	affiliateService     *AffiliateService
+	lotteryChanceService *LotteryChanceService
+}
+
+// SetLotteryChanceService 在不改变现有构造函数调用方的前提下注入抽奖事件处理。
+func (s *RedeemService) SetLotteryChanceService(chanceService *LotteryChanceService) {
+	s.lotteryChanceService = chanceService
 }
 
 // NewRedeemService 创建兑换码服务实例
@@ -384,7 +390,7 @@ func unsupportedRedeemTypeError(codeType string) error {
 	return infraerrors.BadRequest("REDEEM_CODE_UNSUPPORTED_TYPE", fmt.Sprintf("unsupported redeem type: %s", codeType))
 }
 
-// Redeem 使用兑换码
+// Redeem 使用兑换码。
 func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (*RedeemCode, error) {
 	// 检查限流
 	if err := s.checkRedeemRateLimit(ctx, userID); err != nil {
@@ -444,68 +450,13 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 	// 将事务放入 context，使 repository 方法能够使用同一事务
 	txCtx := dbent.NewTxContext(ctx, tx)
 
-	// 【关键】先标记兑换码为已使用，确保并发安全
-	// 利用数据库乐观锁（WHERE status = 'unused'）保证原子性
-	if err := s.redeemRepo.Use(txCtx, redeemCode.ID, userID); err != nil {
-		if errors.Is(err, ErrRedeemCodeNotFound) || errors.Is(err, ErrRedeemCodeUsed) {
-			return nil, ErrRedeemCodeUsed
-		}
-		return nil, fmt.Errorf("mark code as used: %w", err)
+	if err := s.redeemCodeInTx(txCtx, userID, redeemCode); err != nil {
+		return nil, err
 	}
-
-	// 执行兑换逻辑（兑换码已被锁定，此时可安全操作）
-	switch redeemCode.Type {
-	case RedeemTypeBalance:
-		amount := redeemCode.Value
-		if amount < 0 {
-			if s.redeemUserRepo == nil {
-				return nil, errors.New("user repository does not support atomic redeem balance adjustments")
-			}
-			if err := s.redeemUserRepo.ApplyRedeemBalanceAdjustment(txCtx, userID, amount); err != nil {
-				return nil, fmt.Errorf("update user balance: %w", err)
-			}
-		} else if err := s.userRepo.UpdateBalance(txCtx, userID, amount); err != nil {
-			return nil, fmt.Errorf("update user balance: %w", err)
+	if s.lotteryChanceService != nil && ctx.Value(ctxKeySkipRedeemAffiliate{}) == nil {
+		if err := s.lotteryChanceService.GrantFirstRedeem(txCtx, userID, redeemCode.ID, false); err != nil {
+			return nil, fmt.Errorf("grant lottery redeem chance: %w", err)
 		}
-
-	case RedeemTypeConcurrency:
-		delta := int(redeemCode.Value)
-		if delta < 0 {
-			if s.redeemUserRepo == nil {
-				return nil, errors.New("user repository does not support atomic redeem concurrency adjustments")
-			}
-			if err := s.redeemUserRepo.ApplyRedeemConcurrencyAdjustment(txCtx, userID, delta); err != nil {
-				return nil, fmt.Errorf("update user concurrency: %w", err)
-			}
-		} else if err := s.userRepo.UpdateConcurrency(txCtx, userID, delta); err != nil {
-			return nil, fmt.Errorf("update user concurrency: %w", err)
-		}
-
-	case RedeemTypeSubscription:
-		validityDays := redeemCode.ValidityDays
-		if validityDays < 0 {
-			// 负数天数：缩短订阅，减到 0 则取消订阅
-			if err := s.reduceOrCancelSubscription(txCtx, userID, *redeemCode.GroupID, -validityDays, redeemCode.Code); err != nil {
-				return nil, fmt.Errorf("reduce or cancel subscription: %w", err)
-			}
-		} else {
-			if validityDays == 0 {
-				validityDays = 30
-			}
-			_, _, err := s.subscriptionService.AssignOrExtendSubscription(txCtx, &AssignSubscriptionInput{
-				UserID:       userID,
-				GroupID:      *redeemCode.GroupID,
-				ValidityDays: validityDays,
-				AssignedBy:   0, // 系统分配
-				Notes:        fmt.Sprintf("通过兑换码 %s 兑换", redeemCode.Code),
-			})
-			if err != nil {
-				return nil, fmt.Errorf("assign or extend subscription: %w", err)
-			}
-		}
-
-	default:
-		return nil, unsupportedRedeemTypeError(redeemCode.Type)
 	}
 
 	// 提交事务
@@ -528,6 +479,109 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 	}
 
 	return redeemCode, nil
+}
+
+// CreateAndRedeemSystemSubscriptionInTx 生成并兑换抽奖订阅码。
+// 调用方必须持有外层事务，并在提交后调用 FinalizeSystemRedeem。
+func (s *RedeemService) CreateAndRedeemSystemSubscriptionInTx(ctx context.Context, userID, groupID int64, validityDays int, notes string) (*RedeemCode, error) {
+	if dbent.TxFromContext(ctx) == nil {
+		return nil, errors.New("system subscription redeem requires an outer transaction")
+	}
+	codeValue, err := GenerateRedeemCode()
+	if err != nil {
+		return nil, fmt.Errorf("generate lottery redeem code: %w", err)
+	}
+	code := &RedeemCode{
+		Code:         codeValue,
+		Type:         RedeemTypeSubscription,
+		Status:       StatusUnused,
+		GroupID:      &groupID,
+		ValidityDays: validityDays,
+		Notes:        LotterySystemRedeemNotePrefix + strings.TrimSpace(notes),
+	}
+	if err := s.redeemRepo.Create(ctx, code); err != nil {
+		return nil, fmt.Errorf("create lottery redeem code: %w", err)
+	}
+	if err := s.redeemCodeInTx(ContextSkipRedeemAffiliate(ctx), userID, code); err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	code.Status = StatusUsed
+	code.UsedBy = &userID
+	code.UsedAt = &now
+	return code, nil
+}
+
+func (s *RedeemService) redeemCodeInTx(ctx context.Context, userID int64, redeemCode *RedeemCode) error {
+	if redeemCode == nil {
+		return ErrRedeemCodeNotFound
+	}
+	if err := s.redeemRepo.Use(ctx, redeemCode.ID, userID); err != nil {
+		if errors.Is(err, ErrRedeemCodeNotFound) || errors.Is(err, ErrRedeemCodeUsed) {
+			return ErrRedeemCodeUsed
+		}
+		return fmt.Errorf("mark code as used: %w", err)
+	}
+
+	switch redeemCode.Type {
+	case RedeemTypeBalance:
+		amount := redeemCode.Value
+		if amount < 0 {
+			if s.redeemUserRepo == nil {
+				return errors.New("user repository does not support atomic redeem balance adjustments")
+			}
+			if err := s.redeemUserRepo.ApplyRedeemBalanceAdjustment(ctx, userID, amount); err != nil {
+				return fmt.Errorf("update user balance: %w", err)
+			}
+		} else if err := s.userRepo.UpdateBalance(ctx, userID, amount); err != nil {
+			return fmt.Errorf("update user balance: %w", err)
+		}
+	case RedeemTypeConcurrency:
+		delta := int(redeemCode.Value)
+		if delta < 0 {
+			if s.redeemUserRepo == nil {
+				return errors.New("user repository does not support atomic redeem concurrency adjustments")
+			}
+			if err := s.redeemUserRepo.ApplyRedeemConcurrencyAdjustment(ctx, userID, delta); err != nil {
+				return fmt.Errorf("update user concurrency: %w", err)
+			}
+		} else if err := s.userRepo.UpdateConcurrency(ctx, userID, delta); err != nil {
+			return fmt.Errorf("update user concurrency: %w", err)
+		}
+	case RedeemTypeSubscription:
+		if redeemCode.GroupID == nil {
+			return infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid subscription redeem code")
+		}
+		validityDays := redeemCode.ValidityDays
+		if validityDays == 0 {
+			validityDays = 30
+		}
+		if validityDays < 0 {
+			if err := s.reduceOrCancelSubscription(ctx, userID, *redeemCode.GroupID, -validityDays, redeemCode.Code); err != nil {
+				return fmt.Errorf("reduce or cancel subscription: %w", err)
+			}
+			return nil
+		}
+		if _, _, err := s.subscriptionService.assignOrExtendSubscription(ctx, &AssignSubscriptionInput{
+			UserID:       userID,
+			GroupID:      *redeemCode.GroupID,
+			ValidityDays: validityDays,
+			AssignedBy:   0,
+			Notes:        fmt.Sprintf("通过兑换码 %s 兑换", redeemCode.Code),
+		}, true); err != nil {
+			return fmt.Errorf("assign or extend subscription: %w", err)
+		}
+	default:
+		return unsupportedRedeemTypeError(redeemCode.Type)
+	}
+	return nil
+}
+
+// FinalizeSystemRedeem 在外层事务提交后统一刷新权益缓存。
+func (s *RedeemService) FinalizeSystemRedeem(ctx context.Context, userID int64, code *RedeemCode) {
+	if code != nil {
+		s.invalidateRedeemCaches(ctx, userID, code)
+	}
 }
 
 // invalidateRedeemCaches 失效兑换相关的缓存
