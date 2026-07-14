@@ -20,6 +20,7 @@
 - 新增 JWT 鉴权的 `POST /api/v1/playground/images/generations`，复用 OpenAI Images 计费与调度链路。
 
 ### Changed
+- 合并官方 `v0.1.153`，同步 Grok API Key 自定义 Base URL、上游模型同步、视频编辑/延长及相关网关修复，同时保留本地独立 `video` 平台。
 - 抽奖管理端订阅奖品改为选择现有订阅套餐，并自动写入套餐对应的订阅分组和有效天数。
 - 视频分组支持 `per_second` 和 `per_request` 两种计费模式；独立视频平台固定使用余额计费。
 - 视频任务扣费与任务写入在同一幂等事务中完成。

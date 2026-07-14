@@ -47,6 +47,7 @@ flowchart LR
 
 | adr_id | title | date | status | affected_modules | details |
 |--------|-------|------|--------|------------------|---------|
+| ADR-20260714-UPSTREAM-MERGE | 按平台保留 Grok/Video 双路由 | 2026-07-14 | ✅已实施 | 网关媒体、账号管理、模型同步 | [方案](../history/2026-07/202607141328_upstream_0_1_153_merge/how.md#adr-20260714-upstream-merge-按平台保留双路由) |
 | ADR-004 | 在现有单体内建立工单模块 | 2026-07-12 | ✅已实施 | 工单、权限、邮件、私有附件 | [方案](../history/2026-07/202607120533_support_tickets/how.md#adr-004-在现有单体内建立工单模块) |
 | ADR-VIDEO-001 | 视频任务持久化与余额补偿 | 2026-07-11 | ✅已实施 | 账号、分组、网关、计费 | [方案](../plan/202607110153_video_platform/how.md#adr-video-001-视频任务持久化与余额补偿) |
 | ADR-20260711-PLAYGROUND-VIDEO | 对话广场复用视频网关 | 2026-07-11 | ✅已实施 | 对话广场、视频网关 | [方案](../history/2026-07/202607111841_playground_video/how.md#adr-20260711-playground-video-复用视频网关而非新建-playground-视频服务) |

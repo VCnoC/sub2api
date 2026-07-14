@@ -11,6 +11,8 @@
 #### 场景: 创建和查询
 - 创建任务后保存上游任务 ID 与选中账号，查询继续使用同一账号。
 - 视频平台不参与文本和图片路由。
+- `grok` 分组使用官方 Grok 上游处理 `/v1/videos/generations`、`/v1/videos/edits`、`/v1/videos/extensions` 和 `/v1/videos/:id`。
+- `video` 分组继续使用独立上游处理完整视频路由、余额计费和持久化任务，不与 Grok 账号池混合。
 - 后台自动查询终态，进程重启后继续处理。
 - 支持 `/v1/videos`、`/v1/video/create`、`/v1/videos/generations`、`/v1/videos/edits`、`/v1/videos/extensions`、`/v1/videos/:id` 和 `/v1/video/query`。
 - 使用账号 Base URL 和 Bearer API Key 透明转发请求与响应。
@@ -33,3 +35,6 @@
 - 参考图通过 `input_reference.image_url` 透传，文档和多图不进入视频请求。
 - 前端展示创建、排队、生成、完成或失败状态，完成时固定显示 100% 并使用原生播放器。
 - 状态查询仍校验登录用户和分组权限，但不因创建扣费后余额归零而拒绝。
+
+## 变更历史
+- [202607141328_upstream_0_1_153_merge](../../history/2026-07/202607141328_upstream_0_1_153_merge/) - 合并官方 Grok 视频能力并保留独立 Video 路由。
