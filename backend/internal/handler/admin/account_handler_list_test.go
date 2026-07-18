@@ -1,17 +1,40 @@
 package admin
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/Wei-Shaw/sub2api/internal/pkg/usagestats"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
+
+type accountListWindowStatsRepoStub struct {
+	service.UsageLogRepository
+	batchCalls  int
+	singleCalls int
+}
+
+func (r *accountListWindowStatsRepoStub) GetAccountWindowStats(_ context.Context, accountID int64, _ time.Time) (*usagestats.AccountStats, error) {
+	r.singleCalls++
+	return &usagestats.AccountStats{StandardCost: float64(accountID)}, nil
+}
+
+func (r *accountListWindowStatsRepoStub) GetAccountWindowStatsByStartBatch(_ context.Context, queries []service.AccountWindowStatsQuery) (map[string]*usagestats.AccountStats, error) {
+	r.batchCalls++
+	result := make(map[string]*usagestats.AccountStats, len(queries))
+	for _, query := range queries {
+		result[query.Key] = &usagestats.AccountStats{StandardCost: float64(query.AccountID)}
+	}
+	return result, nil
+}
 
 func setupAccountListRouter() (*gin.Engine, *stubAdminService) {
 	gin.SetMode(gin.TestMode)
@@ -20,6 +43,57 @@ func setupAccountListRouter() (*gin.Engine, *stubAdminService) {
 	handler := NewAccountHandler(adminSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	router.GET("/api/v1/admin/accounts", handler.List)
 	return router, adminSvc
+}
+
+func TestAccountHandlerListBatchesWindowCosts(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	adminSvc := newStubAdminService()
+	adminSvc.accounts = make([]service.Account, 0, 50)
+	start := time.Now().Add(-time.Hour)
+	end := start.Add(5 * time.Hour)
+	for i := 1; i <= 50; i++ {
+		adminSvc.accounts = append(adminSvc.accounts, service.Account{
+			ID:                 int64(i),
+			Name:               "anthropic-account-" + strconv.Itoa(i),
+			Platform:           service.PlatformAnthropic,
+			Type:               service.AccountTypeSetupToken,
+			Status:             service.StatusActive,
+			Extra:              map[string]any{"window_cost_limit": 100},
+			SessionWindowStart: &start,
+			SessionWindowEnd:   &end,
+			CreatedAt:          start,
+			UpdatedAt:          start,
+		})
+	}
+
+	usageRepo := &accountListWindowStatsRepoStub{}
+	usageSvc := service.NewAccountUsageService(nil, usageRepo, nil, nil, nil, nil, nil, nil, service.NewUsageCache(), nil, nil)
+	handler := NewAccountHandler(adminSvc, nil, nil, nil, nil, nil, nil, usageSvc, nil, nil, nil, nil, nil, nil)
+	router := gin.New()
+	router.GET("/api/v1/admin/accounts", handler.List)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/accounts?page=1&page_size=50", nil)
+	router.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, 1, usageRepo.batchCalls)
+	require.Zero(t, usageRepo.singleCalls)
+
+	var payload struct {
+		Data struct {
+			Items []struct {
+				ID                int64    `json:"id"`
+				CurrentWindowCost *float64 `json:"current_window_cost"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.Len(t, payload.Data.Items, 50)
+	for _, item := range payload.Data.Items {
+		require.NotNil(t, item.CurrentWindowCost)
+		require.Equal(t, float64(item.ID), *item.CurrentWindowCost)
+	}
 }
 
 func TestAccountHandlerListIncludesCreatedAt(t *testing.T) {

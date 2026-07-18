@@ -89,7 +89,7 @@ func (s *AccountUsageService) GetUsageBatchPassive(ctx context.Context, accountI
 		}
 	}
 
-	windowStats, err := s.getWindowStatsByStartBatch(ctx, windowQueries)
+	windowStats, err := s.GetWindowStatsByStartBatch(ctx, windowQueries)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,8 @@ func (s *AccountUsageService) getTodayStatsBatchStrict(ctx context.Context, ids 
 	return result, nil
 }
 
-func (s *AccountUsageService) getWindowStatsByStartBatch(ctx context.Context, queries []AccountWindowStatsQuery) (map[string]*usagestats.AccountStats, error) {
+// GetWindowStatsByStartBatch 按账号和各自的窗口起点一次性聚合使用统计。
+func (s *AccountUsageService) GetWindowStatsByStartBatch(ctx context.Context, queries []AccountWindowStatsQuery) (map[string]*usagestats.AccountStats, error) {
 	if len(queries) == 0 {
 		return map[string]*usagestats.AccountStats{}, nil
 	}
