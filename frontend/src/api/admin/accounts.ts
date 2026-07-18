@@ -10,6 +10,7 @@ import type {
   UpdateAccountRequest,
   PaginatedResponse,
   AccountUsageInfo,
+  AccountUsageBatchResponse,
   WindowStats,
   ClaudeModel,
   AccountUsageStatsResponse,
@@ -266,6 +267,24 @@ export async function getUsage(id: number, source?: 'passive' | 'active', force?
   const { data } = await apiClient.get<AccountUsageInfo>(`/admin/accounts/${id}/usage`, {
     params: Object.keys(params).length > 0 ? params : undefined
   })
+  return data
+}
+
+/**
+ * Get passive usage snapshots and today's statistics for the current page.
+ */
+export async function getUsageBatch(
+  accountIds: number[],
+  options?: { signal?: AbortSignal; refresh?: boolean }
+): Promise<AccountUsageBatchResponse> {
+  const { data } = await apiClient.post<AccountUsageBatchResponse>(
+    '/admin/accounts/usage/batch',
+    { account_ids: accountIds },
+    {
+      params: options?.refresh ? { refresh: 'true' } : undefined,
+      signal: options?.signal
+    }
+  )
   return data
 }
 
@@ -819,6 +838,7 @@ export const accountsAPI = {
   getStats,
   clearError,
   getUsage,
+  getUsageBatch,
   getTodayStats,
   getBatchTodayStats,
   clearRateLimit,

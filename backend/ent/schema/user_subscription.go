@@ -111,8 +111,7 @@ func (UserSubscription) Indexes() []ent.Index {
 		// 活跃订阅查询复合索引（线上由 SQL 迁移创建部分索引，schema 仅用于模型可读性对齐）
 		index.Fields("user_id", "status", "expires_at"),
 		index.Fields("assigned_by"),
-		// 唯一约束通过部分索引实现（WHERE deleted_at IS NULL），支持软删除后重新订阅
-		// 见迁移文件 016_soft_delete_partial_unique_indexes.sql
+		// 同一用户和分组允许多条独立订阅；候选排序索引由迁移维护。
 		index.Fields("user_id", "group_id"),
 		index.Fields("deleted_at"),
 	}

@@ -733,6 +733,10 @@ func TestExecuteSubscriptionFulfillmentRecoversCommittedAssignmentWithoutExtendi
 
 	require.NoError(t, svc.ExecuteSubscriptionFulfillment(ctx, order.ID))
 	assertPaymentSubscriptionExpiry(t, subRepo, order, expiresAt)
+	linkedOrder, err := client.PaymentOrder.Get(ctx, order.ID)
+	require.NoError(t, err)
+	require.NotNil(t, linkedOrder.SubscriptionID)
+	require.Equal(t, int64(99), *linkedOrder.SubscriptionID)
 
 	assignmentAuditCount, err := client.PaymentAuditLog.Query().
 		Where(
@@ -889,6 +893,8 @@ func TestExecuteSubscriptionFulfillmentAppliesAffiliateRebate(t *testing.T) {
 	reloaded, err := client.PaymentOrder.Get(ctx, order.ID)
 	require.NoError(t, err)
 	require.Equal(t, OrderStatusCompleted, reloaded.Status)
+	require.NotNil(t, reloaded.SubscriptionID)
+	require.Contains(t, subRepo.byID, *reloaded.SubscriptionID)
 	require.Len(t, affiliateRepo.accrueCalls, 1)
 	require.Equal(t, inviterID, affiliateRepo.accrueCalls[0].inviterID)
 	require.Equal(t, user.ID, affiliateRepo.accrueCalls[0].inviteeUserID)

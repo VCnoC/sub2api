@@ -160,6 +160,10 @@ func apiKeyAuthWithSubscription(apiKeyService *service.APIKeyService, subscripti
 			)
 			if subErr != nil {
 				if !skipBilling {
+					if service.IsSubscriptionLimitError(subErr) {
+						AbortWithError(c, 429, "USAGE_LIMIT_EXCEEDED", subErr.Error())
+						return
+					}
 					AbortWithError(c, 403, "SUBSCRIPTION_NOT_FOUND", "No active subscription found for this group")
 					return
 				}

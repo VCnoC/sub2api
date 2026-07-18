@@ -549,29 +549,42 @@ func (s *PaymentService) ensurePaymentSubscriptionAssigned(ctx context.Context, 
 	}
 
 	recoveredFromNote := false
+	var assignedSubscriptionID int64
 	if !alreadyAssigned {
 		orderNote := paymentSubscriptionOrderNote(o.ID)
-		existing, lookupErr := s.subscriptionSvc.userSubRepo.GetByUserIDAndGroupID(txCtx, o.UserID, groupID)
+		existing, lookupErr := s.findPaymentSubscriptionByOrderNote(txCtx, o.UserID, groupID, orderNote)
 		switch {
 		case lookupErr == nil && existing != nil && hasPaymentSubscriptionOrderNote(existing.Notes, orderNote):
 			recoveredFromNote = true
+			assignedSubscriptionID = existing.ID
 		case lookupErr != nil && !errors.Is(lookupErr, ErrSubscriptionNotFound):
 			return fmt.Errorf("check existing subscription assignment: %w", lookupErr)
 		default:
-			if _, _, err := s.subscriptionSvc.assignOrExtendSubscription(txCtx, &AssignSubscriptionInput{
+			issued, issueErr := s.subscriptionSvc.IssueSubscription(txCtx, &AssignSubscriptionInput{
 				UserID:       o.UserID,
 				GroupID:      groupID,
 				ValidityDays: days,
 				AssignedBy:   0,
 				Notes:        orderNote,
-			}, true); err != nil {
-				return fmt.Errorf("assign subscription: %w", err)
+			})
+			if issueErr != nil {
+				return fmt.Errorf("assign subscription: %w", issueErr)
+			}
+			assignedSubscriptionID = issued.ID
+		}
+
+		if assignedSubscriptionID > 0 {
+			if _, err := txClient.PaymentOrder.UpdateOneID(o.ID).
+				SetSubscriptionID(assignedSubscriptionID).
+				Save(txCtx); err != nil {
+				return fmt.Errorf("link payment subscription: %w", err)
 			}
 		}
 
 		detail, _ := json.Marshal(map[string]any{
 			"groupID":           groupID,
 			"validityDays":      days,
+			"subscriptionID":    assignedSubscriptionID,
 			"recoveredFromNote": recoveredFromNote,
 		})
 		if _, err := txClient.PaymentAuditLog.Create().
@@ -602,6 +615,19 @@ func (s *PaymentService) ensurePaymentSubscriptionAssigned(ctx context.Context, 
 		return fmt.Errorf("invalidate subscription cache after fulfillment: %w", err)
 	}
 	return nil
+}
+
+func (s *PaymentService) findPaymentSubscriptionByOrderNote(ctx context.Context, userID, groupID int64, orderNote string) (*UserSubscription, error) {
+	subs, err := s.subscriptionSvc.userSubRepo.ListByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range subs {
+		if subs[i].GroupID == groupID && hasPaymentSubscriptionOrderNote(subs[i].Notes, orderNote) {
+			return &subs[i], nil
+		}
+	}
+	return nil, ErrSubscriptionNotFound
 }
 
 func hasPaymentSubscriptionAssignmentAudit(ctx context.Context, client *dbent.Client, orderID int64) (bool, error) {

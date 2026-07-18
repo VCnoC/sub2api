@@ -76,7 +76,7 @@
                 :class="['rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors', platformButtonClass(subscription.group?.platform || '')]"
                 @click="router.push({ path: '/purchase', query: { tab: 'subscription', group: String(subscription.group_id) } })"
               >
-                {{ t('payment.renewNow') }}
+                {{ t('payment.buyAgain') }}
               </button>
             </div>
           </div>

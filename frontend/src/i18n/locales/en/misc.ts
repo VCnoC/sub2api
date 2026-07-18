@@ -446,6 +446,7 @@ export default {
     },
     subscribeNow: 'Subscribe Now',
     renewNow: 'Renew',
+    buyAgain: 'Buy again',
     selectPlan: 'Select Plan',
     planFeatures: 'Features',
     planCard: {

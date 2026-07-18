@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -562,14 +563,14 @@ func (s *RedeemService) redeemCodeInTx(ctx context.Context, userID int64, redeem
 			}
 			return nil
 		}
-		if _, _, err := s.subscriptionService.assignOrExtendSubscription(ctx, &AssignSubscriptionInput{
+		if _, err := s.subscriptionService.IssueSubscription(ctx, &AssignSubscriptionInput{
 			UserID:       userID,
 			GroupID:      *redeemCode.GroupID,
 			ValidityDays: validityDays,
 			AssignedBy:   0,
 			Notes:        fmt.Sprintf("通过兑换码 %s 兑换", redeemCode.Code),
-		}, true); err != nil {
-			return fmt.Errorf("assign or extend subscription: %w", err)
+		}); err != nil {
+			return fmt.Errorf("issue subscription: %w", err)
 		}
 	default:
 		return unsupportedRedeemTypeError(redeemCode.Type)
@@ -718,48 +719,49 @@ func (s *RedeemService) GetUserHistory(ctx context.Context, userID int64, limit 
 
 // reduceOrCancelSubscription 缩短订阅天数，剩余天数 <= 0 时取消订阅
 func (s *RedeemService) reduceOrCancelSubscription(ctx context.Context, userID, groupID int64, reduceDays int, code string) error {
-	sub, err := s.subscriptionService.userSubRepo.GetByUserIDAndGroupID(ctx, userID, groupID)
+	subs, err := s.subscriptionService.userSubRepo.ListActiveByUserID(ctx, userID)
 	if err != nil {
 		return ErrSubscriptionNotFound
 	}
 
 	now := time.Now()
-	remaining := int(sub.ExpiresAt.Sub(now).Hours() / 24)
-	if remaining < 0 {
-		remaining = 0
-	}
-
-	notes := fmt.Sprintf("通过兑换码 %s 退款扣减 %d 天", code, reduceDays)
-
-	if remaining <= reduceDays {
-		// 剩余天数不足，直接取消订阅
-		if err := s.subscriptionService.userSubRepo.UpdateStatus(ctx, sub.ID, SubscriptionStatusExpired); err != nil {
-			return fmt.Errorf("cancel subscription: %w", err)
+	remainingReduction := reduceDays
+	found := false
+	for i := range subs {
+		sub := &subs[i]
+		if sub.GroupID != groupID || remainingReduction <= 0 {
+			continue
 		}
-		// 设置过期时间为当前时间
-		if err := s.subscriptionService.userSubRepo.ExtendExpiry(ctx, sub.ID, now); err != nil {
-			return fmt.Errorf("set subscription expiry: %w", err)
+		found = true
+		remainingDays := int(math.Ceil(sub.ExpiresAt.Sub(now).Hours() / 24))
+		if remainingDays <= 0 {
+			continue
 		}
-	} else {
-		// 缩短天数
-		newExpiresAt := sub.ExpiresAt.AddDate(0, 0, -reduceDays)
-		if err := s.subscriptionService.userSubRepo.ExtendExpiry(ctx, sub.ID, newExpiresAt); err != nil {
-			return fmt.Errorf("reduce subscription: %w", err)
+
+		deductedDays := min(remainingReduction, remainingDays)
+		if deductedDays == remainingDays {
+			if err := s.subscriptionService.userSubRepo.UpdateStatus(ctx, sub.ID, SubscriptionStatusExpired); err != nil {
+				return fmt.Errorf("cancel subscription: %w", err)
+			}
+			if err := s.subscriptionService.userSubRepo.ExtendExpiry(ctx, sub.ID, now); err != nil {
+				return fmt.Errorf("set subscription expiry: %w", err)
+			}
+		} else {
+			if err := s.subscriptionService.userSubRepo.ExtendExpiry(ctx, sub.ID, sub.ExpiresAt.AddDate(0, 0, -deductedDays)); err != nil {
+				return fmt.Errorf("reduce subscription: %w", err)
+			}
 		}
+
+		notes := fmt.Sprintf("通过兑换码 %s 退款扣减 %d 天", code, deductedDays)
+		if err := s.subscriptionService.userSubRepo.UpdateNotes(ctx, sub.ID, appendSubscriptionNotes(sub.Notes, notes)); err != nil {
+			return fmt.Errorf("update subscription notes: %w", err)
+		}
+		remainingReduction -= deductedDays
+	}
+	if !found {
+		return ErrSubscriptionNotFound
 	}
 
-	// 追加备注
-	newNotes := sub.Notes
-	if newNotes != "" {
-		newNotes += "\n"
-	}
-	newNotes += notes
-	if err := s.subscriptionService.userSubRepo.UpdateNotes(ctx, sub.ID, newNotes); err != nil {
-		return fmt.Errorf("update subscription notes: %w", err)
-	}
-
-	// 失效缓存
 	s.subscriptionService.InvalidateSubCache(userID, groupID)
-
 	return nil
 }

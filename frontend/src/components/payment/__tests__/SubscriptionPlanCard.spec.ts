@@ -1,65 +1,82 @@
-import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
-import { createPinia } from "pinia";
-import { createI18n } from "vue-i18n";
-import SubscriptionPlanCard from "../SubscriptionPlanCard.vue";
+import { mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
+import { createI18n } from 'vue-i18n'
+import { describe, expect, it } from 'vitest'
+import SubscriptionPlanCard from '@/components/payment/SubscriptionPlanCard.vue'
+import type { SubscriptionPlan } from '@/types/payment'
+import type { UserSubscription } from '@/types'
 
-const i18n = createI18n({
-  legacy: false,
-  locale: "en",
-  fallbackWarn: false,
-  missingWarn: false,
-  messages: {
-    en: {
-      payment: {
-        days: "days",
-        models: "Models",
-        planCard: {
-          quota: "Quota",
-          rate: "Rate",
-          unlimited: "Unlimited",
-        },
-        subscribeNow: "Subscribe now",
-      },
-    },
-  },
-});
+const plan: SubscriptionPlan = {
+  id: 1,
+  group_id: 7,
+  name: 'Test plan',
+  description: '',
+  price: 10,
+  validity_days: 30,
+  validity_unit: 'day',
+  features: [],
+  for_sale: true,
+  sort_order: 0
+}
 
-const mountPlanCard = (groupPlatform: string) =>
-  mount(SubscriptionPlanCard, {
-    props: {
-      plan: {
-        id: 1,
-        group_id: 10,
-        group_platform: groupPlatform,
-        name: "Pro",
-        price: 10,
-        amount: 1000,
-        features: [],
-        rate_multiplier: 1,
-        validity_days: 30,
-        validity_unit: "day",
-        supported_model_scopes: ["claude", "gemini_text", "gemini_image"],
-        is_active: true,
-      },
-    },
-    global: { plugins: [i18n, createPinia()] },
-  });
+function mountCard(
+  activeSubscriptions: UserSubscription[] = [],
+  planOverrides: Partial<SubscriptionPlan> = {}
+) {
+  const i18n = createI18n({
+    legacy: false,
+    locale: 'en',
+    messages: {
+      en: {
+        payment: {
+          buyAgain: () => 'Buy again',
+          subscribeNow: () => 'Subscribe',
+          days: () => ' days',
+          planCard: {
+            rate: () => 'Rate',
+            quota: () => 'Quota',
+            unlimited: () => 'Unlimited',
+            models: () => 'Models'
+          }
+        }
+      }
+    }
+  })
+  return mount(SubscriptionPlanCard, {
+    props: { plan: { ...plan, ...planOverrides }, activeSubscriptions },
+    global: { plugins: [createPinia(), i18n] }
+  })
+}
 
-describe("SubscriptionPlanCard", () => {
-  it("does not show Antigravity model scopes for OpenAI plans", () => {
-    const text = mountPlanCard("openai").text();
+describe('SubscriptionPlanCard', () => {
+  it('shows buy again for another active entitlement in the same group', () => {
+    const active = [{ id: 9, group_id: plan.group_id, status: 'active' }] as UserSubscription[]
+    expect(mountCard(active).get('button').text()).toBe('Buy again')
+  })
 
-    expect(text).not.toContain("Claude");
-    expect(text).not.toContain("Gemini");
-    expect(text).not.toContain("Imagen");
-  });
+  it('shows subscribe for a group without an active entitlement', () => {
+    expect(mountCard().get('button').text()).toBe('Subscribe')
+  })
 
-  it("shows model scopes for Antigravity plans", () => {
-    const text = mountPlanCard("antigravity").text();
+  it('does not show Antigravity model scopes for OpenAI plans', () => {
+    const text = mountCard([], {
+      group_platform: 'openai',
+      supported_model_scopes: ['claude', 'gemini_text', 'gemini_image']
+    }).text()
 
-    expect(text).toContain("Claude");
-    expect(text).toContain("Gemini");
-    expect(text).toContain("Imagen");
-  });
-});
+    expect(text).not.toContain('Claude')
+    expect(text).not.toContain('Gemini')
+    expect(text).not.toContain('Imagen')
+  })
+
+  it('shows model scopes for Antigravity plans', () => {
+    const text = mountCard([], {
+      group_platform: 'antigravity',
+      supported_model_scopes: ['claude', 'gemini_text', 'gemini_image']
+    }).text()
+
+    expect(text).toContain('Claude')
+    expect(text).toContain('Gemini')
+    expect(text).toContain('Imagen')
+  })
+})

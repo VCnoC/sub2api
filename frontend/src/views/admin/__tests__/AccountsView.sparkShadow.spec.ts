@@ -11,7 +11,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 const {
   listAccounts,
   listWithEtag,
-  getBatchTodayStats,
+  getUsageBatch,
   getAllProxies,
   getAllGroups,
   createSparkShadow,
@@ -20,7 +20,7 @@ const {
 } = vi.hoisted(() => ({
   listAccounts: vi.fn(),
   listWithEtag: vi.fn(),
-  getBatchTodayStats: vi.fn(),
+  getUsageBatch: vi.fn(),
   getAllProxies: vi.fn(),
   getAllGroups: vi.fn(),
   createSparkShadow: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('@/api/admin', () => ({
     accounts: {
       list: listAccounts,
       listWithEtag,
-      getBatchTodayStats,
+      getUsageBatch,
       createSparkShadow,
       delete: vi.fn(),
       batchClearError: vi.fn(),
@@ -102,12 +102,12 @@ const mountView = () =>
 describe('admin AccountsView — 外审 F2:spark 影子创建接线', () => {
   beforeEach(() => {
     localStorage.clear()
-    for (const fn of [listAccounts, listWithEtag, getBatchTodayStats, getAllProxies, getAllGroups, createSparkShadow, showSuccess, showError]) {
+    for (const fn of [listAccounts, listWithEtag, getUsageBatch, getAllProxies, getAllGroups, createSparkShadow, showSuccess, showError]) {
       fn.mockReset()
     }
     listAccounts.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 20, pages: 0 })
     listWithEtag.mockResolvedValue({ notModified: true, etag: null, data: null })
-    getBatchTodayStats.mockResolvedValue({ stats: {} })
+    getUsageBatch.mockResolvedValue({ usage: {}, today_stats: {}, errors: {} })
     getAllProxies.mockResolvedValue([])
     getAllGroups.mockResolvedValue([])
     createSparkShadow.mockResolvedValue({ id: 999, name: 'parent-acc (Spark)' })
@@ -208,11 +208,11 @@ const mountViewWithRow = () =>
 describe('admin AccountsView — 影子行 parent_* OR 兜底展示', () => {
   beforeEach(() => {
     localStorage.clear()
-    for (const fn of [listAccounts, listWithEtag, getBatchTodayStats, getAllProxies, getAllGroups, createSparkShadow, showSuccess, showError]) {
+    for (const fn of [listAccounts, listWithEtag, getUsageBatch, getAllProxies, getAllGroups, createSparkShadow, showSuccess, showError]) {
       fn.mockReset()
     }
     listWithEtag.mockResolvedValue({ notModified: true, etag: null, data: null })
-    getBatchTodayStats.mockResolvedValue({ stats: {} })
+    getUsageBatch.mockResolvedValue({ usage: {}, today_stats: {}, errors: {} })
     getAllProxies.mockResolvedValue([])
     getAllGroups.mockResolvedValue([])
     vi.stubGlobal('confirm', vi.fn(() => true))

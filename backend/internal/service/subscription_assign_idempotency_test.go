@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -249,6 +250,56 @@ func (s *subscriptionUserSubRepoStub) GetByID(_ context.Context, id int64) (*Use
 	return &cp, nil
 }
 
+func (s *subscriptionUserSubRepoStub) ListByUserID(_ context.Context, userID int64) ([]UserSubscription, error) {
+	result := make([]UserSubscription, 0)
+	for _, sub := range s.byID {
+		if sub.UserID == userID {
+			result = append(result, *sub)
+		}
+	}
+	return result, nil
+}
+
+func (s *subscriptionUserSubRepoStub) ListActiveByUserID(_ context.Context, userID int64) ([]UserSubscription, error) {
+	result := make([]UserSubscription, 0)
+	for _, sub := range s.byID {
+		if sub.UserID == userID && sub.Status == SubscriptionStatusActive && sub.ExpiresAt.After(time.Now()) {
+			result = append(result, *sub)
+		}
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].ExpiresAt.Equal(result[j].ExpiresAt) {
+			return result[i].ID < result[j].ID
+		}
+		return result[i].ExpiresAt.Before(result[j].ExpiresAt)
+	})
+	return result, nil
+}
+
+func (s *subscriptionUserSubRepoStub) UpdateStatus(_ context.Context, id int64, status string) error {
+	if s.byID[id] == nil {
+		return ErrSubscriptionNotFound
+	}
+	s.byID[id].Status = status
+	return nil
+}
+
+func (s *subscriptionUserSubRepoStub) ExtendExpiry(_ context.Context, id int64, expiresAt time.Time) error {
+	if s.byID[id] == nil {
+		return ErrSubscriptionNotFound
+	}
+	s.byID[id].ExpiresAt = expiresAt
+	return nil
+}
+
+func (s *subscriptionUserSubRepoStub) UpdateNotes(_ context.Context, id int64, notes string) error {
+	if s.byID[id] == nil {
+		return ErrSubscriptionNotFound
+	}
+	s.byID[id].Notes = notes
+	return nil
+}
+
 func (s *subscriptionUserSubRepoStub) Update(_ context.Context, sub *UserSubscription) error {
 	if sub == nil {
 		return ErrSubscriptionNilInput
@@ -321,7 +372,7 @@ func TestAssignSubscriptionConflictWhenSemanticsMismatch(t *testing.T) {
 	require.Equal(t, 0, subRepo.createCalls, "conflict should not create or mutate existing subscription")
 }
 
-func TestBulkAssignSubscriptionCreatedReusedAndConflict(t *testing.T) {
+func TestBulkAssignSubscriptionCreatesIndependentEntitlements(t *testing.T) {
 	start := time.Date(2026, 2, 20, 10, 0, 0, 0, time.UTC)
 	groupRepo := &subscriptionGroupRepoStub{
 		group: &Group{ID: 1, SubscriptionType: SubscriptionTypeSubscription},
@@ -355,14 +406,14 @@ func TestBulkAssignSubscriptionCreatedReusedAndConflict(t *testing.T) {
 		Notes:        "same-note",
 	})
 	require.NoError(t, err)
-	require.Equal(t, 2, result.SuccessCount)
-	require.Equal(t, 1, result.CreatedCount)
-	require.Equal(t, 1, result.ReusedCount)
-	require.Equal(t, 1, result.FailedCount)
-	require.Equal(t, "reused", result.Statuses[1])
+	require.Equal(t, 3, result.SuccessCount)
+	require.Equal(t, 3, result.CreatedCount)
+	require.Equal(t, 0, result.ReusedCount)
+	require.Equal(t, 0, result.FailedCount)
+	require.Equal(t, "created", result.Statuses[1])
 	require.Equal(t, "created", result.Statuses[2])
-	require.Equal(t, "failed", result.Statuses[3])
-	require.Equal(t, 1, subRepo.createCalls)
+	require.Equal(t, "created", result.Statuses[3])
+	require.Equal(t, 3, subRepo.createCalls)
 }
 
 func TestAssignSubscriptionKeepsWorkingWhenIdempotencyStoreUnavailable(t *testing.T) {

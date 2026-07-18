@@ -54,7 +54,7 @@ func TestRevokeSubscription_InvalidatesL1CacheSynchronously(t *testing.T) {
 			ExpiresAt: time.Now().Add(time.Hour),
 		},
 	}
-	svc := NewSubscriptionService(groupRepoNoop{}, repo, nil, nil, &config.Config{
+	svc := NewSubscriptionService(nil, repo, nil, nil, &config.Config{
 		SubscriptionCache: config.SubscriptionCacheConfig{
 			L1Size:       16,
 			L1TTLSeconds: 60,
@@ -150,7 +150,7 @@ func TestRestoreSubscription_NotRevokedReturnsConflict(t *testing.T) {
 	require.Zero(t, repo.restoreCalls)
 }
 
-func TestRestoreSubscription_LiveSubscriptionConflict(t *testing.T) {
+func TestRestoreSubscription_AllowsAnotherLiveSubscription(t *testing.T) {
 	deletedAt := time.Now().Add(-time.Hour)
 	repo := &restoreUserSubRepoStub{
 		existsActive: true,
@@ -166,7 +166,8 @@ func TestRestoreSubscription_LiveSubscriptionConflict(t *testing.T) {
 	svc := NewSubscriptionService(groupRepoNoop{}, repo, nil, nil, nil)
 	t.Cleanup(svc.Stop)
 
-	_, err := svc.RestoreSubscription(context.Background(), 1)
-	require.ErrorIs(t, err, ErrSubscriptionRestoreConflict)
-	require.Zero(t, repo.restoreCalls)
+	restored, err := svc.RestoreSubscription(context.Background(), 1)
+	require.NoError(t, err)
+	require.NotNil(t, restored)
+	require.Equal(t, 1, repo.restoreCalls)
 }

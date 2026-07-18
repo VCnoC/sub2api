@@ -2050,6 +2050,70 @@ func (h *AccountHandler) GetUsage(c *gin.Context) {
 	response.Success(c, usage)
 }
 
+type BatchUsageRequest struct {
+	AccountIDs *[]int64 `json:"account_ids"`
+}
+
+// GetUsageBatch returns passive local snapshots for at most 100 accounts.
+// POST /api/v1/admin/accounts/usage/batch
+func (h *AccountHandler) GetUsageBatch(c *gin.Context) {
+	var req BatchUsageRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.AccountIDs == nil {
+		response.BadRequest(c, "Invalid request: account_ids is required")
+		return
+	}
+	for _, id := range *req.AccountIDs {
+		if id <= 0 {
+			response.BadRequest(c, "Invalid request: account_ids must contain positive integers")
+			return
+		}
+	}
+
+	accountIDs := normalizeInt64IDList(*req.AccountIDs)
+	if len(accountIDs) > 100 {
+		response.BadRequest(c, "Invalid request: account_ids must contain at most 100 unique IDs")
+		return
+	}
+	if len(accountIDs) == 0 {
+		response.Success(c, &service.BatchUsageSnapshot{
+			Usage:      map[int64]*service.UsageInfo{},
+			TodayStats: map[int64]*service.WindowStats{},
+			Errors:     map[int64]*service.BatchUsageError{},
+		})
+		return
+	}
+
+	cacheKey := buildAccountUsageBatchCacheKey(accountIDs)
+	bypassCache := c.Query("refresh") == "true"
+	if !bypassCache {
+		if cached, ok := accountUsageBatchCache.Get(cacheKey); ok {
+			writeAccountUsageBatchSnapshot(c, cached, "hit")
+			return
+		}
+	}
+
+	snapshot, err := h.accountUsageService.GetUsageBatchPassive(c.Request.Context(), accountIDs)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	entry := accountUsageBatchCache.Set(cacheKey, snapshot)
+	writeAccountUsageBatchSnapshot(c, entry, "miss")
+}
+
+func writeAccountUsageBatchSnapshot(c *gin.Context, entry snapshotCacheEntry, cacheStatus string) {
+	if entry.ETag != "" {
+		c.Header("ETag", entry.ETag)
+		c.Header("Vary", "If-None-Match")
+		if ifNoneMatchMatched(c.GetHeader("If-None-Match"), entry.ETag) {
+			c.Status(http.StatusNotModified)
+			return
+		}
+	}
+	c.Header("X-Snapshot-Cache", cacheStatus)
+	response.Success(c, entry.Payload)
+}
+
 // ClearRateLimit handles clearing account rate limit status
 // POST /api/v1/admin/accounts/:id/clear-rate-limit
 func (h *AccountHandler) ClearRateLimit(c *gin.Context) {

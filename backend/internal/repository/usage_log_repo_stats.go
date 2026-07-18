@@ -388,6 +388,67 @@ func (r *usageLogRepository) GetAccountWindowStatsBatch(ctx context.Context, acc
 	return result, nil
 }
 
+// GetAccountWindowStatsByStartBatch aggregates multiple independently keyed
+// account windows in one query. An account may appear more than once with
+// different start times (for example, Codex 5h and 7d windows).
+func (r *usageLogRepository) GetAccountWindowStatsByStartBatch(ctx context.Context, queries []service.AccountWindowStatsQuery) (map[string]*usagestats.AccountStats, error) {
+	result := make(map[string]*usagestats.AccountStats, len(queries))
+	if len(queries) == 0 {
+		return result, nil
+	}
+
+	keys := make([]string, 0, len(queries))
+	accountIDs := make([]int64, 0, len(queries))
+	startTimes := make([]time.Time, 0, len(queries))
+	for _, item := range queries {
+		keys = append(keys, item.Key)
+		accountIDs = append(accountIDs, item.AccountID)
+		startTimes = append(startTimes, item.StartTime)
+	}
+
+	query := `
+		WITH windows AS (
+			SELECT *
+			FROM unnest($1::text[], $2::bigint[], $3::timestamptz[])
+				AS w(query_key, account_id, start_time)
+		)
+		SELECT
+			w.query_key,
+			COUNT(u.id) AS requests,
+			COALESCE(SUM(u.input_tokens + u.output_tokens + u.cache_creation_tokens + u.cache_read_tokens), 0) AS tokens,
+			COALESCE(SUM(COALESCE(u.account_stats_cost, u.total_cost) * COALESCE(u.account_rate_multiplier, 1)), 0) AS cost,
+			COALESCE(SUM(u.total_cost), 0) AS standard_cost,
+			COALESCE(SUM(u.actual_cost), 0) AS user_cost
+		FROM windows w
+		LEFT JOIN usage_logs u
+			ON u.account_id = w.account_id AND u.created_at >= w.start_time
+		GROUP BY w.query_key
+	`
+	rows, err := r.sql.QueryContext(ctx, query, pq.Array(keys), pq.Array(accountIDs), pq.Array(startTimes))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var key string
+		stats := &usagestats.AccountStats{}
+		if err := rows.Scan(&key, &stats.Requests, &stats.Tokens, &stats.Cost, &stats.StandardCost, &stats.UserCost); err != nil {
+			return nil, err
+		}
+		result[key] = stats
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	for _, item := range queries {
+		if _, ok := result[item.Key]; !ok {
+			result[item.Key] = &usagestats.AccountStats{}
+		}
+	}
+	return result, nil
+}
+
 // GetGeminiUsageTotalsBatch 批量聚合 Gemini 账号在窗口内的 Pro/Flash 请求与用量。
 // 模型分类规则与 service.geminiModelClassFromName 一致：model 包含 flash/lite 视为 flash，其余视为 pro。
 func (r *usageLogRepository) GetGeminiUsageTotalsBatch(ctx context.Context, accountIDs []int64, startTime, endTime time.Time) (map[int64]service.GeminiUsageTotals, error) {

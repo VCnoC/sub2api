@@ -17,6 +17,12 @@
 ### usage_billing_dedup
 以请求 ID 和 API Key ID 幂等应用余额及配额变更。
 
+### user_subscriptions
+保存每次独立获得的订阅权益、有效期、状态及日/周/月窗口用量。同一用户和分组允许多条未删除记录；有效候选按 `(user_id, group_id, status, expires_at, id)` 查询并优先使用最早到期记录。
+
+### payment_orders
+订阅订单通过可空 `subscription_id` 关联实际发放的 `user_subscriptions` 记录。迁移前历史订单可能为空，新订单履约必须在同一事务内写入权益、订单关联和发放审计。
+
 ### video_tasks
 保存异步视频任务的最小计费快照和轮询状态：上游任务 ID、计费请求 ID、用户/API Key/账号/分组、退款金额、状态、轮询时间、租约、轮询次数、终态时间、退款时间与错误摘要。
 

@@ -1,0 +1,1020 @@
+diff --git a/backend/internal/handler/grok_media_cpa.go b/backend/internal/handler/grok_media_cpa.go
+new file mode 100644
+index 000000000..d59057b7e
+--- /dev/null
++++ b/backend/internal/handler/grok_media_cpa.go
+@@ -0,0 +1,133 @@
++package handler
++
++// CPA (cli-proxy-api) 兼容的 Grok 视频接口。
++// 接口与返回格式对齐 CPA-2 (64.32.23.242:8318)：
++//   - POST /v1/videos、POST /v1/video/create → OpenAI Sora 风格创建，返回包装 video 对象
++//   - GET  /v1/videos/:request_id            → 包装查询对象（走 GrokVideoStatusCPA）
++//   - GET  /v1/video/query?id=               → deepwl 统一查询 schema
++
++import (
++	"bytes"
++	"io"
++	"net/http"
++	"strings"
++
++	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
++	"github.com/Wei-Shaw/sub2api/internal/service"
++	"github.com/gin-gonic/gin"
++	"github.com/tidwall/gjson"
++	"github.com/tidwall/sjson"
++)
++
++// grokCPAVideoError 输出与 CPA writeVideoStringError 一致的错误格式。
++func grokCPAVideoError(c *gin.Context, statusCode int, message string) {
++	out := []byte(`{}`)
++	out, _ = sjson.SetBytes(out, "error.message", message)
++	out, _ = sjson.SetBytes(out, "error.type", "invalid_request_error")
++	out, _ = sjson.SetRawBytes(out, "error.param", []byte("null"))
++	out, _ = sjson.SetBytes(out, "error.code", "invalid_request_error")
++	c.Header("Content-Type", "application/json")
++	c.Status(statusCode)
++	_, _ = c.Writer.Write(out)
++}
++
++// GrokVideoCreateCPA 处理 POST /v1/videos 与 /v1/video/create（OpenAI Sora 风格）。
++// 请求体转换为 xAI 原生格式后复用 grok media 转发链路，响应按 CPA 格式包装。
++func (h *OpenAIGatewayHandler) GrokVideoCreateCPA(c *gin.Context) {
++	rawJSON, err := grokCPAReadVideosCreateRequest(c)
++	if err != nil {
++		grokCPAVideoError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
++		return
++	}
++
++	videoModel := strings.TrimSpace(gjson.GetBytes(rawJSON, "model").String())
++	if videoModel == "" {
++		videoModel = service.GrokCPADefaultVideosModel
++	}
++	if !service.IsGrokCPAVideosModel(videoModel) {
++		grokCPAVideoError(c, http.StatusBadRequest, "Model "+videoModel+" is not supported on /v1/videos. Use "+service.GrokCPADefaultVideosModel+".")
++		return
++	}
++
++	nativeBody, meta, err := service.BuildGrokCPAVideoCreateRequest(rawJSON, videoModel)
++	if err != nil {
++		grokCPAVideoError(c, http.StatusBadRequest, "Invalid request: "+err.Error())
++		return
++	}
++
++	// 用转换后的原生请求体替换入站 body，复用标准 grok media 转发流程。
++	c.Request.Body = io.NopCloser(bytes.NewReader(nativeBody))
++	c.Request.ContentLength = int64(len(nativeBody))
++	c.Request.Header.Set("Content-Type", "application/json")
++
++	service.SetGrokMediaCPAResponseFormat(c, "create", "", &meta)
++	h.handleGrokMedia(c, service.GrokMediaEndpointVideosGenerations, "")
++}
++
++// GrokVideoStatusCPA 处理 GET /v1/videos/:request_id，返回 CPA 包装格式。
++func (h *OpenAIGatewayHandler) GrokVideoStatusCPA(c *gin.Context) {
++	requestID := strings.TrimSpace(c.Param("request_id"))
++	if requestID == "" {
++		grokCPAVideoError(c, http.StatusBadRequest, "Invalid request: video_id is required")
++		return
++	}
++	service.SetGrokMediaCPAResponseFormat(c, "retrieve", requestID, nil)
++	h.handleGrokMedia(c, service.GrokMediaEndpointVideoStatus, requestID)
++}
++
++// GrokVideoQueryCPA 处理 GET /v1/video/query?id=，返回 deepwl 统一查询 schema。
++func (h *OpenAIGatewayHandler) GrokVideoQueryCPA(c *gin.Context) {
++	videoID := strings.TrimSpace(c.Query("id"))
++	if videoID == "" {
++		grokCPAVideoError(c, http.StatusBadRequest, "Invalid request: id is required")
++		return
++	}
++	service.SetGrokMediaCPAResponseFormat(c, "unified", videoID, nil)
++	h.handleGrokMedia(c, service.GrokMediaEndpointVideoStatus, videoID)
++}
++
++// grokCPAReadVideosCreateRequest 读取创建请求：支持 JSON 与表单（对齐 CPA readVideosCreateRequest）。
++func grokCPAReadVideosCreateRequest(c *gin.Context) ([]byte, error) {
++	contentType := strings.ToLower(strings.TrimSpace(c.GetHeader("Content-Type")))
++	if strings.Contains(contentType, "application/json") {
++		body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
++		if err != nil {
++			return nil, err
++		}
++		if len(bytes.TrimSpace(body)) == 0 {
++			return nil, errRequestBodyEmpty
++		}
++		return body, nil
++	}
++
++	// 表单风格（application/x-www-form-urlencoded / multipart/form-data）
++	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
++		// ParseMultipartForm 对 urlencoded 表单内部调用 ParseForm，报错即真错。
++		if err = c.Request.ParseForm(); err != nil {
++			return nil, err
++		}
++	}
++	out := []byte(`{}`)
++	setIf := func(key string, keys ...string) {
++		for _, k := range keys {
++			if v := strings.TrimSpace(c.Request.PostFormValue(k)); v != "" {
++				out, _ = sjson.SetBytes(out, key, v)
++				return
++			}
++		}
++	}
++	setIf("model", "model")
++	setIf("prompt", "prompt")
++	setIf("seconds", "seconds", "duration")
++	setIf("size", "size")
++	setIf("aspect_ratio", "aspect_ratio")
++	setIf("resolution", "resolution")
++	setIf("image_url", "image_url", "image")
++	return out, nil
++}
++
++var errRequestBodyEmpty = &grokCPAError{msg: "request body is empty"}
++
++type grokCPAError struct{ msg string }
++
++func (e *grokCPAError) Error() string { return e.msg }
+diff --git a/backend/internal/server/routes/gateway.go b/backend/internal/server/routes/gateway.go
+index a1e1de260..cfb3abc16 100644
+--- a/backend/internal/server/routes/gateway.go
++++ b/backend/internal/server/routes/gateway.go
+@@ -80,7 +80,7 @@ func RegisterGatewayRoutes(
+ 	}
+ 	videoStatusHandler := func(c *gin.Context) {
+ 		if getGroupPlatform(c) == service.PlatformGrok {
+-			h.OpenAIGateway.GrokVideoStatus(c)
++			h.OpenAIGateway.GrokVideoStatusCPA(c)
+ 			return
+ 		}
+ 		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
+@@ -107,6 +107,23 @@ func RegisterGatewayRoutes(
+ 		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
+ 		c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Videos API is not supported for this platform"}})
+ 	}
++	// CPA (cli-proxy-api) 兼容视频接口：仅 Grok 平台可用。
++	videoCreateCPAHandler := func(c *gin.Context) {
++		if getGroupPlatform(c) == service.PlatformGrok {
++			h.OpenAIGateway.GrokVideoCreateCPA(c)
++			return
++		}
++		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
++		c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Videos API is not supported for this platform"}})
++	}
++	videoQueryCPAHandler := func(c *gin.Context) {
++		if getGroupPlatform(c) == service.PlatformGrok {
++			h.OpenAIGateway.GrokVideoQueryCPA(c)
++			return
++		}
++		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
++		c.JSON(http.StatusNotFound, gin.H{"error": gin.H{"type": "not_found_error", "message": "Videos API is not supported for this platform"}})
++	}
+ 	// API网关（Claude API兼容）
+ 	gateway := r.Group("/v1")
+ 	gateway.Use(bodyLimit)
+@@ -209,6 +226,10 @@ func RegisterGatewayRoutes(
+ 		gateway.POST("/videos/edits", videoEditHandler)
+ 		gateway.POST("/videos/extensions", videoExtensionHandler)
+ 		gateway.GET("/videos/:request_id", videoStatusHandler)
++		// CPA (cli-proxy-api) 兼容视频接口
++		gateway.POST("/videos", videoCreateCPAHandler)
++		gateway.POST("/video/create", videoCreateCPAHandler)
++		gateway.GET("/video/query", videoQueryCPAHandler)
+ 	}
+ 
+ 	// Gemini 原生 API 兼容层（Gemini SDK/CLI 直连）
+@@ -282,6 +303,10 @@ func RegisterGatewayRoutes(
+ 	r.POST("/videos/edits", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoEditHandler)
+ 	r.POST("/videos/extensions", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoExtensionHandler)
+ 	r.GET("/videos/:request_id", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoStatusHandler)
++	// CPA (cli-proxy-api) 兼容视频接口（无 v1 前缀别名）
++	r.POST("/videos", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoCreateCPAHandler)
++	r.POST("/video/create", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoCreateCPAHandler)
++	r.GET("/video/query", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, videoQueryCPAHandler)
+ 
+ 	// Antigravity 模型列表
+ 	r.GET("/antigravity/models", gin.HandlerFunc(apiKeyAuth), requireGroupAnthropic, h.Gateway.AntigravityModels)
+diff --git a/backend/internal/server/routes/prompt_audit_route_coverage_test.go b/backend/internal/server/routes/prompt_audit_route_coverage_test.go
+index ba38910b4..b2f6cabeb 100644
+--- a/backend/internal/server/routes/prompt_audit_route_coverage_test.go
++++ b/backend/internal/server/routes/prompt_audit_route_coverage_test.go
+@@ -42,6 +42,8 @@ func TestEveryGatewayPOSTRouteIsClassifiedForPromptAuditCoverage(t *testing.T) {
+ 		"/videos/generations":       {"grok_media.go"},
+ 		"/videos/edits":             {"grok_media.go"},
+ 		"/videos/extensions":        {"grok_media.go"},
++		"/videos":                   {"grok_media.go"},
++		"/video/create":             {"grok_media.go"},
+ 		"/models/*modelAction":      {"gemini_v1beta_handler.go"},
+ 	}
+ 	excluded := map[string]string{
+diff --git a/backend/internal/service/grok_media.go b/backend/internal/service/grok_media.go
+index c75bd271f..a60d15906 100644
+--- a/backend/internal/service/grok_media.go
++++ b/backend/internal/service/grok_media.go
+@@ -364,7 +364,9 @@ func (s *OpenAIGatewayService) ForwardGrokMedia(
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	writeGrokMediaResponse(c, resp, respBody, s.responseHeaderFilter)
++	// CPA 兼容格式：按请求上下文标记重塑响应（计费用原始上游 body，不受影响）。
++	clientBody, clientStatusOverride := applyGrokMediaCPAResponse(c, respBody)
++	writeGrokMediaResponse(c, resp, clientBody, clientStatusOverride, s.responseHeaderFilter)
+ 	usage := grokMediaUsageFromResponse(endpoint, requestInfo, respBody)
+ 	return &OpenAIForwardResult{
+ 		RequestID:            requestIDHeader,
+@@ -720,6 +722,14 @@ func writeGrokMediaErrorResponse(c *gin.Context, statusCode int, errType, messag
+ 	if c == nil || c.Writer == nil || c.Writer.Written() {
+ 		return
+ 	}
++	// CPA 兼容接口的错误返回与 CPA writeVideoFailure 对齐（HTTP 502 + failed 对象）。
++	if format := grokMediaCPAFormatFromContext(c); format != grokMediaCPAFormatOff {
++		out := BuildGrokCPAVideoFailureResponse(grokMediaCPAVideoIDFromContext(c), message)
++		c.Header("Content-Type", "application/json")
++		c.Status(http.StatusBadGateway)
++		_, _ = c.Writer.Write(out)
++		return
++	}
+ 	c.JSON(statusCode, gin.H{
+ 		"error": gin.H{
+ 			"type":    strings.TrimSpace(errType),
+@@ -728,7 +738,7 @@ func writeGrokMediaErrorResponse(c *gin.Context, statusCode int, errType, messag
+ 	})
+ }
+ 
+-func writeGrokMediaResponse(c *gin.Context, resp *http.Response, body []byte, filter *responseheaders.CompiledHeaderFilter) {
++func writeGrokMediaResponse(c *gin.Context, resp *http.Response, body []byte, statusOverride int, filter *responseheaders.CompiledHeaderFilter) {
+ 	if c == nil || resp == nil {
+ 		return
+ 	}
+@@ -737,5 +747,9 @@ func writeGrokMediaResponse(c *gin.Context, resp *http.Response, body []byte, fi
+ 	if contentType == "" {
+ 		contentType = "application/json"
+ 	}
+-	c.Data(resp.StatusCode, contentType, body)
++	statusCode := resp.StatusCode
++	if statusOverride > 0 {
++		statusCode = statusOverride
++	}
++	c.Data(statusCode, contentType, body)
+ }
+diff --git a/backend/internal/service/grok_media_cpa.go b/backend/internal/service/grok_media_cpa.go
+new file mode 100644
+index 000000000..8af214f7f
+--- /dev/null
++++ b/backend/internal/service/grok_media_cpa.go
+@@ -0,0 +1,619 @@
++package service
++
++// CPA (cli-proxy-api) 兼容的 Grok 视频接口格式层。
++// 目标：让 sub2api 的 Grok 视频返回与 CPA-2 (64.32.23.242:8318) 完全一致：
++//   - POST /v1/videos、POST /v1/video/create  → OpenAI Sora 风格创建，返回包装后的 video 对象
++//   - GET  /v1/videos/:video_id               → 包装后的查询对象（status 归一 + video_url）
++//   - GET  /v1/video/query?id=                → deepwl 统一查询 schema
++//   - POST /v1/videos/generations|edits|extensions 保持原生透传（与 CPA 一致）
++
++import (
++	"fmt"
++	"net/http"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/gin-gonic/gin"
++	"github.com/tidwall/gjson"
++	"github.com/tidwall/sjson"
++)
++
++const (
++	GrokCPADefaultVideosModel      = "grok-imagine-video"
++	grokCPAVideos15PreviewModel    = "grok-imagine-video-1.5-preview"
++	grokCPADefaultVideosSeconds    = "4"
++	grokCPADefaultVideosSize       = "720x1280"
++	grokCPADefaultVideosResolution = "720p"
++	grokCPAMaxVideoReferences      = 7
++)
++
++type grokMediaCPAFormat string
++
++const (
++	grokMediaCPAFormatOff      grokMediaCPAFormat = ""
++	grokMediaCPAFormatCreate   grokMediaCPAFormat = "create"
++	grokMediaCPAFormatRetrieve grokMediaCPAFormat = "retrieve"
++	grokMediaCPAFormatUnified  grokMediaCPAFormat = "unified"
++)
++
++const (
++	grokMediaCPAFormatContextKey = "grok_media_cpa_format"
++	grokMediaCPAVideoIDKey       = "grok_media_cpa_video_id"
++	grokMediaCPACreateMetaKey    = "grok_media_cpa_create_meta"
++)
++
++// GrokCPAVideoCreateMeta 记录创建请求元数据，用于把上游响应重塑为 CPA 创建格式。
++type GrokCPAVideoCreateMeta struct {
++	Model     string
++	Prompt    string
++	Seconds   string
++	Size      string
++	CreatedAt int64
++}
++
++// SetGrokMediaCPAResponseFormat 在当前请求上下文上启用 CPA 响应包装。
++func SetGrokMediaCPAResponseFormat(c *gin.Context, format string, videoID string, meta *GrokCPAVideoCreateMeta) {
++	if c == nil {
++		return
++	}
++	c.Set(grokMediaCPAFormatContextKey, format)
++	if strings.TrimSpace(videoID) != "" {
++		c.Set(grokMediaCPAVideoIDKey, strings.TrimSpace(videoID))
++	}
++	if meta != nil {
++		c.Set(grokMediaCPACreateMetaKey, *meta)
++	}
++}
++
++func grokMediaCPAFormatFromContext(c *gin.Context) grokMediaCPAFormat {
++	if c == nil {
++		return grokMediaCPAFormatOff
++	}
++	value, ok := c.Get(grokMediaCPAFormatContextKey)
++	if !ok {
++		return grokMediaCPAFormatOff
++	}
++	format, _ := value.(string)
++	return grokMediaCPAFormat(format)
++}
++
++func grokMediaCPAVideoIDFromContext(c *gin.Context) string {
++	if c == nil {
++		return ""
++	}
++	value, ok := c.Get(grokMediaCPAVideoIDKey)
++	if !ok {
++		return ""
++	}
++	videoID, _ := value.(string)
++	return strings.TrimSpace(videoID)
++}
++
++func grokMediaCPACreateMetaFromContext(c *gin.Context) GrokCPAVideoCreateMeta {
++	if c == nil {
++		return GrokCPAVideoCreateMeta{}
++	}
++	value, ok := c.Get(grokMediaCPACreateMetaKey)
++	if !ok {
++		return GrokCPAVideoCreateMeta{}
++	}
++	meta, _ := value.(GrokCPAVideoCreateMeta)
++	return meta
++}
++
++// applyGrokMediaCPAResponse 按上下文标记把上游 xAI 响应重塑为 CPA 格式；
++// 未标记时原样返回（保持原生透传）。
++func applyGrokMediaCPAResponse(c *gin.Context, respBody []byte) ([]byte, int) {
++	format := grokMediaCPAFormatFromContext(c)
++	if format == grokMediaCPAFormatOff {
++		return respBody, 0
++	}
++	statusOverride := 0
++	var out []byte
++	switch format {
++	case grokMediaCPAFormatCreate:
++		meta := grokMediaCPACreateMetaFromContext(c)
++		transformed, err := BuildGrokCPAVideosCreateResponse(respBody, meta)
++		if err != nil {
++			return respBody, 0
++		}
++		out = transformed
++	case grokMediaCPAFormatRetrieve:
++		videoID := grokMediaCPAVideoIDFromContext(c)
++		out = BuildGrokCPAVideosRetrieveResponse(videoID, respBody, GrokCPADefaultVideosModel)
++	case grokMediaCPAFormatUnified:
++		videoID := grokMediaCPAVideoIDFromContext(c)
++		out = BuildGrokCPAVideosUnifiedResponse(videoID, respBody)
++	default:
++		return respBody, 0
++	}
++	// 与 CPA 一致：成功响应固定 200（上游可能是 202）；终态 failed 时查询接口返回 502。
++	statusOverride = http.StatusOK
++	if format != grokMediaCPAFormatCreate && gjson.GetBytes(out, "status").String() == "failed" {
++		statusOverride = http.StatusBadGateway
++	}
++	return out, statusOverride
++}
++
++// ===== 模型校验（对齐 CPA isXAIVideosModel / canonicalXAIVideosModel） =====
++
++func grokCPAVideosModelBase(model string) string {
++	model = strings.TrimSpace(model)
++	if idx := strings.LastIndex(model, "/"); idx >= 0 {
++		model = model[idx+1:]
++	}
++	return strings.ToLower(strings.TrimSpace(model))
++}
++
++func grokCPAVideosModelPrefix(model string) string {
++	model = strings.TrimSpace(model)
++	if idx := strings.LastIndex(model, "/"); idx >= 0 {
++		return strings.ToLower(strings.TrimSpace(model[:idx]))
++	}
++	return ""
++}
++
++// IsGrokCPAVideosModel 判定模型是否为 CPA 支持的视频模型。
++func IsGrokCPAVideosModel(model string) bool {
++	base := grokCPAVideosModelBase(model)
++	if base != GrokCPADefaultVideosModel && base != grokCPAVideos15PreviewModel {
++		return false
++	}
++	switch grokCPAVideosModelPrefix(model) {
++	case "", "xai", "x-ai", "grok":
++		return true
++	}
++	return false
++}
++
++// CanonicalGrokCPAVideosModel 归一视频模型名（去掉前缀）。
++func CanonicalGrokCPAVideosModel(model string) string {
++	switch grokCPAVideosModelBase(model) {
++	case grokCPAVideos15PreviewModel:
++		return grokCPAVideos15PreviewModel
++	default:
++		return GrokCPADefaultVideosModel
++	}
++}
++
++// ===== 创建请求转换（对齐 CPA buildXAIVideosCreateRequest） =====
++
++// BuildGrokCPAVideoCreateRequest 把 OpenAI Sora 风格创建请求转换为 xAI 原生请求体。
++func BuildGrokCPAVideoCreateRequest(rawJSON []byte, model string) ([]byte, GrokCPAVideoCreateMeta, error) {
++	prompt := strings.TrimSpace(gjson.GetBytes(rawJSON, "prompt").String())
++	if prompt == "" {
++		return nil, GrokCPAVideoCreateMeta{}, fmt.Errorf("prompt is required")
++	}
++
++	// 兼容 seconds（OpenAI 风格）和 duration（xAI 原生风格），seconds 优先。
++	secondsRaw := gjson.GetBytes(rawJSON, "seconds").String()
++	if strings.TrimSpace(secondsRaw) == "" {
++		secondsRaw = gjson.GetBytes(rawJSON, "duration").String()
++	}
++	seconds, duration, err := grokCPANormalizeVideosSeconds(secondsRaw)
++	if err != nil {
++		return nil, GrokCPAVideoCreateMeta{}, err
++	}
++
++	size, aspectRatio, resolution, err := grokCPAVideosSizeOptions(gjson.GetBytes(rawJSON, "size").String())
++	if err != nil {
++		return nil, GrokCPAVideoCreateMeta{}, err
++	}
++	if value := grokCPAVideosAspectRatio(gjson.GetBytes(rawJSON, "aspect_ratio").String(), ""); value != "" {
++		aspectRatio = value
++	}
++	if value := grokCPAVideosResolution(gjson.GetBytes(rawJSON, "resolution").String(), ""); value != "" {
++		resolution = value
++	}
++
++	imageURL, err := grokCPAVideosInputImageURL(rawJSON)
++	if err != nil {
++		return nil, GrokCPAVideoCreateMeta{}, err
++	}
++	referenceImages := grokCPACollectVideoReferenceImages(rawJSON)
++	if len(referenceImages) == 1 && imageURL == "" {
++		imageURL = referenceImages[0]
++		referenceImages = nil
++	}
++	if len(referenceImages) > grokCPAMaxVideoReferences {
++		return nil, GrokCPAVideoCreateMeta{}, fmt.Errorf("reference_images supports at most %d images on xAI", grokCPAMaxVideoReferences)
++	}
++	if imageURL != "" && len(referenceImages) > 0 {
++		return nil, GrokCPAVideoCreateMeta{}, fmt.Errorf("image and reference_images cannot be combined on xAI")
++	}
++	if len(referenceImages) > 0 && duration > 10 {
++		duration = 10
++		seconds = "10"
++	}
++
++	videoModel := CanonicalGrokCPAVideosModel(model)
++	req := []byte(`{}`)
++	req, _ = sjson.SetBytes(req, "model", videoModel)
++	req, _ = sjson.SetBytes(req, "prompt", prompt)
++	req, _ = sjson.SetRawBytes(req, "duration", []byte(strconv.FormatInt(duration, 10)))
++	req, _ = sjson.SetBytes(req, "aspect_ratio", aspectRatio)
++	req, _ = sjson.SetBytes(req, "resolution", resolution)
++	if imageURL != "" {
++		req, _ = sjson.SetBytes(req, "image.url", imageURL)
++	}
++	for _, image := range referenceImages {
++		req, _ = sjson.SetBytes(req, "reference_images.-1.url", image)
++	}
++
++	meta := GrokCPAVideoCreateMeta{
++		Model:     videoModel,
++		Prompt:    prompt,
++		Seconds:   seconds,
++		Size:      size,
++		CreatedAt: time.Now().Unix(),
++	}
++	return req, meta, nil
++}
++
++func grokCPANormalizeVideosSeconds(raw string) (string, int64, error) {
++	seconds := strings.TrimSpace(raw)
++	if seconds == "" {
++		seconds = grokCPADefaultVideosSeconds
++	}
++	duration, err := strconv.ParseInt(seconds, 10, 64)
++	if err != nil {
++		return "", 0, fmt.Errorf("seconds must be an integer")
++	}
++	if duration < 1 {
++		duration = 1
++	}
++	if duration > 15 {
++		duration = 15
++	}
++	return strconv.FormatInt(duration, 10), duration, nil
++}
++
++func grokCPAVideosSizeOptions(raw string) (size string, aspectRatio string, resolution string, err error) {
++	size = strings.TrimSpace(raw)
++	if size == "" {
++		size = grokCPADefaultVideosSize
++	}
++	switch strings.ToLower(size) {
++	case "720x1280", "1024x1792":
++		return size, "9:16", grokCPADefaultVideosResolution, nil
++	case "1280x720", "1792x1024":
++		return size, "16:9", grokCPADefaultVideosResolution, nil
++	case "480p":
++		return grokCPADefaultVideosSize, "9:16", "480p", nil
++	case "720p":
++		return grokCPADefaultVideosSize, "9:16", "720p", nil
++	case "1080p":
++		return grokCPADefaultVideosSize, "9:16", "720p", nil
++	default:
++		return "", "", "", fmt.Errorf("size must be one of 720x1280, 1280x720, 1024x1792, 1792x1024, 480p, 720p, or 1080p")
++	}
++}
++
++func grokCPAVideosAspectRatio(raw string, fallback string) string {
++	switch strings.ToLower(strings.TrimSpace(raw)) {
++	case "1:1", "square":
++		return "1:1"
++	case "16:9", "landscape":
++		return "16:9"
++	case "9:16", "portrait":
++		return "9:16"
++	case "4:3":
++		return "4:3"
++	case "3:4":
++		return "3:4"
++	case "3:2":
++		return "3:2"
++	case "2:3":
++		return "2:3"
++	default:
++		return fallback
++	}
++}
++
++func grokCPAVideosResolution(raw string, fallback string) string {
++	switch strings.ToLower(strings.TrimSpace(raw)) {
++	case "480p":
++		return "480p"
++	case "720p":
++		return "720p"
++	default:
++		return fallback
++	}
++}
++
++func grokCPAVideosInputImageURL(rawJSON []byte) (string, error) {
++	inputRef := gjson.GetBytes(rawJSON, "input_reference")
++	if inputRef.Exists() {
++		imageURL := strings.TrimSpace(inputRef.Get("image_url").String())
++		fileID := strings.TrimSpace(inputRef.Get("file_id").String())
++		if imageURL != "" && fileID != "" {
++			return "", fmt.Errorf("input_reference must provide exactly one of image_url or file_id")
++		}
++		if fileID != "" {
++			return "", fmt.Errorf("input_reference.file_id is not supported for xAI video generation; use input_reference.image_url")
++		}
++		if imageURL != "" {
++			return imageURL, nil
++		}
++	}
++
++	image := gjson.GetBytes(rawJSON, "image")
++	if image.Exists() {
++		if image.Type == gjson.String {
++			return strings.TrimSpace(image.String()), nil
++		}
++		if value := strings.TrimSpace(image.Get("url").String()); value != "" {
++			return value, nil
++		}
++		if value := strings.TrimSpace(image.Get("image_url.url").String()); value != "" {
++			return value, nil
++		}
++	}
++
++	return strings.TrimSpace(gjson.GetBytes(rawJSON, "image_url").String()), nil
++}
++
++func grokCPACollectVideoReferenceImages(rawJSON []byte) []string {
++	out := make([]string, 0)
++	appendRef := func(value string) {
++		value = strings.TrimSpace(value)
++		if value != "" {
++			out = append(out, value)
++		}
++	}
++	collectArray := func(result gjson.Result) {
++		if !result.IsArray() {
++			return
++		}
++		result.ForEach(func(_, item gjson.Result) bool {
++			if item.Type == gjson.String {
++				appendRef(item.String())
++				return true
++			}
++			if value := item.Get("url").String(); value != "" {
++				appendRef(value)
++				return true
++			}
++			if value := item.Get("image_url").String(); value != "" {
++				appendRef(value)
++				return true
++			}
++			if value := item.Get("image_url.url").String(); value != "" {
++				appendRef(value)
++			}
++			return true
++		})
++	}
++	collectArray(gjson.GetBytes(rawJSON, "reference_images"))
++	collectArray(gjson.GetBytes(rawJSON, "reference_image_urls"))
++	collectArray(gjson.GetBytes(rawJSON, "images"))
++	collectArray(gjson.GetBytes(rawJSON, "input_reference"))
++	return out
++}
++
++// ===== 响应包装（对齐 CPA buildVideos*APIResponseFromXAI） =====
++
++// BuildGrokCPAVideosCreateResponse 把 xAI 创建响应重塑为 CPA 的 video 对象格式。
++func BuildGrokCPAVideosCreateResponse(payload []byte, meta GrokCPAVideoCreateMeta) ([]byte, error) {
++	requestID := strings.TrimSpace(gjson.GetBytes(payload, "request_id").String())
++	if requestID == "" {
++		requestID = strings.TrimSpace(gjson.GetBytes(payload, "id").String())
++	}
++	if requestID == "" {
++		return nil, fmt.Errorf("xAI video response did not include request_id")
++	}
++
++	out := []byte(`{"object":"video","progress":0,"status":"queued"}`)
++	out, _ = sjson.SetBytes(out, "id", requestID)
++	out, _ = sjson.SetBytes(out, "model", meta.Model)
++	out, _ = sjson.SetBytes(out, "prompt", meta.Prompt)
++	out, _ = sjson.SetBytes(out, "seconds", meta.Seconds)
++	out, _ = sjson.SetBytes(out, "size", meta.Size)
++	out, _ = sjson.SetBytes(out, "created_at", meta.CreatedAt)
++	if status := GrokCPAOpenAIVideoStatus(gjson.GetBytes(payload, "status").String()); status != "" {
++		out, _ = sjson.SetBytes(out, "status", status)
++	}
++	if progress := gjson.GetBytes(payload, "progress"); progress.Exists() {
++		out, _ = sjson.SetRawBytes(out, "progress", []byte(progress.Raw))
++	}
++	return out, nil
++}
++
++// BuildGrokCPAVideosRetrieveResponse 把 xAI 查询响应重塑为 CPA 的查询格式。
++func BuildGrokCPAVideosRetrieveResponse(videoID string, payload []byte, fallbackModel string) []byte {
++	out := []byte(`{"object":"video"}`)
++	out, _ = sjson.SetBytes(out, "id", videoID)
++
++	model := strings.TrimSpace(gjson.GetBytes(payload, "model").String())
++	if model == "" {
++		model = fallbackModel
++	}
++	out, _ = sjson.SetBytes(out, "model", model)
++
++	if status := GrokCPAOpenAIVideoStatus(gjson.GetBytes(payload, "status").String()); status != "" {
++		out, _ = sjson.SetBytes(out, "status", status)
++	}
++	if progress := gjson.GetBytes(payload, "progress"); progress.Exists() {
++		out, _ = sjson.SetRawBytes(out, "progress", []byte(progress.Raw))
++	}
++	if duration := gjson.GetBytes(payload, "video.duration"); duration.Exists() {
++		out, _ = sjson.SetBytes(out, "seconds", duration.String())
++	}
++	if videoURL := gjson.GetBytes(payload, "video.url").String(); videoURL != "" {
++		out, _ = sjson.SetBytes(out, "video_url", videoURL)
++	}
++	if errPayload := gjson.GetBytes(payload, "error"); errPayload.Exists() {
++		if errPayload.IsObject() {
++			out, _ = sjson.SetRawBytes(out, "error", []byte(errPayload.Raw))
++		} else {
++			errMsg := strings.TrimSpace(errPayload.String())
++			out, _ = sjson.SetBytes(out, "error.message", errMsg)
++			out, _ = sjson.SetBytes(out, "error.type", "invalid_request_error")
++			out, _ = sjson.SetRawBytes(out, "error.param", []byte("null"))
++			out, _ = sjson.SetBytes(out, "error.code", "error")
++		}
++	}
++	return out
++}
++
++// BuildGrokCPAVideosUnifiedResponse 把 xAI 查询响应重塑为 deepwl 统一查询 schema。
++func BuildGrokCPAVideosUnifiedResponse(videoID string, payload []byte) []byte {
++	out := []byte(`{}`)
++	out, _ = sjson.SetBytes(out, "id", videoID)
++	out, _ = sjson.SetBytes(out, "status", grokCPAUnifiedVideoStatus(gjson.GetBytes(payload, "status").String()))
++
++	if v := grokCPAFirstNonEmptyVideoString(payload, "video.url", "video_url"); v != "" {
++		out, _ = sjson.SetBytes(out, "video_url", v)
++	} else {
++		out, _ = sjson.SetRawBytes(out, "video_url", []byte("null"))
++	}
++
++	if raw, ok := grokCPAFirstNumberRaw(payload, "status_update_time", "updated_at", "last_update", "last_status_update"); ok {
++		out, _ = sjson.SetRawBytes(out, "status_update_time", []byte(raw))
++	} else {
++		out, _ = sjson.SetBytes(out, "status_update_time", time.Now().Unix())
++	}
++
++	if raw, ok := grokCPAFirstNumberRaw(payload, "progress", "video.progress"); ok {
++		out, _ = sjson.SetRawBytes(out, "progress", []byte(raw))
++	} else {
++		out, _ = sjson.SetBytes(out, "progress", 0)
++	}
++
++	out, _ = sjson.SetBytes(out, "prompt",
++		grokCPAFirstNonEmptyVideoString(payload, "prompt", "video.prompt", "request.prompt"))
++	out, _ = sjson.SetBytes(out, "ratio",
++		grokCPAFirstNonEmptyVideoString(payload, "aspect_ratio", "video.aspect_ratio", "ratio", "video.ratio"))
++	out, _ = sjson.SetBytes(out, "thumbnail_url",
++		grokCPAFirstNonEmptyVideoString(payload, "video.thumbnail_url", "thumbnail_url", "video.preview_url", "preview_url", "video.thumbnail"))
++
++	if errPayload := gjson.GetBytes(payload, "error"); errPayload.Exists() {
++		if errPayload.IsObject() {
++			out, _ = sjson.SetRawBytes(out, "error", []byte(errPayload.Raw))
++		} else {
++			errMsg := strings.TrimSpace(errPayload.String())
++			out, _ = sjson.SetBytes(out, "error.message", errMsg)
++			out, _ = sjson.SetBytes(out, "error.type", "invalid_request_error")
++			out, _ = sjson.SetRawBytes(out, "error.param", []byte("null"))
++			out, _ = sjson.SetBytes(out, "error.code", "error")
++		}
++	}
++
++	return out
++}
++
++// GrokCPAOpenAIVideoStatus 归一上游状态为 OpenAI 视频状态枚举。
++func GrokCPAOpenAIVideoStatus(status string) string {
++	switch strings.ToLower(strings.TrimSpace(status)) {
++	case "queued", "pending":
++		return "queued"
++	case "in_progress", "processing", "running":
++		return "in_progress"
++	case "completed", "done", "succeeded", "success":
++		return "completed"
++	case "failed", "error", "expired", "cancelled", "canceled":
++		return "failed"
++	default:
++		return ""
++	}
++}
++
++// grokCPAUnifiedVideoStatus 归一为 deepwl 规范的四个枚举值。
++func grokCPAUnifiedVideoStatus(status string) string {
++	switch strings.ToLower(strings.TrimSpace(status)) {
++	case "queued", "pending", "in_progress", "processing", "running":
++		return "processing"
++	case "completed", "done", "succeeded", "success":
++		return "completed"
++	case "failed", "error", "expired", "cancelled", "canceled":
++		return "failed"
++	default:
++		return "unknown"
++	}
++}
++
++func grokCPAFirstNonEmptyVideoString(payload []byte, paths ...string) string {
++	for _, p := range paths {
++		if v := strings.TrimSpace(gjson.GetBytes(payload, p).String()); v != "" {
++			return v
++		}
++	}
++	return ""
++}
++
++func grokCPAFirstNumberRaw(payload []byte, paths ...string) (string, bool) {
++	for _, p := range paths {
++		if r := gjson.GetBytes(payload, p); r.Exists() && r.Type == gjson.Number {
++			return r.Raw, true
++		}
++	}
++	return "", false
++}
++
++// ===== 失败响应（对齐 CPA buildVideoFailureResponse / classifyVideoError） =====
++
++// BuildGrokCPAVideoFailureResponse 构造 CPA 风格的视频失败响应（HTTP 502）。
++func BuildGrokCPAVideoFailureResponse(videoID string, raw string) []byte {
++	out := []byte(`{"status":"failed","video_url":null,"progress":0,"prompt":"","ratio":"","thumbnail_url":""}`)
++	if videoID != "" {
++		out, _ = sjson.SetBytes(out, "id", videoID)
++	}
++	out, _ = sjson.SetBytes(out, "status_update_time", time.Now().Unix())
++	code, message := grokCPAClassifyVideoError(raw)
++	out, _ = sjson.SetBytes(out, "error.message", message)
++	out, _ = sjson.SetBytes(out, "error.type", "invalid_request_error")
++	out, _ = sjson.SetRawBytes(out, "error.param", []byte("null"))
++	out, _ = sjson.SetBytes(out, "error.code", code)
++	return out
++}
++
++func grokCPAVideoErrorTextFromRaw(raw string) string {
++	if msg := strings.TrimSpace(gjson.Get(raw, "error.message").String()); msg != "" {
++		return msg
++	}
++	if msg := strings.TrimSpace(gjson.Get(raw, "error.error").String()); msg != "" {
++		return msg
++	}
++	if msg := strings.TrimSpace(gjson.Get(raw, "error").String()); msg != "" {
++		return msg
++	}
++	return strings.TrimSpace(raw)
++}
++
++func grokCPAClassifyVideoError(raw string) (string, string) {
++	switch {
++	case strings.Contains(raw, "content moderation"):
++		return "content_moderation", "视频内容未通过审核，请调整提示词后重试"
++	case strings.Contains(raw, "Failed to read static file"):
++		return "not_found", "视频不存在或已失效"
++	case strings.Contains(raw, "Malformed request ID"):
++		return "invalid_request", "视频ID格式不正确"
++	case strings.Contains(raw, "Prompt length exceeds"):
++		return "invalid_request", "提示词长度超过上限（最多 4096 字符）"
++	case strings.Contains(raw, "Text-to-video is not supported"):
++		return "unsupported_model", "该模型不支持文生视频"
++	case strings.Contains(raw, "is a video model and is therefore not available"):
++		return "unsupported_endpoint", "该视频模型不支持此接口"
++	case strings.Contains(raw, "run out of credits") || strings.Contains(raw, "spending-limit"):
++		return "insufficient_quota", "账号额度已用完"
++	case strings.Contains(raw, "Too many requests") || strings.Contains(raw, "resource-exhausted"):
++		if msg := grokCPAVideoErrorTextFromRaw(raw); msg != "" {
++			return "rate_limited", msg
++		}
++		return "rate_limited", "请求过于频繁，请稍后再试"
++	default:
++		code := strings.TrimSpace(gjson.Get(raw, "code").String())
++		if code == "" {
++			code = "error"
++		}
++		msg := strings.TrimSpace(gjson.Get(raw, "error").String())
++		if msg == "" {
++			msg = raw
++		}
++		if msg == "" {
++			msg = "Upstream request failed"
++		}
++		return code, msg
++	}
++}
+diff --git a/backend/internal/service/grok_media_cpa_test.go b/backend/internal/service/grok_media_cpa_test.go
+new file mode 100644
+index 000000000..622d34141
+--- /dev/null
++++ b/backend/internal/service/grok_media_cpa_test.go
+@@ -0,0 +1,128 @@
++package service
++
++import (
++	"testing"
++
++	"github.com/tidwall/gjson"
++)
++
++func TestGrokCPACreateRequestAndResponse(t *testing.T) {
++	raw := []byte(`{"model":"grok-imagine-video","prompt":"a cat","seconds":"20","size":"1280x720"}`)
++	body, meta, err := BuildGrokCPAVideoCreateRequest(raw, "grok-imagine-video")
++	if err != nil {
++		t.Fatalf("build request: %v", err)
++	}
++	// seconds 20 应被钳到 15
++	if got := gjson.GetBytes(body, "duration").Int(); got != 15 {
++		t.Fatalf("duration=%d want 15", got)
++	}
++	if got := gjson.GetBytes(body, "aspect_ratio").String(); got != "16:9" {
++		t.Fatalf("aspect_ratio=%s want 16:9", got)
++	}
++	if got := gjson.GetBytes(body, "resolution").String(); got != "720p" {
++		t.Fatalf("resolution=%s want 720p", got)
++	}
++	if meta.Seconds != "15" || meta.Size != "1280x720" {
++		t.Fatalf("meta=%+v", meta)
++	}
++
++	upstream := []byte(`{"request_id":"req-123","status":"pending"}`)
++	out, err := BuildGrokCPAVideosCreateResponse(upstream, meta)
++	if err != nil {
++		t.Fatalf("create response: %v", err)
++	}
++	if got := gjson.GetBytes(out, "object").String(); got != "video" {
++		t.Fatalf("object=%s", got)
++	}
++	if got := gjson.GetBytes(out, "id").String(); got != "req-123" {
++		t.Fatalf("id=%s", got)
++	}
++	if got := gjson.GetBytes(out, "status").String(); got != "queued" {
++		t.Fatalf("status=%s want queued", got)
++	}
++	if got := gjson.GetBytes(out, "model").String(); got != "grok-imagine-video" {
++		t.Fatalf("model=%s", got)
++	}
++	if got := gjson.GetBytes(out, "seconds").String(); got != "15" {
++		t.Fatalf("seconds=%s", got)
++	}
++	if !gjson.GetBytes(out, "created_at").Exists() {
++		t.Fatal("created_at missing")
++	}
++}
++
++func TestGrokCPARetrieveResponse(t *testing.T) {
++	upstream := []byte(`{"request_id":"req-123","status":"done","model":"grok-imagine-video","progress":100,"video":{"url":"https://x.ai/v.mp4","duration":6}}`)
++	out := BuildGrokCPAVideosRetrieveResponse("req-123", upstream, "")
++	if got := gjson.GetBytes(out, "status").String(); got != "completed" {
++		t.Fatalf("status=%s want completed", got)
++	}
++	if got := gjson.GetBytes(out, "video_url").String(); got != "https://x.ai/v.mp4" {
++		t.Fatalf("video_url=%s", got)
++	}
++	if got := gjson.GetBytes(out, "seconds").String(); got != "6" {
++		t.Fatalf("seconds=%s", got)
++	}
++	if got := gjson.GetBytes(out, "object").String(); got != "video" {
++		t.Fatalf("object=%s", got)
++	}
++
++	// failed 场景
++	fail := []byte(`{"request_id":"req-9","status":"error","error":{"message":"boom"}}`)
++	out = BuildGrokCPAVideosRetrieveResponse("req-9", fail, "")
++	if got := gjson.GetBytes(out, "status").String(); got != "failed" {
++		t.Fatalf("status=%s want failed", got)
++	}
++	if got := gjson.GetBytes(out, "error.message").String(); got != "boom" {
++		t.Fatalf("error.message=%s", got)
++	}
++}
++
++func TestGrokCPAUnifiedResponse(t *testing.T) {
++	upstream := []byte(`{"status":"done","video":{"url":"https://x.ai/v.mp4","duration":6},"progress":100}`)
++	out := BuildGrokCPAVideosUnifiedResponse("req-1", upstream)
++	if got := gjson.GetBytes(out, "status").String(); got != "completed" {
++		t.Fatalf("status=%s want completed", got)
++	}
++	if got := gjson.GetBytes(out, "video_url").String(); got != "https://x.ai/v.mp4" {
++		t.Fatalf("video_url=%s", got)
++	}
++	if !gjson.GetBytes(out, "status_update_time").Exists() {
++		t.Fatal("status_update_time missing")
++	}
++
++	// 无 url 时 video_url 应为 null
++	out = BuildGrokCPAVideosUnifiedResponse("req-2", []byte(`{"status":"processing"}`))
++	if got := gjson.GetBytes(out, "video_url"); got.Exists() && got.Type.String() != "Null" {
++		t.Fatalf("video_url should be null, got %s", got.Raw)
++	}
++	if got := gjson.GetBytes(out, "status").String(); got != "processing" {
++		t.Fatalf("status=%s", got)
++	}
++}
++
++func TestGrokCPAModelValidation(t *testing.T) {
++	for _, m := range []string{"grok-imagine-video", "xai/grok-imagine-video", "grok/grok-imagine-video-1.5-preview"} {
++		if !IsGrokCPAVideosModel(m) {
++			t.Fatalf("model %s should be supported", m)
++		}
++	}
++	for _, m := range []string{"grok-4", "openai/grok-imagine-video"} {
++		if IsGrokCPAVideosModel(m) {
++			t.Fatalf("model %s should be rejected", m)
++		}
++	}
++	if got := CanonicalGrokCPAVideosModel("xai/grok-imagine-video-1.5-preview"); got != "grok-imagine-video-1.5-preview" {
++		t.Fatalf("canonical=%s", got)
++	}
++}
++
++func TestGrokCPASizeValidation(t *testing.T) {
++	if _, _, _, err := grokCPAVideosSizeOptions("999x999"); err == nil {
++		t.Fatal("invalid size should error")
++	}
++	s, ar, res, err := grokCPAVideosSizeOptions("1080p")
++	if err != nil || s != "720x1280" || ar != "9:16" || res != "720p" {
++		t.Fatalf("1080p mapping: %s %s %s %v", s, ar, res, err)
++	}
++}

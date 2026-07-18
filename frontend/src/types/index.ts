@@ -1114,6 +1114,17 @@ export interface AccountUsageInfo {
   error?: string            // usage 获取失败时的错误信息
 }
 
+export interface AccountUsageBatchError {
+  code: string
+  message: string
+}
+
+export interface AccountUsageBatchResponse {
+  usage: Record<string, AccountUsageInfo | null>
+  today_stats: Record<string, WindowStats>
+  errors: Record<string, AccountUsageBatchError>
+}
+
 // OpenAI Codex usage snapshot (from response headers)
 export interface CodexUsageSnapshot {
   // Legacy fields (kept for backwards compatibility)

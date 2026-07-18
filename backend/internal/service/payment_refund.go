@@ -258,11 +258,22 @@ func (s *PaymentService) prepDeduct(ctx context.Context, o *dbent.PaymentOrder, 
 		p.DeductionType = payment.DeductionTypeSubscription
 		if o.SubscriptionGroupID != nil && o.SubscriptionDays != nil {
 			p.SubDaysToDeduct = *o.SubscriptionDays
-			sub, err := s.subscriptionSvc.GetActiveSubscription(ctx, o.UserID, *o.SubscriptionGroupID)
+			if o.SubscriptionID == nil {
+				if !force {
+					return &RefundResult{Success: false, Warning: "legacy subscription order has no exact entitlement link, use force", RequireForce: true}
+				}
+				sub, err := s.subscriptionSvc.GetActiveSubscription(ctx, o.UserID, *o.SubscriptionGroupID)
+				if err == nil && sub != nil {
+					p.SubscriptionID = sub.ID
+				}
+				return nil
+			}
+
+			sub, err := s.subscriptionSvc.GetByID(ctx, *o.SubscriptionID)
 			if err == nil && sub != nil {
 				p.SubscriptionID = sub.ID
 			} else if !force {
-				return &RefundResult{Success: false, Warning: "cannot find active subscription for deduction, use force", RequireForce: true}
+				return &RefundResult{Success: false, Warning: "cannot find the subscription issued by this order, use force", RequireForce: true}
 			}
 		}
 		return nil
@@ -311,6 +322,7 @@ func (s *PaymentService) ExecuteRefund(ctx context.Context, p *RefundPlan) (*Ref
 						s.restoreStatus(ctx, p)
 						return nil, fmt.Errorf("revoke subscription: %w", revokeErr)
 					}
+					p.SubscriptionRevoked = true
 				} else {
 					// Other errors (DB failure, not found) — abort refund
 					s.restoreStatus(ctx, p)
@@ -630,6 +642,14 @@ func (s *PaymentService) RollbackRefund(ctx context.Context, p *RefundPlan, gErr
 		}
 	}
 	if p.DeductionType == payment.DeductionTypeSubscription && p.SubDaysToDeduct > 0 && p.SubscriptionID > 0 {
+		if p.SubscriptionRevoked {
+			if _, err := s.subscriptionSvc.RestoreSubscription(ctx, p.SubscriptionID); err != nil {
+				slog.Error("[CRITICAL] subscription restore failed", "orderID", p.OrderID, "subID", p.SubscriptionID, "error", err)
+				s.writeAuditLog(ctx, p.OrderID, "REFUND_ROLLBACK_FAILED", "admin", map[string]any{"gatewayError": psErrMsg(gErr), "rollbackError": psErrMsg(err), "subscriptionRevoked": true})
+				return false
+			}
+			return true
+		}
 		if _, err := s.subscriptionSvc.ExtendSubscription(ctx, p.SubscriptionID, p.SubDaysToDeduct); err != nil {
 			slog.Error("[CRITICAL] subscription rollback failed", "orderID", p.OrderID, "subID", p.SubscriptionID, "days", p.SubDaysToDeduct, "error", err)
 			s.writeAuditLog(ctx, p.OrderID, "REFUND_ROLLBACK_FAILED", "admin", map[string]any{"gatewayError": psErrMsg(gErr), "rollbackError": psErrMsg(err), "subDaysDeducted": p.SubDaysToDeduct})

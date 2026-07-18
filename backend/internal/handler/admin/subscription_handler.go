@@ -135,20 +135,7 @@ func (h *SubscriptionHandler) GetProgress(c *gin.Context) {
 // Assign handles assigning a subscription to a user.
 // POST /api/v1/admin/subscriptions/assign
 //
-// Behavior（"重新分配"语义）：
-//   - 不存在订阅 → 创建新订阅（ExpiresAt = now + ValidityDays）
-//   - 已存在订阅（无论是否过期）→ 完全重置：
-//       ExpiresAt = now + ValidityDays（原剩余天数作废）
-//       StartsAt 重置为 now
-//       daily/weekly/monthly 用量窗口和计数全部清零
-//       status 恢复为 active
-//
-// 历史 bug：原本调用 AssignSubscription（幂等返回 existing），导致管理员后台
-// 对"额度已耗尽但日期未过期"的订阅重新分配时，付了钱却仍报 *_LIMIT_EXCEEDED。
-// 改为调用 AssignOrResetSubscription，统一走"重置语义"——这是管理员"重新分配"
-// 按钮的直觉行为。
-//
-// 配合 executeAdminIdempotentJSON 防止管理员误操作（双击/重复请求）造成重复重置。
+// 每次分配创建独立订阅；请求幂等键防止双击重复发放。
 func (h *SubscriptionHandler) Assign(c *gin.Context) {
 	var req AssignSubscriptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -163,7 +150,7 @@ func (h *SubscriptionHandler) Assign(c *gin.Context) {
 		Body AssignSubscriptionRequest `json:"body"`
 	}{Body: req}
 	executeAdminIdempotentJSON(c, "admin.subscriptions.assign", idempotencyPayload, service.DefaultWriteIdempotencyTTL(), func(ctx context.Context) (any, error) {
-		subscription, _, execErr := h.subscriptionService.AssignOrResetSubscription(ctx, &service.AssignSubscriptionInput{
+		subscription, execErr := h.subscriptionService.IssueSubscription(ctx, &service.AssignSubscriptionInput{
 			UserID:       req.UserID,
 			GroupID:      req.GroupID,
 			ValidityDays: req.ValidityDays,

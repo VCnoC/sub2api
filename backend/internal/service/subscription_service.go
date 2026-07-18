@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
@@ -205,6 +206,24 @@ func (s *SubscriptionService) AssignSubscription(ctx context.Context, input *Ass
 	return sub, nil
 }
 
+// IssueSubscription 发放一张独立订阅权益，不合并同分组的已有订阅。
+func (s *SubscriptionService) IssueSubscription(ctx context.Context, input *AssignSubscriptionInput) (*UserSubscription, error) {
+	group, err := s.groupRepo.GetByID(ctx, input.GroupID)
+	if err != nil {
+		return nil, fmt.Errorf("group not found: %w", err)
+	}
+	if !group.IsSubscriptionType() {
+		return nil, ErrGroupNotSubscriptionType
+	}
+
+	sub, err := s.createSubscription(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	s.maybeInvalidateAssignmentCaches(input.UserID, input.GroupID, dbent.TxFromContext(ctx) != nil)
+	return sub, nil
+}
+
 // AssignOrExtendSubscription 分配或续期订阅（用于兑换码等场景）
 // 如果用户已有同分组的订阅：
 //   - 未过期：从当前过期时间累加天数
@@ -304,10 +323,10 @@ func (s *SubscriptionService) maybeInvalidateAssignmentCaches(userID, groupID in
 // AssignOrResetSubscription 用于管理员"重新分配"语义：
 // - 不存在订阅 → 创建新订阅
 // - 已存在订阅（无论是否过期）→ 完全重置：
-//     * ExpiresAt = now + ValidityDays（原剩余天数作废）
-//     * StartsAt 重置为 now
-//     * 所有用量窗口和计数清零
-//     * Status 恢复为 active
+//   - ExpiresAt = now + ValidityDays（原剩余天数作废）
+//   - StartsAt 重置为 now
+//   - 所有用量窗口和计数清零
+//   - Status 恢复为 active
 //
 // 与 AssignOrExtendSubscription 的区别：本方法**不叠加**剩余天数，
 // 而是完全从头开始一段新订阅。适用于：管理员后台"分配套餐"（gift/replace 语义）。
@@ -547,7 +566,7 @@ func (s *SubscriptionService) BulkAssignSubscription(ctx context.Context, input 
 	}
 
 	for _, userID := range input.UserIDs {
-		sub, reused, err := s.assignSubscriptionWithReuse(ctx, &AssignSubscriptionInput{
+		sub, err := s.IssueSubscription(ctx, &AssignSubscriptionInput{
 			UserID:       userID,
 			GroupID:      input.GroupID,
 			ValidityDays: input.ValidityDays,
@@ -561,13 +580,8 @@ func (s *SubscriptionService) BulkAssignSubscription(ctx context.Context, input 
 		} else {
 			result.SuccessCount++
 			result.Subscriptions = append(result.Subscriptions, *sub)
-			if reused {
-				result.ReusedCount++
-				result.Statuses[userID] = "reused"
-			} else {
-				result.CreatedCount++
-				result.Statuses[userID] = "created"
-			}
+			result.CreatedCount++
+			result.Statuses[userID] = "created"
 		}
 	}
 
@@ -685,14 +699,6 @@ func (s *SubscriptionService) RestoreSubscription(ctx context.Context, subscript
 		return nil, ErrSubscriptionNotRevoked
 	}
 
-	exists, err := s.userSubRepo.ExistsActiveByUserIDAndGroupID(ctx, sub.UserID, sub.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, ErrSubscriptionRestoreConflict
-	}
-
 	restoredStatus := sub.Status
 	now := time.Now()
 	if restoredStatus == SubscriptionStatusActive && !sub.ExpiresAt.After(now) {
@@ -782,44 +788,53 @@ func (s *SubscriptionService) GetByID(ctx context.Context, id int64) (*UserSubsc
 	return s.userSubRepo.GetByID(ctx, id)
 }
 
-// GetActiveSubscription 获取用户对特定分组的有效订阅
-// 使用 L1 缓存 + singleflight 加速中间件热路径。
-// 返回缓存对象的浅拷贝，调用方可安全修改字段而不会污染缓存或触发 data race。
+// GetActiveSubscription 返回最早到期且当前仍有额度的订阅。
 func (s *SubscriptionService) GetActiveSubscription(ctx context.Context, userID, groupID int64) (*UserSubscription, error) {
-	key := subCacheKey(userID, groupID)
-
-	// L1 缓存命中：返回浅拷贝
-	if s.subCacheL1 != nil {
-		if v, ok := s.subCacheL1.Get(key); ok {
-			if sub, ok := v.(*UserSubscription); ok {
-				cp := *sub
-				return &cp, nil
-			}
-		}
+	// 部分轻量调用方只注入仓储；生产路径会注入 groupRepo 并执行多卡选择。
+	if s.groupRepo == nil {
+		return s.userSubRepo.GetActiveByUserIDAndGroupID(ctx, userID, groupID)
 	}
-
-	// singleflight 防止并发击穿
-	value, err, _ := s.subCacheGroup.Do(key, func() (any, error) {
-		sub, err := s.userSubRepo.GetActiveByUserIDAndGroupID(ctx, userID, groupID)
-		if err != nil {
-			return nil, err // 直接透传 repo 已翻译的错误（NotFound → ErrSubscriptionNotFound，其他错误原样返回）
-		}
-		// 写入 L1 缓存
-		if s.subCacheL1 != nil {
-			_ = s.subCacheL1.SetWithTTL(key, sub, 1, s.jitteredTTL(s.subCacheTTL))
-		}
-		return sub, nil
-	})
+	group, err := s.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
 		return nil, err
 	}
-	// singleflight 返回的也是缓存指针，需要浅拷贝
-	sub, ok := value.(*UserSubscription)
-	if !ok || sub == nil {
-		return nil, ErrSubscriptionNotFound
+	subs, err := s.userSubRepo.ListActiveByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
 	}
-	cp := *sub
-	return &cp, nil
+
+	var exhaustedErr error
+	for i := range subs {
+		sub := &subs[i]
+		if sub.GroupID != groupID {
+			continue
+		}
+
+		needsMaintenance, validateErr := s.ValidateAndCheckLimits(sub, group)
+		if needsMaintenance {
+			sub, err = s.EnsureWindowMaintenance(ctx, sub)
+			if err != nil {
+				return nil, err
+			}
+			_, validateErr = s.ValidateAndCheckLimits(sub, group)
+		}
+		if validateErr == nil {
+			return sub, nil
+		}
+		if IsSubscriptionLimitError(validateErr) {
+			exhaustedErr = validateErr
+		}
+	}
+	if exhaustedErr != nil {
+		return nil, exhaustedErr
+	}
+	return nil, ErrSubscriptionNotFound
+}
+
+func IsSubscriptionLimitError(err error) bool {
+	return errors.Is(err, ErrDailyLimitExceeded) ||
+		errors.Is(err, ErrWeeklyLimitExceeded) ||
+		errors.Is(err, ErrMonthlyLimitExceeded)
 }
 
 // ListUserSubscriptions 获取用户的所有订阅

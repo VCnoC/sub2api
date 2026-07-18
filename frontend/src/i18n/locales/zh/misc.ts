@@ -470,6 +470,7 @@ export default {
     },
     subscribeNow: '立即开通',
     renewNow: '续费',
+    buyAgain: '再次购买',
     selectPlan: '选择套餐',
     planFeatures: '功能特性',
     planCard: {

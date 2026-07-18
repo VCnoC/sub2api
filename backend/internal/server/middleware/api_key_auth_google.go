@@ -136,6 +136,10 @@ func APIKeyAuthWithSubscriptionGoogle(apiKeyService *service.APIKeyService, subs
 				apiKey.Group.ID,
 			)
 			if err != nil {
+				if service.IsSubscriptionLimitError(err) {
+					abortWithGoogleError(c, 429, err.Error())
+					return
+				}
 				abortWithGoogleError(c, 403, "No active subscription found for this group")
 				return
 			}

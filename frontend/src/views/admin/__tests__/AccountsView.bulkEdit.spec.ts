@@ -6,13 +6,13 @@ import AccountsView from '../AccountsView.vue'
 const {
   listAccounts,
   listWithEtag,
-  getBatchTodayStats,
+  getUsageBatch,
   getAllProxies,
   getAllGroups
 } = vi.hoisted(() => ({
   listAccounts: vi.fn(),
   listWithEtag: vi.fn(),
-  getBatchTodayStats: vi.fn(),
+  getUsageBatch: vi.fn(),
   getAllProxies: vi.fn(),
   getAllGroups: vi.fn()
 }))
@@ -22,7 +22,7 @@ vi.mock('@/api/admin', () => ({
     accounts: {
       list: listAccounts,
       listWithEtag,
-      getBatchTodayStats,
+      getUsageBatch,
       delete: vi.fn(),
       batchClearError: vi.fn(),
       batchRefresh: vi.fn(),
@@ -90,7 +90,7 @@ describe('admin AccountsView bulk edit scope', () => {
 
     listAccounts.mockReset()
     listWithEtag.mockReset()
-    getBatchTodayStats.mockReset()
+    getUsageBatch.mockReset()
     getAllProxies.mockReset()
     getAllGroups.mockReset()
 
@@ -106,7 +106,7 @@ describe('admin AccountsView bulk edit scope', () => {
       etag: null,
       data: null
     })
-    getBatchTodayStats.mockResolvedValue({ stats: {} })
+    getUsageBatch.mockResolvedValue({ usage: {}, today_stats: {}, errors: {} })
     getAllProxies.mockResolvedValue([])
     getAllGroups.mockResolvedValue([])
   })

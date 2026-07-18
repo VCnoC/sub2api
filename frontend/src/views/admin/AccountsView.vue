@@ -273,8 +273,8 @@
           <template #cell-today_stats="{ row }">
             <AccountTodayStatsCell
               :stats="todayStatsByAccountId[String(row.id)] ?? null"
-              :loading="todayStatsLoading"
-              :error="todayStatsError"
+              :loading="usageBatchLoading"
+              :error="usageBatchError"
             />
           </template>
           <template #cell-groups="{ row }">
@@ -289,9 +289,11 @@
           <template #cell-usage="{ row }">
             <AccountUsageCell
               :account="row"
+              :usage-info="usageByAccountId[String(row.id)] ?? null"
+              :usage-loading="usageBatchLoading"
+              :usage-error="usageErrorsByAccountId[String(row.id)]?.message ?? usageBatchError"
               :today-stats="todayStatsByAccountId[String(row.id)] ?? null"
-              :today-stats-loading="todayStatsLoading"
-              :manual-refresh-token="usageManualRefreshToken"
+              :today-stats-loading="usageBatchLoading"
             />
           </template>
           <template #cell-proxy="{ row }">
@@ -465,7 +467,7 @@ import TLSFingerprintProfilesModal from '@/components/admin/TLSFingerprintProfil
 import { buildOpenAIUsageRefreshKey } from '@/utils/accountUsageRefresh'
 import { formatDateTime, formatRelativeTime } from '@/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/utils/proxyExpiry'
-import type { Account, AccountPlatform, AccountSchedulerGroupScore, AccountType, Proxy as AccountProxy, AdminGroup, WindowStats, ClaudeModel } from '@/types'
+import type { Account, AccountPlatform, AccountSchedulerGroupScore, AccountType, Proxy as AccountProxy, AdminGroup, AccountUsageBatchError, AccountUsageInfo, WindowStats, ClaudeModel } from '@/types'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -604,11 +606,13 @@ const AUTO_REFRESH_SILENT_WINDOW_MS = 15000
 const autoRefreshSilentUntil = ref(0)
 const hasPendingListSync = ref(false)
 const todayStatsByAccountId = ref<Record<string, WindowStats>>({})
-const todayStatsLoading = ref(false)
-const todayStatsError = ref<string | null>(null)
-const todayStatsReqSeq = ref(0)
-const pendingTodayStatsRefresh = ref(false)
-const usageManualRefreshToken = ref(0)
+const usageByAccountId = ref<Record<string, AccountUsageInfo | null>>({})
+const usageErrorsByAccountId = ref<Record<string, AccountUsageBatchError>>({})
+const usageBatchLoading = ref(false)
+const usageBatchError = ref<string | null>(null)
+const usageBatchReqSeq = ref(0)
+const pendingUsageBatchRefresh = ref(false)
+let usageBatchAbortController: AbortController | null = null
 
 const buildDefaultTodayStats = (): WindowStats => ({
   requests: 0,
@@ -618,46 +622,68 @@ const buildDefaultTodayStats = (): WindowStats => ({
   user_cost: 0
 })
 
-const refreshTodayStatsBatch = async () => {
+const buildAccountIDFingerprint = (accountIDs: number[]) => {
+  return [...new Set(accountIDs)].sort((a, b) => a - b).join(',')
+}
+
+const isAbortError = (error: any) => {
+  return error?.name === 'AbortError' || error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError'
+}
+
+const refreshUsageBatch = async (options?: { refresh?: boolean }) => {
   // Why this checks both columns:
   // - today_stats column shows dedicated today's metrics.
   // - usage column also embeds today's stats for Key/Bedrock rows.
   // So we only skip fetching when BOTH columns are hidden.
   if (hiddenColumns.has('today_stats') && hiddenColumns.has('usage')) {
-    todayStatsLoading.value = false
-    todayStatsError.value = null
+    usageBatchAbortController?.abort()
+    usageBatchLoading.value = false
+    usageBatchError.value = null
     return
   }
 
   const accountIDs = accounts.value.map(account => account.id)
-  const reqSeq = ++todayStatsReqSeq.value
+  const fingerprint = buildAccountIDFingerprint(accountIDs)
+  const reqSeq = ++usageBatchReqSeq.value
+  usageBatchAbortController?.abort()
   if (accountIDs.length === 0) {
     todayStatsByAccountId.value = {}
-    todayStatsError.value = null
-    todayStatsLoading.value = false
+    usageByAccountId.value = {}
+    usageErrorsByAccountId.value = {}
+    usageBatchError.value = null
+    usageBatchLoading.value = false
     return
   }
 
-  todayStatsLoading.value = true
-  todayStatsError.value = null
+  const controller = new AbortController()
+  usageBatchAbortController = controller
+  usageBatchLoading.value = true
+  usageBatchError.value = null
 
   try {
-    const result = await adminAPI.accounts.getBatchTodayStats(accountIDs)
-    if (reqSeq !== todayStatsReqSeq.value) return
-    const serverStats = result.stats ?? {}
+    const result = await adminAPI.accounts.getUsageBatch(accountIDs, {
+      signal: controller.signal,
+      refresh: options?.refresh
+    })
+    if (reqSeq !== usageBatchReqSeq.value) return
+    if (fingerprint !== buildAccountIDFingerprint(accounts.value.map(account => account.id))) return
+    const serverStats = result.today_stats ?? {}
     const nextStats: Record<string, WindowStats> = {}
     for (const accountID of accountIDs) {
       const key = String(accountID)
       nextStats[key] = serverStats[key] ?? buildDefaultTodayStats()
     }
     todayStatsByAccountId.value = nextStats
+    usageByAccountId.value = result.usage ?? {}
+    usageErrorsByAccountId.value = result.errors ?? {}
   } catch (error) {
-    if (reqSeq !== todayStatsReqSeq.value) return
-    todayStatsError.value = 'Failed'
-    console.error('Failed to load account today stats:', error)
+    if (reqSeq !== usageBatchReqSeq.value || isAbortError(error)) return
+    usageBatchError.value = 'Failed'
+    console.error('Failed to load account usage snapshots:', error)
   } finally {
-    if (reqSeq === todayStatsReqSeq.value) {
-      todayStatsLoading.value = false
+    if (reqSeq === usageBatchReqSeq.value) {
+      if (usageBatchAbortController === controller) usageBatchAbortController = null
+      usageBatchLoading.value = false
     }
   }
 }
@@ -800,8 +826,8 @@ const toggleColumn = (key: string) => {
   }
   saveColumnsToStorage()
   if ((key === 'today_stats' || key === 'usage') && wasHidden) {
-    refreshTodayStatsBatch().catch((error) => {
-      console.error('Failed to load account today stats after showing column:', error)
+    refreshUsageBatch().catch((error) => {
+      console.error('Failed to load account usage snapshots after showing column:', error)
     })
   }
   if (key === 'scheduler_score') {
@@ -883,12 +909,12 @@ const resetAutoRefreshCache = () => {
 
 const isFirstLoad = ref(true)
 
-const load = async () => {
+const load = async (options?: { refreshUsage?: boolean }) => {
   const requestParams = params as any
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = false
+  pendingUsageBatchRefresh.value = false
   if (isFirstLoad.value) {
     requestParams.lite = '1'
   }
@@ -897,23 +923,23 @@ const load = async () => {
     isFirstLoad.value = false
     delete requestParams.lite
   }
-  await refreshTodayStatsBatch()
+  await refreshUsageBatch({ refresh: options?.refreshUsage })
 }
 
 const reload = async () => {
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = false
+  pendingUsageBatchRefresh.value = false
   await baseReload()
-  await refreshTodayStatsBatch()
+  await refreshUsageBatch()
 }
 
 const debouncedReload = () => {
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = true
+  pendingUsageBatchRefresh.value = true
   baseDebouncedReload()
 }
 
@@ -921,7 +947,7 @@ const handlePageChange = (page: number) => {
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = true
+  pendingUsageBatchRefresh.value = true
   baseHandlePageChange(page)
 }
 
@@ -929,7 +955,7 @@ const handlePageSizeChange = (size: number) => {
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = true
+  pendingUsageBatchRefresh.value = true
   baseHandlePageSizeChange(size)
 }
 
@@ -943,15 +969,15 @@ const handleSort = (key: string, order: AccountSortOrder) => {
   pagination.page = 1
   hasPendingListSync.value = false
   resetAutoRefreshCache()
-  pendingTodayStatsRefresh.value = true
+  pendingUsageBatchRefresh.value = true
   load()
 }
 
 watch(loading, (isLoading, wasLoading) => {
-  if (wasLoading && !isLoading && pendingTodayStatsRefresh.value) {
-    pendingTodayStatsRefresh.value = false
-    refreshTodayStatsBatch().catch((error) => {
-      console.error('Failed to refresh account today stats after table load:', error)
+  if (wasLoading && !isLoading && pendingUsageBatchRefresh.value) {
+    pendingUsageBatchRefresh.value = false
+    refreshUsageBatch().catch((error) => {
+      console.error('Failed to refresh account usage snapshots after table load:', error)
     })
   }
 })
@@ -1069,7 +1095,7 @@ const refreshAccountsIncrementally = async () => {
       hasPendingListSync.value = false
     }
 
-    await refreshTodayStatsBatch()
+    await refreshUsageBatch()
   } catch (error) {
     console.error('Auto refresh failed:', error)
   } finally {
@@ -1078,9 +1104,7 @@ const refreshAccountsIncrementally = async () => {
 }
 
 const handleManualRefresh = async () => {
-  await load()
-  // Force usage cells to refetch /usage on explicit user refresh.
-  usageManualRefreshToken.value += 1
+  await load({ refreshUsage: true })
 }
 
 const closeAccountToolsDropdown = () => {
@@ -1115,8 +1139,6 @@ const openTLSFingerprintProfiles = () => {
 const syncPendingListChanges = async () => {
   hasPendingListSync.value = false
   await load()
-  // Keep behavior consistent with manual refresh.
-  usageManualRefreshToken.value += 1
 }
 
 const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(
@@ -1861,6 +1883,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  usageBatchAbortController?.abort()
   window.removeEventListener('scroll', handleScroll, true)
   document.removeEventListener('click', handleClickOutside)
 })

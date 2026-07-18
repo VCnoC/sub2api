@@ -227,6 +227,23 @@ func (s *UserSubscriptionRepoSuite) TestGetActiveByUserIDAndGroupID() {
 	s.Require().Equal(active.ID, got.ID)
 }
 
+func (s *UserSubscriptionRepoSuite) TestGetActiveByUserIDAndGroupID_ReturnsEarliestExpiry() {
+	user := s.mustCreateUser("active-multi@test.com", service.RoleUser)
+	group := s.mustCreateGroup("g-active-multi")
+
+	later := s.mustCreateSubscription(user.ID, group.ID, func(c *dbent.UserSubscriptionCreate) {
+		c.SetExpiresAt(time.Now().Add(48 * time.Hour))
+	})
+	earlier := s.mustCreateSubscription(user.ID, group.ID, func(c *dbent.UserSubscriptionCreate) {
+		c.SetExpiresAt(time.Now().Add(24 * time.Hour))
+	})
+
+	got, err := s.repo.GetActiveByUserIDAndGroupID(s.ctx, user.ID, group.ID)
+	s.Require().NoError(err)
+	s.Require().Equal(earlier.ID, got.ID)
+	s.Require().NotEqual(later.ID, got.ID)
+}
+
 func (s *UserSubscriptionRepoSuite) TestGetActiveByUserIDAndGroupID_ExpiredIgnored() {
 	user := s.mustCreateUser("expired@test.com", service.RoleUser)
 	group := s.mustCreateGroup("g-expired")
