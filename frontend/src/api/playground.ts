@@ -26,6 +26,8 @@ import type {
   UpdateConversationRequest,
 } from '@/types/playground'
 
+const CONVERSATION_REQUEST_TIMEOUT_MS = 60_000
+
 /**
  * 查询指定分组下用户可用的模型列表
  */
@@ -109,7 +111,8 @@ export async function listConversations(): Promise<ConversationSummary[]> {
 /** 获取单个会话详情（含完整消息列表） */
 export async function getConversation(id: number): Promise<ConversationDetail> {
   const { data } = await apiClient.get<ConversationDetail>(
-    `${API_ENDPOINTS.CONVERSATIONS}/${id}`
+    `${API_ENDPOINTS.CONVERSATIONS}/${id}`,
+    { timeout: CONVERSATION_REQUEST_TIMEOUT_MS }
   )
   return data
 }
@@ -120,7 +123,8 @@ export async function createConversation(
 ): Promise<ConversationDetail> {
   const { data } = await apiClient.post<ConversationDetail>(
     API_ENDPOINTS.CONVERSATIONS,
-    payload
+    payload,
+    { timeout: CONVERSATION_REQUEST_TIMEOUT_MS }
   )
   return data
 }
@@ -133,7 +137,9 @@ export async function updateConversation(
   id: number,
   payload: UpdateConversationRequest
 ): Promise<void> {
-  await apiClient.put(`${API_ENDPOINTS.CONVERSATIONS}/${id}`, payload)
+  await apiClient.put(`${API_ENDPOINTS.CONVERSATIONS}/${id}`, payload, {
+    timeout: CONVERSATION_REQUEST_TIMEOUT_MS,
+  })
 }
 
 /** 删除会话 */
