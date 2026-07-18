@@ -5,7 +5,7 @@
 ---
 
 ## 1. 数据模型与迁移
-- [√] 1.1 在 `backend/migrations/177_add_payment_order_subscription_link.sql` 和 `backend/migrations/178_multi_subscription_candidate_indexes_notx.sql` 中增加支付订单订阅外键、移除同组唯一索引并增加候选排序索引，验证 why.md#需求-独立发放订阅-场景-重复获得同一套餐
+- [√] 1.1 在 `backend/migrations/183_add_payment_order_subscription_link.sql` 和 `backend/migrations/184_multi_subscription_candidate_indexes_notx.sql` 中增加支付订单订阅外键、移除同组唯一索引并增加候选排序索引，验证 why.md#需求-独立发放订阅-场景-重复获得同一套餐
 - [√] 1.2 在 `backend/ent/schema/payment_order.go` 中增加可空 `subscription_id` 字段，在 `backend/ent/schema/user_subscription.go` 中更新多订阅索引说明，依赖任务1.1
 - [√] 1.3 运行 Ent 代码生成并审计生成结果，确认只包含 schema 对应机械变更，依赖任务1.2
 - [√] 1.4 在 migration 回归测试中验证唯一索引移除、候选索引与外键存在，依赖任务1.1

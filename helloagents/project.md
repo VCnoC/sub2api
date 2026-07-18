@@ -1,6 +1,7 @@
 # 项目技术约定
 
 ## 技术栈
+- **官方基线:** Sub2API v0.1.160
 - **后端:** Go 1.26、Gin、Ent、PostgreSQL、Redis
 - **前端:** Vue 3、TypeScript、Vite、Pinia、Tailwind CSS
 - **部署:** Docker Compose
@@ -17,6 +18,7 @@
 - API Key、访问令牌和服务器地址不得写入知识库或日志正文。
 
 ## 测试与流程
+- Ent/Wire 源定义发生变化后必须运行项目现有生成命令，并以生成结果作为唯一来源。
 - 后端运行受影响包测试及 migration 回归测试。
 - 前端运行类型检查、相关 Vitest 与生产构建。
 - PostgreSQL 并发或权限边界使用 `integration` build tag 的临时容器测试验证。

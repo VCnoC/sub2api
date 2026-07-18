@@ -35,6 +35,7 @@ import riskControlAPI from './riskControl'
 import adminComplianceAPI from './compliance'
 import adminTicketsAPI from './tickets'
 import adminLotteryAPI from './lottery'
+import auditAPI from './audit'
 
 /**
  * Unified admin API object for convenient access
@@ -71,7 +72,8 @@ export const adminAPI = {
   riskControl: riskControlAPI,
   compliance: adminComplianceAPI,
   tickets: adminTicketsAPI,
-  lottery: adminLotteryAPI
+  lottery: adminLotteryAPI,
+  audit: auditAPI
 }
 
 export {
@@ -106,12 +108,14 @@ export {
   riskControlAPI,
   adminComplianceAPI,
   adminTicketsAPI,
-  adminLotteryAPI
+  adminLotteryAPI,
+  auditAPI
 }
 
 export default adminAPI
 
 // Re-export types used by components
+export type { AuditLog, AuditLogQuery, AuditLogListResponse } from './audit'
 export type { BalanceHistoryItem } from './users'
 export type { ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest } from './errorPassthrough'
 export type { BackupAgentHealth, DataManagementConfig } from './dataManagement'

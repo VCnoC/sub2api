@@ -86,7 +86,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_payment_orders_subscription_id
 ```
 
 - 不拆分现有合并订阅；迁移后它作为一条 legacy 权益继续使用。
-- 字段和外键由 `177_add_payment_order_subscription_link.sql` 添加，在线索引由 `178_multi_subscription_candidate_indexes_notx.sql` 创建。
+- 字段和外键由 `183_add_payment_order_subscription_link.sql` 添加，在线索引由 `184_multi_subscription_candidate_indexes_notx.sql` 创建。
 - 新支付订单必须在履约事务内写入 `subscription_id`。
 - 不为 `subscription_id` 增加全局唯一约束，以兼容历史修复和审计操作；业务层保证一个订单只发放一次。
 

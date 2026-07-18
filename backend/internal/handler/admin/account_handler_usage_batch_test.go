@@ -57,8 +57,8 @@ func setupUsageBatchRouter() (*gin.Engine, *usageBatchAccountRepoStub) {
 	accountRepo := &usageBatchAccountRepoStub{accounts: map[int64]*service.Account{
 		1: {ID: 1, Platform: service.PlatformAnthropic, Type: service.AccountTypeSetupToken, SessionWindowEnd: &end},
 	}}
-	usageSvc := service.NewAccountUsageService(accountRepo, usageBatchLogRepoStub{}, nil, nil, nil, nil, nil, service.NewUsageCache(), nil, nil)
-	handler := NewAccountHandler(nil, nil, nil, nil, nil, nil, usageSvc, nil, nil, nil, nil, nil, nil)
+	usageSvc := service.NewAccountUsageService(accountRepo, usageBatchLogRepoStub{}, nil, nil, nil, nil, nil, nil, service.NewUsageCache(), nil, nil)
+	handler := NewAccountHandler(nil, nil, nil, nil, nil, nil, nil, usageSvc, nil, nil, nil, nil, nil, nil)
 	router := gin.New()
 	router.POST("/api/v1/admin/accounts/usage/batch", handler.GetUsageBatch)
 	return router, accountRepo

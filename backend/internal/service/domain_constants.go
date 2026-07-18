@@ -33,13 +33,13 @@ const (
 	AffiliateRebateDurationDaysDefault  = 0     // 0 = 永久有效
 	AffiliateRebateDurationDaysMax      = 3650  // ~10 年
 	AffiliateRebatePerInviteeCapDefault = 0.0   // 0 = 无上限
-
 	// 邀请注册奖励（一次性赠送，与按比例的充值返利并列）
 	AffiliateSignupBonusEnabledDefault = false
 	AffiliateInviterBonusUSDDefault    = 0.0
 	AffiliateInviteeBonusUSDDefault    = 0.0
 	AffiliateBonusUSDMin               = 0.0
 	AffiliateBonusUSDMax               = 1000.0 // 单次注册奖励上限 $1000，避免误填
+	AdminRechargeRebateEnabledDefault  = false  // 管理员充值默认不产生返利
 )
 
 // Platform constants
@@ -150,6 +150,7 @@ const (
 	SettingKeyAffiliateSignupBonusEnabled      = "affiliate_signup_bonus_enabled"      // 邀请注册奖励子开关（双向赠送余额）
 	SettingKeyAffiliateInviterBonusUSD         = "affiliate_inviter_bonus_usd"         // 邀请人注册奖励金额（USD）
 	SettingKeyAffiliateInviteeBonusUSD         = "affiliate_invitee_bonus_usd"         // 被邀请人注册奖励金额（USD）
+	SettingKeyAffiliateAdminRechargeEnabled    = "affiliate_admin_recharge_enabled"    // 管理员充值是否产生返利
 	SettingKeyRiskControlEnabled               = "risk_control_enabled"                // 是否启用风控中心入口与审计链路
 	SettingKeyContentModerationConfig          = "content_moderation_config"           // 内容审计配置（JSON）
 	SettingKeyCyberSessionBlockEnabled         = "cyber_session_block_enabled"         // cyber 命中后会话级自动屏蔽总开关(默认关)
@@ -178,6 +179,12 @@ const (
 
 	// TOTP 双因素认证设置
 	SettingKeyTotpEnabled = "totp_enabled" // 是否启用 TOTP 2FA 功能
+
+	// 会话安全设置
+	SettingKeySessionBindingEnabled = "session_binding_enabled" // 会话 IP/UA 绑定（变更即失效），默认开启
+
+	// 操作审计日志设置
+	SettingKeyAuditLogRetentionDays = "audit_log_retention_days" // 审计日志保留天数（<=0 永久保留），默认 180
 
 	// LinuxDo Connect OAuth 登录设置
 	SettingKeyLinuxDoConnectEnabled      = "linuxdo_connect_enabled"
@@ -379,6 +386,10 @@ const (
 	// sidebar entry is hidden. Defaults to false (opt-in feature).
 	SettingKeyAvailableChannelsEnabled = "available_channels_enabled"
 
+	// SettingKeyUpstreamBillingProbeSettings stores the global enable switch and interval
+	// for probing remote Sub2API API-key billing metadata.
+	SettingKeyUpstreamBillingProbeSettings = "upstream_billing_probe_settings"
+
 	// =========================
 	// Overload Cooldown (529)
 	// =========================
@@ -443,6 +454,10 @@ const (
 
 	// SettingKeyAllowUngroupedKeyScheduling 允许未分组 API Key 调度（默认 false：未分组 Key 返回 403）
 	SettingKeyAllowUngroupedKeyScheduling = "allow_ungrouped_key_scheduling"
+	// SettingKeyOpenAILowUpstreamRatePriorityEnabled 旧调度是否按上游 token 倍率优先。
+	SettingKeyOpenAILowUpstreamRatePriorityEnabled = "openai_low_upstream_rate_priority_enabled"
+	// SettingKeyOpenAIOAuthSchedulingRateMultiplier OAuth 账号参与成本调度时使用的参考倍率。
+	SettingKeyOpenAIOAuthSchedulingRateMultiplier = "openai_oauth_scheduling_rate_multiplier"
 	// SettingKeyOpenAIAdvancedSchedulerStickyWeightedEnabled OpenAI 高级调度下是否启用粘性加权。
 	SettingKeyOpenAIAdvancedSchedulerStickyWeightedEnabled = "openai_advanced_scheduler_sticky_weighted_enabled"
 	// SettingKeyOpenAIAdvancedSchedulerSubscriptionPriorityEnabled OpenAI 高级调度下是否优先使用订阅账号池。
@@ -455,6 +470,7 @@ const (
 	SettingKeyOpenAIAdvancedSchedulerWeightTTFT                  = "openai_advanced_scheduler_weight_ttft"
 	SettingKeyOpenAIAdvancedSchedulerWeightReset                 = "openai_advanced_scheduler_weight_reset"
 	SettingKeyOpenAIAdvancedSchedulerWeightQuotaHeadroom         = "openai_advanced_scheduler_weight_quota_headroom"
+	SettingKeyOpenAIAdvancedSchedulerWeightUpstreamCost          = "openai_advanced_scheduler_weight_upstream_cost"
 	SettingKeyOpenAIAdvancedSchedulerWeightPreviousResponse      = "openai_advanced_scheduler_weight_previous_response"
 	SettingKeyOpenAIAdvancedSchedulerWeightSessionSticky         = "openai_advanced_scheduler_weight_session_sticky"
 

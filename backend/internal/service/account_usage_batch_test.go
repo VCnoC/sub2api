@@ -92,7 +92,7 @@ func TestAccountUsageServiceGetUsageBatchPassiveUsesConstantBatchCalls(t *testin
 			}
 			accountRepo := &batchUsageAccountRepoStub{accounts: accounts}
 			usageRepo := &batchUsageLogRepoStub{}
-			svc := NewAccountUsageService(accountRepo, usageRepo, panicClaudeUsageFetcher{}, nil, nil, nil, nil, NewUsageCache(), nil, nil)
+			svc := NewAccountUsageService(accountRepo, usageRepo, panicClaudeUsageFetcher{}, nil, nil, nil, nil, nil, NewUsageCache(), nil, nil)
 
 			result, err := svc.GetUsageBatchPassive(context.Background(), ids)
 			require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestAccountUsageServiceGetUsageBatchPassivePartialFailuresAndGemini(t *test
 	}
 	accountRepo := &batchUsageAccountRepoStub{accounts: accounts}
 	usageRepo := &batchUsageLogRepoStub{}
-	svc := NewAccountUsageService(accountRepo, usageRepo, panicClaudeUsageFetcher{}, NewGeminiQuotaService(nil, nil), nil, nil, nil, NewUsageCache(), nil, nil)
+	svc := NewAccountUsageService(accountRepo, usageRepo, panicClaudeUsageFetcher{}, NewGeminiQuotaService(nil, nil), nil, nil, nil, nil, NewUsageCache(), nil, nil)
 
 	result, err := svc.GetUsageBatchPassive(context.Background(), []int64{1, 2, 3, 4, 999})
 	require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestAccountUsageServiceGetUsageBatchPassiveClonesAntigravityCache(t *testin
 	accountRepo := &batchUsageAccountRepoStub{accounts: map[int64]*Account{
 		7: {ID: 7, Platform: PlatformAntigravity, Type: AccountTypeOAuth},
 	}}
-	svc := NewAccountUsageService(accountRepo, &batchUsageLogRepoStub{}, panicClaudeUsageFetcher{}, nil, nil, nil, nil, cache, nil, nil)
+	svc := NewAccountUsageService(accountRepo, &batchUsageLogRepoStub{}, panicClaudeUsageFetcher{}, nil, nil, nil, nil, nil, cache, nil, nil)
 
 	result, err := svc.GetUsageBatchPassive(context.Background(), []int64{7})
 	require.NoError(t, err)

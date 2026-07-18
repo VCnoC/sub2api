@@ -1292,6 +1292,9 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(group.FieldStatus, field.TypeString, value)
 	}
+	if _u.mutation.DuplicateOperationIDCleared() {
+		_spec.ClearField(group.FieldDuplicateOperationID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Platform(); ok {
 		_spec.SetField(group.FieldPlatform, field.TypeString, value)
 	}
@@ -3103,6 +3106,9 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(group.FieldStatus, field.TypeString, value)
+	}
+	if _u.mutation.DuplicateOperationIDCleared() {
+		_spec.ClearField(group.FieldDuplicateOperationID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Platform(); ok {
 		_spec.SetField(group.FieldPlatform, field.TypeString, value)

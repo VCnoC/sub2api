@@ -10,7 +10,11 @@ flowchart LR
     Gateway --> Scheduler[分组调度]
     Scheduler --> Account[上游账号]
     Gateway --> Billing[计费服务]
+    Gateway --> PromptAudit[提示词审计]
+    AdminAPI --> AuditLog[管理操作审计]
     Billing --> PG[(PostgreSQL)]
+    PromptAudit --> PG
+    AuditLog --> PG
     Gateway --> VideoTask[视频任务]
     VideoTask --> PG
     Worker[视频任务 Worker] --> VideoTask
@@ -33,6 +37,8 @@ flowchart LR
 - API Key 绑定分组，分组平台决定协议与账号池。
 - Redis 负责并发、短期缓存和粘性会话；PostgreSQL 保存长期事实。
 - 用量扣费通过 `usage_billing_dedup` 保证同一请求最多应用一次。
+- 管理操作审计与提示词审计使用独立存储和权限边界；敏感管理员操作通过 step-up 2FA 再验证。
+- 异步图片任务只在对象存储配置完整时启用，Redis 保存紧凑任务状态，图片结果写入 S3 兼容存储。
 - 同组多张订阅独立计时和记账，鉴权按最早到期顺序选择当前仍有额度的具体 `subscription_id`。
 - 视频扣余额与 `video_tasks` 写入在同一数据库事务中提交。
 - Worker 使用数据库租约领取任务；未知状态和传输错误继续重试，只有上游明确失败终态才退款。
@@ -48,6 +54,8 @@ flowchart LR
 
 | adr_id | title | date | status | affected_modules | details |
 |--------|-------|------|--------|------------------|---------|
+| ADR-20260718-UPSTREAM-160-001 | 使用快照分支执行三方合并 | 2026-07-18 | ✅已实施 | 全局架构、版本管理 | [方案](../history/2026-07/202607181652_upstream_0_1_160_merge/how.md#adr-20260718-upstream-160-001-使用快照分支执行三方合并) |
+| ADR-20260718-UPSTREAM-160-002 | 生成代码统一重建 | 2026-07-18 | ✅已实施 | Ent、Wire、依赖注入 | [方案](../history/2026-07/202607181652_upstream_0_1_160_merge/how.md#adr-20260718-upstream-160-002-生成代码统一重建) |
 | ADR-20260718-MULTI-SUB-001 | 独立权益记录并由数据库选择候选 | 2026-07-18 | ✅已实施 | 订阅、鉴权、计费 | [方案](../history/2026-07/202607180325_multi_subscription_consumption/how.md#adr-20260718-multi-sub-001-独立权益记录并由数据库选择候选) |
 | ADR-20260718-MULTI-SUB-002 | 每张订阅获得后立即计时 | 2026-07-18 | ✅已实施 | 订阅、用户端 | [方案](../history/2026-07/202607180325_multi_subscription_consumption/how.md#adr-20260718-multi-sub-002-每张订阅获得后立即计时) |
 | ADR-20260718-MULTI-SUB-003 | 支付订单关联精确权益 | 2026-07-18 | ✅已实施 | 支付、退款、订阅 | [方案](../history/2026-07/202607180325_multi_subscription_consumption/how.md#adr-20260718-multi-sub-003-支付订单关联精确权益) |
