@@ -475,45 +475,59 @@
 
         <div>
           <label class="input-label">{{ t('keys.groupLabel') }}</label>
-          <Select
-            v-model="formData.group_id"
-            :options="groupOptions"
-            :placeholder="t('keys.selectGroup')"
-            :searchable="true"
-            :search-placeholder="t('keys.searchGroup')"
+          <VueDraggable
+            v-model="formData.group_ids"
+            :animation="180"
+            handle=".group-drag-handle"
+            class="space-y-2"
             data-tour="key-form-group"
           >
-            <template #selected="{ option }">
+            <div
+              v-for="(groupId, index) in formData.group_ids"
+              :key="groupId"
+              class="flex min-h-11 items-center gap-2 rounded-md border border-gray-200 bg-white px-2 dark:border-dark-600 dark:bg-dark-800"
+            >
+              <button
+                type="button"
+                class="group-drag-handle cursor-grab p-1 text-gray-400 active:cursor-grabbing"
+                :title="t('keys.reorderGroup')"
+              >
+                <Icon name="menu" size="sm" />
+              </button>
+              <span class="w-5 text-center text-xs font-semibold tabular-nums text-gray-400">{{ index + 1 }}</span>
               <GroupBadge
-                v-if="option"
-                :name="(option as unknown as GroupOption).label"
-                :platform="(option as unknown as GroupOption).platform"
-                :subscription-type="(option as unknown as GroupOption).subscriptionType"
-                :rate-multiplier="(option as unknown as GroupOption).rate"
-                :user-rate-multiplier="(option as unknown as GroupOption).userRate"
-                :peak-rate-enabled="(option as unknown as GroupOption).peakRateEnabled"
-                :peak-start="(option as unknown as GroupOption).peakStart"
-                :peak-end="(option as unknown as GroupOption).peakEnd"
-                :peak-rate-multiplier="(option as unknown as GroupOption).peakRateMultiplier"
+                v-if="groupOptionByID(groupId)"
+                :name="groupOptionByID(groupId)!.label"
+                :platform="groupOptionByID(groupId)!.platform"
+                :subscription-type="groupOptionByID(groupId)!.subscriptionType"
+                :rate-multiplier="groupOptionByID(groupId)!.rate"
+                :user-rate-multiplier="groupOptionByID(groupId)!.userRate"
+                :peak-rate-enabled="groupOptionByID(groupId)!.peakRateEnabled"
+                :peak-start="groupOptionByID(groupId)!.peakStart"
+                :peak-end="groupOptionByID(groupId)!.peakEnd"
+                :peak-rate-multiplier="groupOptionByID(groupId)!.peakRateMultiplier"
               />
-              <span v-else class="text-gray-400">{{ t('keys.selectGroup') }}</span>
-            </template>
-            <template #option="{ option, selected }">
-              <GroupOptionItem
-                :name="(option as unknown as GroupOption).label"
-                :platform="(option as unknown as GroupOption).platform"
-                :subscription-type="(option as unknown as GroupOption).subscriptionType"
-                :rate-multiplier="(option as unknown as GroupOption).rate"
-                :user-rate-multiplier="(option as unknown as GroupOption).userRate"
-                :peak-rate-enabled="(option as unknown as GroupOption).peakRateEnabled"
-                :peak-start="(option as unknown as GroupOption).peakStart"
-                :peak-end="(option as unknown as GroupOption).peakEnd"
-                :peak-rate-multiplier="(option as unknown as GroupOption).peakRateMultiplier"
-                :description="(option as unknown as GroupOption).description"
-                :selected="selected"
-              />
-            </template>
-          </Select>
+              <button
+                type="button"
+                class="ml-auto rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-dark-700"
+                :title="t('keys.removeGroup')"
+                @click="removeSelectedGroup(groupId)"
+              >
+                <Icon name="x" size="sm" />
+              </button>
+            </div>
+          </VueDraggable>
+
+          <Select
+            v-if="formData.group_ids.length < 5 && availableGroupOptions.length > 0"
+            v-model="pendingGroupID"
+            :options="availableGroupOptions"
+            :placeholder="t('keys.addGroup')"
+            :searchable="true"
+            :search-placeholder="t('keys.searchGroup')"
+            class="mt-2"
+            @update:modelValue="addSelectedGroup"
+          />
         </div>
 
         <!-- Custom Key Section (only for create) -->
@@ -1128,6 +1142,7 @@
 <script setup lang="ts">
 	import { ref, reactive, computed, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 	import { useI18n } from 'vue-i18n'
+	import { VueDraggable } from 'vue-draggable-plus'
 	import { useAppStore } from '@/stores/app'
 	import { useOnboardingStore } from '@/stores/onboarding'
 	import { useClipboard } from '@/composables/useClipboard'
@@ -1149,7 +1164,7 @@ import TablePageLayout from '@/components/layout/TablePageLayout.vue'
 	import EndpointPopover from '@/components/keys/EndpointPopover.vue'
 	import GroupBadge from '@/components/common/GroupBadge.vue'
 	import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
-	import type { ApiKey, Group, PublicSettings, SubscriptionType, GroupPlatform, UpdateApiKeyRequest } from '@/types'
+	import type { ApiKey, Group, PublicSettings, UpdateApiKeyRequest } from '@/types'
 import type { Column } from '@/components/common/types'
 import type { BatchApiKeyUsageStats } from '@/api/usage'
 import { formatDateTime, formatDateOnly, formatTime } from '@/utils/format'
@@ -1164,20 +1179,6 @@ const formatDateTimeLocal = (isoDate: string): string => {
   const date = new Date(isoDate)
   const pad = (n: number) => n.toString().padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-interface GroupOption {
-  value: number
-  label: string
-  description: string | null
-  rate: number
-  userRate: number | null
-  peakRateEnabled: boolean
-  peakStart: string
-  peakEnd: string
-  peakRateMultiplier: number
-  subscriptionType: SubscriptionType
-  platform: GroupPlatform
 }
 
 const appStore = useAppStore()
@@ -1339,7 +1340,7 @@ const setGroupButtonRef = (keyId: number, el: Element | ComponentPublicInstance 
 
 const formData = ref({
   name: '',
-  group_id: null as number | null,
+  group_ids: [] as number[],
   status: 'active' as 'active' | 'inactive',
   use_custom_key: false,
   custom_key: '',
@@ -1433,6 +1434,28 @@ const groupOptions = computed(() =>
     platform: group.platform
   }))
 )
+
+const pendingGroupID = ref<number | null>(null)
+const groupOptionByID = (groupID: number) => groupOptions.value.find((option) => option.value === groupID)
+const availableGroupOptions = computed(() => {
+  const first = groupOptionByID(formData.value.group_ids[0])
+  return groupOptions.value.filter((option) =>
+    !formData.value.group_ids.includes(option.value) && (!first || option.platform === first.platform)
+  )
+})
+
+const addSelectedGroup = (value: string | number | boolean | null) => {
+  const groupID = typeof value === 'number' ? value : Number(value)
+  if (Number.isInteger(groupID) && groupID > 0 && formData.value.group_ids.length < 5 && !formData.value.group_ids.includes(groupID)) {
+    formData.value.group_ids.push(groupID)
+  }
+  pendingGroupID.value = null
+}
+
+const removeSelectedGroup = (groupID: number) => {
+  formData.value.group_ids = formData.value.group_ids.filter((id) => id !== groupID)
+  pendingGroupID.value = null
+}
 
 // Group dropdown search
 const groupSearchQuery = ref('')
@@ -1576,7 +1599,7 @@ const editKey = (key: ApiKey) => {
   const hasExpiration = !!key.expires_at
   formData.value = {
     name: key.name,
-    group_id: key.group_id,
+    group_ids: key.group_ids?.length ? [...key.group_ids] : key.group_id ? [key.group_id] : [],
     status: key.status === 'quota_exhausted' || key.status === 'expired' ? 'inactive' : key.status,
     use_custom_key: false,
     custom_key: '',
@@ -1643,10 +1666,15 @@ const openGroupSelector = (key: ApiKey) => {
 const changeGroup = async (key: ApiKey, newGroupId: number | null) => {
   groupSelectorKeyId.value = null
   dropdownPosition.value = null
-  if (key.group_id === newGroupId) return
+  if (newGroupId === null || key.group_id === newGroupId) return
 
   try {
-    await keysAPI.update(key.id, { group_id: newGroupId })
+	const existing = key.group_ids?.length ? key.group_ids : key.group_id ? [key.group_id] : []
+	const selectedGroup = groups.value.find((group) => group.id === newGroupId)
+	const ordered = [newGroupId, ...existing.filter((id) => id !== newGroupId)]
+		.filter((id) => groups.value.find((group) => group.id === id)?.platform === selectedGroup?.platform)
+		.slice(0, 5)
+    await keysAPI.update(key.id, { group_id: newGroupId, group_ids: ordered })
     appStore.showSuccess(t('keys.groupChangedSuccess'))
     loadApiKeys()
   } catch (error) {
@@ -1672,8 +1700,7 @@ const confirmDelete = (key: ApiKey) => {
 }
 
 const handleSubmit = async () => {
-  // Validate group_id is required
-  if (formData.value.group_id === null) {
+  if (formData.value.group_ids.length === 0) {
     appStore.showError(t('keys.groupRequired'))
     return
   }
@@ -1730,7 +1757,8 @@ const handleSubmit = async () => {
     if (showEditModal.value && selectedKey.value) {
       const updates: UpdateApiKeyRequest = {
         name: formData.value.name,
-        group_id: formData.value.group_id,
+        group_id: formData.value.group_ids[0],
+        group_ids: formData.value.group_ids,
         ip_whitelist: ipWhitelist,
         ip_blacklist: ipBlacklist,
         quota: quota,
@@ -1748,7 +1776,7 @@ const handleSubmit = async () => {
       const customKey = formData.value.use_custom_key ? formData.value.custom_key : undefined
       await keysAPI.create(
         formData.value.name,
-        formData.value.group_id,
+        formData.value.group_ids,
         customKey,
         ipWhitelist,
         ipBlacklist,
@@ -1799,7 +1827,7 @@ const closeModals = () => {
   selectedKey.value = null
   formData.value = {
     name: '',
-    group_id: null,
+    group_ids: [],
     status: 'active',
     use_custom_key: false,
     custom_key: '',

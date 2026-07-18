@@ -267,6 +267,12 @@ func TestAPIKeyService_SnapshotRoundTrip_PreservesMessagesDispatchModelConfig(t 
 			},
 		},
 	}
+	secondGroup := &Group{
+		ID: 10, Name: "openai-balance", Platform: PlatformOpenAI, Status: StatusActive,
+		SubscriptionType: SubscriptionTypeStandard, RateMultiplier: 1,
+	}
+	apiKey.GroupIDs = []int64{groupID, secondGroup.ID}
+	apiKey.Groups = []*Group{apiKey.Group, secondGroup}
 
 	snapshot := svc.snapshotFromAPIKey(context.Background(), apiKey)
 	roundTrip := svc.snapshotToAPIKey(apiKey.Key, snapshot)
@@ -275,6 +281,9 @@ func TestAPIKeyService_SnapshotRoundTrip_PreservesMessagesDispatchModelConfig(t 
 	require.Equal(t, apiKey.Name, roundTrip.Name)
 	require.NotNil(t, roundTrip.Group)
 	require.Equal(t, apiKey.Group.MessagesDispatchModelConfig, roundTrip.Group.MessagesDispatchModelConfig)
+	require.Equal(t, []int64{groupID, secondGroup.ID}, roundTrip.GroupIDs)
+	require.Len(t, roundTrip.Groups, 2)
+	require.Equal(t, secondGroup.ID, roundTrip.Groups[1].ID)
 }
 
 func TestAPIKeyService_GetByKey_IgnoresLegacyAuthCacheSnapshotWithoutMessagesDispatchConfig(t *testing.T) {

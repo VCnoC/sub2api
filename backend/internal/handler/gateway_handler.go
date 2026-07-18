@@ -307,6 +307,14 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			selection, err := h.gatewayService.SelectAccountWithLoadAwareness(c.Request.Context(), apiKey.GroupID, sessionKey, reqModel, fs.FailedAccountIDs, "", int64(0)) // Gemini 不使用会话限制
 			if err != nil {
 				if len(fs.FailedAccountIDs) == 0 {
+					if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+						apiKey, subscription = nextKey, nextSub
+						parsedReq.GroupID = apiKey.GroupID
+						channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+						sessionBoundAccountID = 0
+						hasBoundSession = false
+						continue
+					}
 					cls := classifyNoAccountErrorFromGin(c, h.gatewayService, apiKey, reqModel, reqModel, service.PlatformGemini)
 					if !cls.ModelNotFound {
 						markOpsRoutingCapacityLimitedIfNoAvailable(c, err)
@@ -335,6 +343,14 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					failoverClientGone(c)
 					return
 				default: // FailoverExhausted
+					if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+						apiKey, subscription = nextKey, nextSub
+						parsedReq.GroupID = apiKey.GroupID
+						channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+						sessionBoundAccountID = 0
+						hasBoundSession = false
+						continue
+					}
 					if fs.LastFailoverErr != nil {
 						h.handleFailoverExhausted(c, fs.LastFailoverErr, service.PlatformGemini, streamStarted)
 					} else {
@@ -459,6 +475,14 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					case FailoverContinue:
 						continue
 					case FailoverExhausted:
+						if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+							apiKey, subscription = nextKey, nextSub
+							parsedReq.GroupID = apiKey.GroupID
+							channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+							sessionBoundAccountID = 0
+							hasBoundSession = false
+							continue
+						}
 						h.handleFailoverExhausted(c, fs.LastFailoverErr, service.PlatformGemini, streamStarted)
 						return
 					case FailoverCanceled:
@@ -594,6 +618,17 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 			selection, err := h.gatewayService.SelectAccountWithLoadAwareness(c.Request.Context(), currentAPIKey.GroupID, sessionKey, reqModel, fs.FailedAccountIDs, parsedReq.MetadataUserID, subject.UserID)
 			if err != nil {
 				if len(fs.FailedAccountIDs) == 0 {
+					if !fallbackUsed {
+						if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+							apiKey, currentAPIKey, currentSubscription = nextKey, nextKey, nextSub
+							parsedReq.GroupID = nextKey.GroupID
+							channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), nextKey.GroupID, reqModel)
+							fallbackGroupID = nextKey.Group.FallbackGroupIDOnInvalidRequest
+							sessionBoundAccountID = 0
+							hasBoundSession = false
+							continue
+						}
+					}
 					cls := classifyNoAccountErrorFromGin(c, h.gatewayService, currentAPIKey, reqModel, reqModel, platform)
 					if !cls.ModelNotFound {
 						markOpsRoutingCapacityLimitedIfNoAvailable(c, err)
@@ -623,6 +658,17 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					failoverClientGone(c)
 					return
 				default: // FailoverExhausted
+					if !fallbackUsed {
+						if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+							apiKey, currentAPIKey, currentSubscription = nextKey, nextKey, nextSub
+							parsedReq.GroupID = nextKey.GroupID
+							channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), nextKey.GroupID, reqModel)
+							fallbackGroupID = nextKey.Group.FallbackGroupIDOnInvalidRequest
+							sessionBoundAccountID = 0
+							hasBoundSession = false
+							continue
+						}
+					}
 					if fs.LastFailoverErr != nil {
 						h.handleFailoverExhausted(c, fs.LastFailoverErr, platform, streamStarted)
 					} else {
@@ -881,6 +927,17 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					case FailoverContinue:
 						continue
 					case FailoverExhausted:
+						if !fallbackUsed {
+							if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+								apiKey, currentAPIKey, currentSubscription = nextKey, nextKey, nextSub
+								parsedReq.GroupID = nextKey.GroupID
+								channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), nextKey.GroupID, reqModel)
+								fallbackGroupID = nextKey.Group.FallbackGroupIDOnInvalidRequest
+								sessionBoundAccountID = 0
+								hasBoundSession = false
+								continue
+							}
+						}
 						h.handleFailoverExhausted(c, fs.LastFailoverErr, account.Platform, streamStarted)
 						return
 					case FailoverCanceled:

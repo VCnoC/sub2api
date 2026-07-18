@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"go.uber.org/zap"
 )
@@ -171,6 +172,18 @@ func (s *FailoverState) HandleSelectionExhausted(ctx context.Context) FailoverAc
 		return FailoverContinue
 	}
 	return FailoverExhausted
+}
+
+// AdvanceGroup 推进到 API Key 的下一个候选组，并重置组内账号 failover 状态。
+func (s *FailoverState) AdvanceGroup(c *gin.Context) bool {
+	if s == nil || !middleware2.AdvanceAPIKeyGroup(c) {
+		return false
+	}
+	s.SwitchCount = 0
+	s.FailedAccountIDs = make(map[int64]struct{})
+	s.SameAccountRetryCount = make(map[int64]int)
+	s.LastFailoverErr = nil
+	return true
 }
 
 // needForceCacheBilling 判断 failover 时是否需要强制缓存计费。

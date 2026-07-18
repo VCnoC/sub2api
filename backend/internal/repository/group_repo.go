@@ -833,7 +833,50 @@ func (r *groupRepository) DeleteCascade(ctx context.Context, id int64) ([]int64,
 		return nil, err
 	}
 
-	// 4. Soft-delete group itself.
+	// 4. Remove this group from ordered API Key candidates and compact each chain.
+	rows, err = exec.QueryContext(ctx, "SELECT api_key_id, priority FROM api_key_groups WHERE group_id = $1", id)
+	if err != nil {
+		return nil, err
+	}
+	type keyBinding struct {
+		apiKeyID int64
+		priority int
+	}
+	bindings := make([]keyBinding, 0)
+	for rows.Next() {
+		var binding keyBinding
+		if err := rows.Scan(&binding.apiKeyID, &binding.priority); err != nil {
+			_ = rows.Close()
+			return nil, err
+		}
+		bindings = append(bindings, binding)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if _, err := exec.ExecContext(ctx, "DELETE FROM api_key_groups WHERE group_id = $1", id); err != nil {
+		return nil, err
+	}
+	for _, binding := range bindings {
+		if _, err := exec.ExecContext(ctx,
+			"UPDATE api_key_groups SET priority = priority - 1 WHERE api_key_id = $1 AND priority > $2",
+			binding.apiKeyID, binding.priority,
+		); err != nil {
+			return nil, err
+		}
+		if _, err := exec.ExecContext(ctx, `
+			UPDATE api_keys
+			SET group_id = (SELECT group_id FROM api_key_groups WHERE api_key_id = $1 ORDER BY priority LIMIT 1),
+				updated_at = NOW()
+			WHERE id = $1`, binding.apiKeyID); err != nil {
+			return nil, err
+		}
+	}
+
+	// 5. Soft-delete group itself.
 	if _, err := txClient.Group.Delete().Where(group.IDEQ(id)).Exec(ctx); err != nil {
 		return nil, err
 	}

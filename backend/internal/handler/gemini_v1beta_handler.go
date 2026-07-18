@@ -350,6 +350,18 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 		selection, err := h.gatewayService.SelectAccountWithLoadAwareness(c.Request.Context(), apiKey.GroupID, sessionKey, modelName, fs.FailedAccountIDs, "", int64(0)) // Gemini 不使用会话限制
 		if err != nil {
 			if len(fs.FailedAccountIDs) == 0 {
+				if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+					apiKey, subscription = nextKey, nextSub
+					channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+					modelName = reqModel
+					if channelMapping.Mapped {
+						modelName = channelMapping.MappedModel
+					}
+					sessionBoundAccountID = 0
+					hasBoundSession = false
+					body = service.CleanGeminiNativeThoughtSignatures(body)
+					continue
+				}
 				cls := classifyNoAccountErrorFromGin(c, h.gatewayService, apiKey, modelName, modelName, service.PlatformGemini)
 				if !cls.ModelNotFound {
 					markOpsRoutingCapacityLimitedIfNoAvailable(c, err)
@@ -371,6 +383,18 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 				failoverClientGone(c)
 				return
 			default: // FailoverExhausted
+				if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+					apiKey, subscription = nextKey, nextSub
+					channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+					modelName = reqModel
+					if channelMapping.Mapped {
+						modelName = channelMapping.MappedModel
+					}
+					sessionBoundAccountID = 0
+					hasBoundSession = false
+					body = service.CleanGeminiNativeThoughtSignatures(body)
+					continue
+				}
 				h.handleGeminiFailoverExhausted(c, fs.LastFailoverErr)
 				return
 			}
@@ -488,6 +512,18 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 				case FailoverContinue:
 					continue
 				case FailoverExhausted:
+					if nextKey, nextSub, advanced := h.advanceAPIKeyGroup(c, fs); advanced {
+						apiKey, subscription = nextKey, nextSub
+						channelMapping, _ = h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
+						modelName = reqModel
+						if channelMapping.Mapped {
+							modelName = channelMapping.MappedModel
+						}
+						sessionBoundAccountID = 0
+						hasBoundSession = false
+						body = service.CleanGeminiNativeThoughtSignatures(body)
+						continue
+					}
 					h.handleGeminiFailoverExhausted(c, fs.LastFailoverErr)
 					return
 				case FailoverCanceled:

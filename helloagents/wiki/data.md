@@ -11,6 +11,16 @@
 - `video_billing_mode`：`per_second` 或 `per_request`，默认 `per_second`。
 - 视频平台只允许 `standard` 余额计费。
 
+### api_keys
+保存 Key 所有者、状态、配额、限速和 `group_id` 首组兼容镜像。新业务顺序以 `api_key_groups` 为准；旧的非空 `group_id` 在迁移 185 中回填为优先级 0。
+
+### api_key_groups
+保存 API Key 的有序候选分组：`api_key_id`、`group_id`、`priority`（0-4）和创建时间。
+
+- `(api_key_id, group_id)` 唯一，禁止同一 Key 重复分组。
+- `(api_key_id, priority)` 唯一，确保顺序位置不冲突。
+- 删除 Key 时级联删除；删除分组前由仓储移除绑定、压紧优先级并同步 `api_keys.group_id`。
+
 ### usage_logs
 保存请求模型、账号、API Key、费用、媒体尺寸、视频分辨率与时长快照。
 

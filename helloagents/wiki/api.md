@@ -1,5 +1,12 @@
 # API 手册
 
+## API Key API
+- `POST /api/v1/keys`：创建 API Key；`group_ids` 为 1-5 个同平台分组 ID 的有序数组，`group_id` 保留为首组兼容字段。
+- `PUT /api/v1/keys/:id`：整体替换候选分组顺序；提交 `group_ids` 时按数组顺序保存，仅提交 `group_id` 时按旧语义替换为单分组。
+- `GET /api/v1/keys`、`GET /api/v1/keys/:id`：响应同时返回 `group_ids`/`groups` 和首组兼容字段 `group_id`/`group`。
+
+候选分组必须去重、全部有效、当前用户可绑定且平台相同。每个新网关请求从首组开始；余额或订阅资格不可用、组内无账号或安全可重试故障耗尽时依次推进。参数/权限错误、客户端取消、响应已提交及异步任务提交后不跨组重放。
+
 ## 管理 API
 - `POST /api/v1/admin/accounts`：创建上游账号并绑定分组。
 - `POST /api/v1/admin/accounts/models/sync-upstream-preview`：使用未保存的凭证获取上游模型。

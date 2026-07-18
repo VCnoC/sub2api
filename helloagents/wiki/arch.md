@@ -34,12 +34,14 @@ flowchart LR
 ```
 
 ## 核心约束
-- API Key 绑定分组，分组平台决定协议与账号池。
+- API Key 通过有序关联绑定 1-5 个同平台分组，首组决定初始协议与账号池；每个请求都从首组重新开始。
 - Redis 负责并发、短期缓存和粘性会话；PostgreSQL 保存长期事实。
 - 用量扣费通过 `usage_billing_dedup` 保证同一请求最多应用一次。
 - 管理操作审计与提示词审计使用独立存储和权限边界；敏感管理员操作通过 step-up 2FA 再验证。
 - 异步图片任务只在对象存储配置完整时启用，Redis 保存紧凑任务状态，图片结果写入 S3 兼容存储。
 - 同组多张订阅独立计时和记账，鉴权按最早到期顺序选择当前仍有额度的具体 `subscription_id`。
+- 当前分组计费资格不可用或组内账号安全重试耗尽时按 Key 自定义顺序推进；切组重新检查订阅/余额/RPM 并重置账号 failover 状态。
+- 响应已提交、客户端取消、不可重试错误和异步任务可能已创建后禁止跨组重放；成功组写入最终用量与计费记录。
 - 视频扣余额与 `video_tasks` 写入在同一数据库事务中提交。
 - Worker 使用数据库租约领取任务；未知状态和传输错误继续重试，只有上游明确失败终态才退款。
 - 失败退款在数据库事务内锁定任务并更新余额、任务和用量记录，重复执行不重复退款。
@@ -54,6 +56,9 @@ flowchart LR
 
 | adr_id | title | date | status | affected_modules | details |
 |--------|-------|------|--------|------------------|---------|
+| ADR-20260718-APIKEY-GROUPS-001 | 使用有序关联表保存候选分组 | 2026-07-18 | ✅已实施 | API Key、分组、数据模型 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-001-使用有序关联表保存候选分组) |
+| ADR-20260718-APIKEY-GROUPS-002 | 复用组内 Failover 并增加分组推进 | 2026-07-18 | ✅已实施 | 鉴权、网关、调度、计费 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-002-复用组内-failover-并增加外层分组推进) |
+| ADR-20260718-APIKEY-GROUPS-003 | 保留 group_id 作为兼容镜像 | 2026-07-18 | ✅已实施 | API、Repository、迁移 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-003-保留-group_id-作为兼容镜像) |
 | ADR-20260718-UPSTREAM-160-001 | 使用快照分支执行三方合并 | 2026-07-18 | ✅已实施 | 全局架构、版本管理 | [方案](../history/2026-07/202607181652_upstream_0_1_160_merge/how.md#adr-20260718-upstream-160-001-使用快照分支执行三方合并) |
 | ADR-20260718-UPSTREAM-160-002 | 生成代码统一重建 | 2026-07-18 | ✅已实施 | Ent、Wire、依赖注入 | [方案](../history/2026-07/202607181652_upstream_0_1_160_merge/how.md#adr-20260718-upstream-160-002-生成代码统一重建) |
 | ADR-20260718-MULTI-SUB-001 | 独立权益记录并由数据库选择候选 | 2026-07-18 | ✅已实施 | 订阅、鉴权、计费 | [方案](../history/2026-07/202607180325_multi_subscription_consumption/how.md#adr-20260718-multi-sub-001-独立权益记录并由数据库选择候选) |
