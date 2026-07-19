@@ -228,11 +228,17 @@
           <div class="dialog-params">
             <template v-if="isImageModel">
               <label class="dialog-field">
-                <span>{{ t('playground.params.imageSize') }}</span>
-                <select v-model="config.imageSize" class="dialog-select">
-                  <option v-for="item in GPT_IMAGE_2_SIZE_OPTIONS" :key="item.value" :value="item.value">
-                    {{ item.label }} · {{ item.value }}
+                <span>{{ t('playground.params.imageAspectRatio') }}</span>
+                <select v-model="imageAspectRatio" class="dialog-select">
+                  <option v-for="item in GPT_IMAGE_2_ASPECT_RATIO_OPTIONS" :key="item" :value="item">
+                    {{ item }} · {{ getGptImage2Size(imageResolution, item) }}
                   </option>
+                </select>
+              </label>
+              <label class="dialog-field">
+                <span>{{ t('playground.params.imageResolution') }}</span>
+                <select v-model="imageResolution" class="dialog-select">
+                  <option v-for="item in imageResolutionOptions" :key="item" :value="item">{{ item }}</option>
                 </select>
               </label>
               <label class="dialog-field">
@@ -387,11 +393,17 @@ import ParamSlider from '@/components/playground/ParamSlider.vue'
 import { usePlaygroundState } from '@/composables/playground/usePlaygroundState'
 import { useConversations } from '@/composables/playground/useConversations'
 import {
+  GPT_IMAGE_2_ASPECT_RATIO_OPTIONS,
   GPT_IMAGE_2_BACKGROUND_OPTIONS,
   GPT_IMAGE_2_QUALITY_OPTIONS,
+  GPT_IMAGE_2_RESOLUTION_OPTIONS,
   GPT_IMAGE_2_RESPONSE_FORMAT_OPTIONS,
-  GPT_IMAGE_2_SIZE_OPTIONS,
-  isGptImage2VipModel,
+  getGptImage2AspectRatio,
+  getGptImage2Resolution,
+  getGptImage2ResolutionForSize,
+  getGptImage2Size,
+  isGptImageModel,
+  withGptImage2Resolution,
 } from '@/constants/playground'
 import {
   useChatHandler,
@@ -407,6 +419,10 @@ import type {
   GroupOption,
   PlaygroundAttachment,
 } from '@/types/playground'
+import type {
+  GptImage2AspectRatio,
+  GptImage2Resolution,
+} from '@/constants/playground'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -500,7 +516,48 @@ const modelOptions = computed<ModelOption[]>(() => models.value)
 const isVideoGroup = computed(
   () => groups.value.find((group) => group.value === config.value.group)?.platform === 'video'
 )
-const isImageModel = computed(() => isGptImage2VipModel(config.value.model))
+const isImageModel = computed(() => isGptImageModel(config.value.model))
+const imageAspectRatio = computed<GptImage2AspectRatio>({
+  get: () => getGptImage2AspectRatio(config.value.imageSize) ?? '1:1',
+  set: (ratio) => {
+    config.value.imageSize = getGptImage2Size(imageResolution.value, ratio)
+  },
+})
+const imageResolution = computed<GptImage2Resolution>({
+  get: () =>
+    getGptImage2Resolution(config.value.model) ??
+    getGptImage2ResolutionForSize(config.value.imageSize) ??
+    '1K',
+  set: (resolution) => {
+    const targetModel = withGptImage2Resolution(config.value.model, resolution)
+    if (models.value.some((model) => model.value === targetModel)) {
+      config.value.model = targetModel
+    }
+    config.value.imageSize = getGptImage2Size(resolution, imageAspectRatio.value)
+  },
+})
+const imageResolutionOptions = computed(() =>
+  GPT_IMAGE_2_RESOLUTION_OPTIONS.filter((resolution) => {
+    const targetModel = withGptImage2Resolution(config.value.model, resolution)
+    return (
+      resolution === imageResolution.value ||
+      targetModel === config.value.model ||
+      models.value.some((model) => model.value === targetModel)
+    )
+  })
+)
+
+watch(
+  [() => config.value.model, () => config.value.imageSize],
+  ([model, size]) => {
+    const resolution = getGptImage2Resolution(model)
+    if (!resolution) return
+    const ratio = getGptImage2AspectRatio(size) ?? '1:1'
+    const normalizedSize = getGptImage2Size(resolution, ratio)
+    if (size !== normalizedSize) config.value.imageSize = normalizedSize
+  },
+  { immediate: true }
+)
 
 async function loadGroups() {
   try {
