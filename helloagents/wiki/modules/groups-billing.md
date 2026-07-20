@@ -47,6 +47,7 @@
 #### 场景: 用户配置候选顺序
 - 每个 Key 必须配置 1-5 个去重、同平台且当前用户有权使用的分组。
 - 用户拖拽顺序是严格消费与容灾顺序，余额组和订阅组可自由混排。
+- 创建或编辑 Key 时，待添加分组的下拉选项显示分组默认倍率、用户专属倍率和峰值倍率信息。
 - `group_id` 始终镜像第一组；旧客户端只提交该字段时替换为单分组链。
 
 #### 场景: 请求选择与切换
@@ -57,6 +58,7 @@
 - 用量和扣费始终归属实际成功的 `group_id`、`subscription_id` 与账号。
 
 ## 变更历史
+- [202607202023_api_key_group_rate_display](../../history/2026-07/202607202023_api_key_group_rate_display/) - 恢复 Key 分组下拉选项的倍率展示。
 - [202607181905_api_key_group_failover](../../history/2026-07/202607181905_api_key_group_failover/) - API Key 有序多分组、按优先级容灾与实际分组计费。
 - [202607181652_upstream_0_1_160_merge](../../history/2026-07/202607181652_upstream_0_1_160_merge/) - 将本地多订阅迁移顺延至 183/184，并保留独立权益消费语义。
 - [202607180325_multi_subscription_consumption](../../history/2026-07/202607180325_multi_subscription_consumption/) - 同组多张订阅独立计时、最早到期优先消费和精确退款。

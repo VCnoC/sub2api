@@ -527,7 +527,23 @@
             :search-placeholder="t('keys.searchGroup')"
             class="mt-2"
             @update:modelValue="addSelectedGroup"
-          />
+          >
+            <template #option="{ option, selected }">
+              <GroupOptionItem
+                :name="option.label"
+                :platform="option.platform"
+                :subscription-type="option.subscriptionType"
+                :rate-multiplier="option.rate"
+                :user-rate-multiplier="option.userRate"
+                :peak-rate-enabled="option.peakRateEnabled"
+                :peak-start="option.peakStart"
+                :peak-end="option.peakEnd"
+                :peak-rate-multiplier="option.peakRateMultiplier"
+                :description="option.description"
+                :selected="selected"
+              />
+            </template>
+          </Select>
         </div>
 
         <!-- Custom Key Section (only for create) -->

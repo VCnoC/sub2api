@@ -151,6 +151,12 @@ const TablePageLayoutStub = {
   `,
 }
 
+const BaseDialogStub = {
+  name: 'BaseDialog',
+  props: ['show'],
+  template: '<div v-if="show"><slot /><slot name="footer" /></div>',
+}
+
 const DataTableStub = {
   name: 'DataTable',
   props: ['columns', 'data'],
@@ -189,7 +195,13 @@ const SelectStub = {
   name: 'Select',
   props: ['modelValue', 'options'],
   emits: ['update:modelValue'],
-  template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"></select>',
+  template: `
+    <select :value="modelValue" @change="$emit('update:modelValue', $event.target.value)">
+      <option v-for="option in options" :key="option.value" :value="option.value">
+        <slot name="option" :option="option" :selected="option.value === modelValue" />
+      </option>
+    </select>
+  `,
 }
 
 const SearchInputStub = {
@@ -223,7 +235,7 @@ const mountView = async () => {
         TablePageLayout: TablePageLayoutStub,
         DataTable: DataTableStub,
         Pagination: PaginationStub,
-        BaseDialog: true,
+        BaseDialog: BaseDialogStub,
         ConfirmDialog: true,
         EmptyState: true,
         Select: SelectStub,
@@ -437,5 +449,27 @@ describe('user KeysView column settings', () => {
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
+  })
+
+  it('shows default and user rate multipliers in the create-key group options', async () => {
+    getAvailableGroups.mockResolvedValue([
+      {
+        id: 42,
+        name: 'OpenAI Premium',
+        platform: 'openai',
+        subscription_type: 'standard',
+        rate_multiplier: 1.5,
+      },
+    ])
+    getUserGroupRates.mockResolvedValue({ 42: 1.2 })
+    const wrapper = await mountView()
+
+    await wrapper.get('[data-tour="keys-create-btn"]').trigger('click')
+    await nextTick()
+
+    const option = wrapper.findComponent({ name: 'GroupOptionItem' })
+    expect(option.exists()).toBe(true)
+    expect(option.props('rateMultiplier')).toBe(1.5)
+    expect(option.props('userRateMultiplier')).toBe(1.2)
   })
 })
