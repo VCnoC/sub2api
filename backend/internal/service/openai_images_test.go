@@ -922,6 +922,33 @@ func TestOpenAIGatewayServiceForwardImages_OAuthUpstreamHTTPErrorSurfacesRealErr
 	require.Contains(t, gjson.Get(rec.Body.String(), "error.message").String(), "Invalid value for 'size'")
 }
 
+func TestOpenAIImagesHTTPModerationWrappedAs502ReturnsClientError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	body := []byte(`{"code":"sensitive_words_detected","message":"Your prompt or reference material was rejected by content moderation. Please revise it and submit again."}`)
+	svc := &OpenAIGatewayService{}
+
+	require.False(t, svc.shouldFailoverOpenAIImagesUpstreamResponse(http.StatusBadGateway, extractUpstreamErrorMessage(body), body))
+	require.True(t, svc.shouldFailoverOpenAIImagesUpstreamResponse(http.StatusBadGateway, "temporary upstream outage", []byte(`{"error":{"message":"temporary upstream outage"}}`)))
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	resp := &http.Response{
+		StatusCode: http.StatusBadGateway,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(bytes.NewReader(body)),
+	}
+	result, err := svc.handleOpenAIImagesErrorResponse(context.Background(), resp, c, &Account{Platform: PlatformOpenAI})
+
+	require.Nil(t, result)
+	var upstreamErr *OpenAIImagesUpstreamError
+	require.ErrorAs(t, err, &upstreamErr)
+	require.Equal(t, http.StatusBadRequest, upstreamErr.StatusCode)
+	require.Equal(t, "sensitive_words_detected", upstreamErr.Code)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Equal(t, "sensitive_words_detected", gjson.Get(rec.Body.String(), "error.code").String())
+	require.Contains(t, gjson.Get(rec.Body.String(), "error.message").String(), "content moderation")
+}
+
 func TestOpenAIGatewayServiceForwardImages_OAuthNonStreamModerationBlockedReturnsClientError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	body := []byte(`{"model":"gpt-image-2","prompt":"draw blocked image","response_format":"b64_json"}`)

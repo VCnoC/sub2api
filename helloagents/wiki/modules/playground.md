@@ -20,6 +20,14 @@
 - 画面比例与清晰度共同生成精确 `size`，不向上游发送额外的清晰度字段。
 - 恢复历史会话时，模型后缀和 `size` 必须自动校正到同一档位。
 
+### 需求: 生图错误可读性
+**模块:** 对话广场
+
+#### 场景: 上游用 5xx 包装内容审核拒绝
+- 当生图上游正文明确包含内容审核、内容策略或敏感词拒绝时，网关必须停止换号并返回 `400`。
+- 错误响应必须保留脱敏后的上游提示和错误码，供对话广场直接展示。
+- 未包含用户输入错误信号的真实 `502/503` 仍按原有容灾策略处理。
+
 ## API 接口
 - `POST /api/v1/playground/images/generations`：使用 JWT 提交 OpenAI Images 兼容请求。
 
@@ -28,4 +36,5 @@
 - 用户分组与计费链路
 
 ## 变更历史
+- [202607201825_playground_image_error_passthrough](../../history/2026-07/202607201825_playground_image_error_passthrough/) - 透传被上游 5xx 包装的内容审核错误。
 - [202607200140_playground_image_controls](../../history/2026-07/202607200140_playground_image_controls/) - 新增画面比例、1K/2K/4K 清晰度和模型后缀感知。

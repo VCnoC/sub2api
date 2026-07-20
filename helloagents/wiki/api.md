@@ -38,6 +38,8 @@
 
 该入口只允许选择 `platform=openai` 的用户可用分组，不向浏览器暴露上游 API Key。前端将 `gpt-image-*` 和 `image-2-*` 识别为生图模型；选择 `gpt-image-2-1k/-2k/-4k` 或 `image-2-1k/-2k/-4k` 时，清晰度与模型后缀同步，画面比例会转换为该档位的精确 `size`。`quality`、`response_format`、`background`、`style`、`watermark` 仍按启用开关发送；服务端复用现有 `/v1/images/generations` 的图片权限、调度、计费、限流和用量记录链路。
 
+若上游以 `502/503` 包装明确的内容审核、内容策略或敏感词拒绝，接口会规范化为 `400` 并保留脱敏后的上游错误消息与错误码；真实服务故障仍执行原有换号容灾。
+
 ## 站内工单 API
 
 用户接口使用登录 JWT，且只能访问本人资源：

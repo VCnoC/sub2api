@@ -99,9 +99,10 @@ func IsOpenAIImagesRetryableUpstreamError(err *OpenAIImagesUpstreamError) bool {
 	return err != nil && err.StatusCode >= http.StatusInternalServerError
 }
 
-func openAIImagesSSEErrorStatus(errType, code string) int {
+func openAIImagesSSEErrorStatus(errType, code, message string) int {
 	errType = strings.ToLower(strings.TrimSpace(errType))
 	code = strings.ToLower(strings.TrimSpace(code))
+	message = strings.ToLower(strings.TrimSpace(message))
 
 	switch {
 	case strings.Contains(errType, "rate_limit"), strings.Contains(code, "rate_limit"):
@@ -117,11 +118,28 @@ func openAIImagesSSEErrorStatus(errType, code string) int {
 		code == "moderation_blocked",
 		strings.Contains(code, "content_policy"),
 		strings.Contains(code, "policy_violation"),
-		strings.Contains(code, "safety_violation"):
+		strings.Contains(code, "safety_violation"),
+		strings.Contains(code, "sensitive_word"),
+		strings.Contains(message, "rejected by content moderation"),
+		strings.Contains(message, "blocked by content moderation"),
+		strings.Contains(message, "rejected by the safety system"),
+		strings.Contains(message, "content policy violation"),
+		strings.Contains(message, "内容不安全"),
+		strings.Contains(message, "内容审核未通过"),
+		strings.Contains(message, "内容审核拒绝"),
+		strings.Contains(message, "检测到敏感词"),
+		strings.Contains(message, "包含敏感词"):
 		return http.StatusBadRequest
 	default:
 		return http.StatusBadGateway
 	}
+}
+
+func (s *OpenAIGatewayService) shouldFailoverOpenAIImagesUpstreamResponse(statusCode int, upstreamMsg string, upstreamBody []byte) bool {
+	if statusCode >= http.StatusInternalServerError && openAIImagesUpstreamErrorFromHTTP(statusCode, nil, upstreamBody).StatusCode == http.StatusBadRequest {
+		return false
+	}
+	return s.shouldFailoverOpenAIUpstreamResponse(statusCode, upstreamMsg, upstreamBody)
 }
 
 func openAIImagesUpstreamErrorResponseBody(err *OpenAIImagesUpstreamError) []byte {
@@ -746,7 +764,7 @@ func openAIImagesUpstreamErrorFromGJSON(errorObj gjson.Result, upstreamRequestID
 	errType := strings.TrimSpace(errorObj.Get("type").String())
 	message := strings.TrimSpace(errorObj.Get("message").String())
 	param := strings.TrimSpace(errorObj.Get("param").String())
-	statusCode := openAIImagesSSEErrorStatus(errType, code)
+	statusCode := openAIImagesSSEErrorStatus(errType, code, message)
 	if message == "" {
 		message = "Upstream request failed"
 	}
@@ -787,11 +805,23 @@ func openAIImagesErrorTypeForStatus(status int) string {
 // generic 502.
 func openAIImagesUpstreamErrorFromHTTP(statusCode int, header http.Header, body []byte) *OpenAIImagesUpstreamError {
 	errType := strings.TrimSpace(gjson.GetBytes(body, "error.type").String())
+	if errType == "" {
+		errType = strings.TrimSpace(gjson.GetBytes(body, "type").String())
+	}
 	code := strings.TrimSpace(extractUpstreamErrorCode(body))
+	if code == "" {
+		code = strings.TrimSpace(gjson.GetBytes(body, "code").String())
+	}
 	param := strings.TrimSpace(gjson.GetBytes(body, "error.param").String())
+	if param == "" {
+		param = strings.TrimSpace(gjson.GetBytes(body, "param").String())
+	}
 	message := sanitizeUpstreamErrorMessage(strings.TrimSpace(extractUpstreamErrorMessage(body)))
 	if message == "" {
 		message = fmt.Sprintf("Upstream request failed (status %d)", statusCode)
+	}
+	if statusCode >= http.StatusInternalServerError && openAIImagesSSEErrorStatus(errType, code, message) == http.StatusBadRequest {
+		statusCode = http.StatusBadRequest
 	}
 	if errType == "" {
 		errType = openAIImagesErrorTypeForStatus(statusCode)
@@ -870,6 +900,14 @@ func (s *OpenAIGatewayService) handleOpenAIImagesErrorResponse(
 		}
 		writeOpenAIImagesUpstreamErrorResponse(c, upErr)
 		return nil, upErr
+	}
+
+	if resp.StatusCode >= http.StatusInternalServerError {
+		upErr := openAIImagesUpstreamErrorFromHTTP(resp.StatusCode, resp.Header, body)
+		if upErr.StatusCode == http.StatusBadRequest {
+			writeOpenAIImagesUpstreamErrorResponse(c, upErr)
+			return nil, upErr
+		}
 	}
 
 	// If the account is not configured to handle this status code, fall back to
@@ -1741,7 +1779,7 @@ func (s *OpenAIGatewayService) forwardOpenAIImagesOAuth(
 		resp.Body = io.NopCloser(bytes.NewReader(respBody))
 		upstreamMsg := strings.TrimSpace(extractUpstreamErrorMessage(respBody))
 		upstreamMsg = sanitizeUpstreamErrorMessage(upstreamMsg)
-		if s.shouldFailoverOpenAIUpstreamResponse(resp.StatusCode, upstreamMsg, respBody) {
+		if s.shouldFailoverOpenAIImagesUpstreamResponse(resp.StatusCode, upstreamMsg, respBody) {
 			appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
 				Platform:           account.Platform,
 				AccountID:          account.ID,
