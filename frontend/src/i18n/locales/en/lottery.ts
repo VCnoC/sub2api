@@ -6,6 +6,8 @@ export default {
     luxury: 'Premium',
     daily: 'Daily',
     weekly: 'Weekly',
+    startsAt: 'Starts at',
+    endsAt: 'Ends at',
     baseChances: 'Period chances',
     extraChances: 'Bonus chances',
     start: 'Draw now',

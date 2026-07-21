@@ -1125,6 +1125,29 @@ func Window7dStartNotNil() predicate.APIKey {
 	return predicate.APIKey(sql.FieldNotNull(FieldWindow7dStart))
 }
 
+// HasSubscriptionRequestReservations applies the HasEdge predicate on the "subscription_request_reservations" edge.
+func HasSubscriptionRequestReservations() predicate.APIKey {
+	return predicate.APIKey(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionRequestReservationsTable, SubscriptionRequestReservationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSubscriptionRequestReservationsWith applies the HasEdge predicate on the "subscription_request_reservations" edge with a given conditions (other predicates).
+func HasSubscriptionRequestReservationsWith(preds ...predicate.SubscriptionRequestReservation) predicate.APIKey {
+	return predicate.APIKey(func(s *sql.Selector) {
+		step := newSubscriptionRequestReservationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasUser applies the HasEdge predicate on the "user" edge.
 func HasUser() predicate.APIKey {
 	return predicate.APIKey(func(s *sql.Selector) {

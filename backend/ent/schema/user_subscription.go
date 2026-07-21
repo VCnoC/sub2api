@@ -68,6 +68,20 @@ func (UserSubscription) Fields() []ent.Field {
 		field.Float("monthly_usage_usd").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,10)"}).
 			Default(0),
+		field.Int("request_usage_5h").
+			Default(0).
+			NonNegative(),
+		field.Int("request_usage_1d").
+			Default(0).
+			NonNegative(),
+		field.Time("request_window_5h_start").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
+		field.Time("request_window_1d_start").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
 
 		field.Int64("assigned_by").
 			Optional().
@@ -99,6 +113,7 @@ func (UserSubscription) Edges() []ent.Edge {
 			Field("assigned_by").
 			Unique(),
 		edge.To("usage_logs", UsageLog.Type),
+		edge.To("request_reservations", SubscriptionRequestReservation.Type),
 	}
 }
 

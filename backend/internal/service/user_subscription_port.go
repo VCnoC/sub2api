@@ -37,3 +37,8 @@ type UserSubscriptionRepository interface {
 
 	BatchUpdateExpiredStatus(ctx context.Context) (int64, error)
 }
+
+type SubscriptionRequestReservationRepository interface {
+	ReserveRequestCount(ctx context.Context, requestID string, apiKeyID, userID, groupID int64, expiresAt time.Time) (*SubscriptionRequestReservation, error)
+	ReleaseRequestCount(ctx context.Context, reservationID int64) error
+}

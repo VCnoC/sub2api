@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
@@ -172,6 +173,12 @@ func (r *usageBillingRepository) applyBatchImageBalanceHold(
 }
 
 func (r *usageBillingRepository) applyUsageBillingEffects(ctx context.Context, tx *sql.Tx, cmd *service.UsageBillingCommand, result *service.UsageBillingApplyResult) error {
+	if cmd.RequestReservationID > 0 {
+		if err := commitUsageBillingRequestReservation(ctx, tx, cmd.RequestReservationID); err != nil {
+			return err
+		}
+	}
+
 	if cmd.SubscriptionCost > 0 && cmd.SubscriptionID != nil {
 		if err := incrementUsageBillingSubscription(ctx, tx, *cmd.SubscriptionID, cmd.SubscriptionCost); err != nil {
 			return err
@@ -216,6 +223,96 @@ func (r *usageBillingRepository) applyUsageBillingEffects(ctx context.Context, t
 	}
 
 	return nil
+}
+
+func commitUsageBillingRequestReservation(ctx context.Context, tx *sql.Tx, reservationID int64) error {
+	var status string
+	var subscriptionID int64
+	var window5hStart, window1dStart sql.NullTime
+	if err := tx.QueryRowContext(ctx, `
+		SELECT status, subscription_id, window_5h_start, window_1d_start
+		FROM subscription_request_reservations
+		WHERE id = $1
+		FOR UPDATE
+	`, reservationID).Scan(&status, &subscriptionID, &window5hStart, &window1dStart); err != nil {
+		return err
+	}
+	if status == service.SubscriptionRequestReservationCommitted {
+		return nil
+	}
+	if status == service.SubscriptionRequestReservationReleased {
+		return service.ErrRequestReservationReleased
+	}
+
+	now := time.Now().UTC()
+	if err := alignFirstSuccessfulRequestWindow(ctx, tx, subscriptionID, reservationID, "5h", window5hStart, now); err != nil {
+		return err
+	}
+	if err := alignFirstSuccessfulRequestWindow(ctx, tx, subscriptionID, reservationID, "1d", window1dStart, now); err != nil {
+		return err
+	}
+
+	res, err := tx.ExecContext(ctx, `
+		UPDATE subscription_request_reservations
+		SET status = 'committed', updated_at = NOW()
+		WHERE id = $1 AND status = 'pending'
+	`, reservationID)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return service.ErrRequestReservationReleased
+	}
+	return nil
+}
+
+func alignFirstSuccessfulRequestWindow(ctx context.Context, tx *sql.Tx, subscriptionID, reservationID int64, window string, snapshot sql.NullTime, now time.Time) error {
+	if !snapshot.Valid {
+		return nil
+	}
+	windowColumn := "window_5h_start"
+	subscriptionColumn := "request_window_5h_start"
+	if window == "1d" {
+		windowColumn = "window_1d_start"
+		subscriptionColumn = "request_window_1d_start"
+	}
+
+	var current sql.NullTime
+	if err := tx.QueryRowContext(ctx, "SELECT "+subscriptionColumn+" FROM user_subscriptions WHERE id = $1 FOR UPDATE", subscriptionID).Scan(&current); err != nil {
+		return err
+	}
+	if !current.Valid || !current.Time.Equal(snapshot.Time) {
+		return nil
+	}
+
+	var committed bool
+	if err := tx.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM subscription_request_reservations
+			WHERE subscription_id = $1 AND id <> $2 AND status = 'committed'
+				AND `+windowColumn+` IS NOT DISTINCT FROM $3
+		)
+	`, subscriptionID, reservationID, snapshot.Time).Scan(&committed); err != nil {
+		return err
+	}
+	if committed {
+		return nil
+	}
+
+	if _, err := tx.ExecContext(ctx, "UPDATE user_subscriptions SET "+subscriptionColumn+" = $1, updated_at = NOW() WHERE id = $2", now, subscriptionID); err != nil {
+		return err
+	}
+	_, err := tx.ExecContext(ctx, `
+		UPDATE subscription_request_reservations
+		SET `+windowColumn+` = $1, updated_at = NOW()
+		WHERE subscription_id = $2 AND status = 'pending'
+			AND `+windowColumn+` IS NOT DISTINCT FROM $3
+	`, now, subscriptionID, snapshot.Time)
+	return err
 }
 
 func insertUsageBillingVideoTask(ctx context.Context, tx *sql.Tx, cmd *service.UsageBillingCommand) error {

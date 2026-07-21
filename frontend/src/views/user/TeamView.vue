@@ -12,6 +12,15 @@
 
       <!-- Not in any team -->
       <template v-else-if="!team">
+        <div v-if="createApplication" class="card border-l-4 p-5" :class="createApplication.status === 'rejected' ? 'border-l-red-500' : 'border-l-amber-500'">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ t(`team.application.${createApplication.status}`) }}</p>
+              <p v-if="createApplication.review_reason" class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ createApplication.review_reason }}</p>
+            </div>
+            <span class="badge" :class="createApplication.status === 'rejected' ? 'badge-danger' : 'badge-warning'">{{ createApplication.team_name }}</span>
+          </div>
+        </div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="card p-6">
             <div class="flex items-center gap-3">
@@ -19,6 +28,7 @@
               <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('team.create.title') }}</h2>
                 <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('team.create.description') }}</p>
+				<p v-if="creationEligibility" class="mt-1 text-xs" :class="creationEligibility.eligible ? 'text-emerald-600' : 'text-amber-600'">{{ t('team.create.eligibility', { days: creationEligibility.registration_days, requiredDays: creationEligibility.settings.min_registration_days, recharge: formatCurrency(creationEligibility.effective_recharge), requiredRecharge: formatCurrency(creationEligibility.settings.min_total_recharge) }) }}</p>
               </div>
             </div>
             <div class="mt-4 space-y-3">
@@ -29,6 +39,8 @@
                 :placeholder="t('team.create.namePlaceholder')"
                 maxlength="100"
               />
+              <textarea v-model="createReason" class="input min-h-20 w-full" :placeholder="t('team.create.reasonPlaceholder')" maxlength="2000"></textarea>
+              <textarea v-model="createAdditionalInfo" class="input min-h-20 w-full" :placeholder="t('team.create.additionalInfoPlaceholder')" maxlength="4000"></textarea>
               <button class="btn btn-primary w-full" :disabled="creating" @click="handleCreate">
                 <Icon v-if="creating" name="refresh" size="sm" class="animate-spin" />
                 <Icon v-else name="plus" size="sm" />
@@ -52,6 +64,7 @@
                 class="input w-full"
                 :placeholder="t('team.join.codePlaceholder')"
               />
+              <textarea v-model="joinMessage" class="input min-h-20 w-full" :placeholder="t('team.join.messagePlaceholder')" maxlength="1000"></textarea>
               <button class="btn btn-primary w-full" :disabled="joining" @click="handleJoin">
                 <Icon v-if="joining" name="refresh" size="sm" class="animate-spin" />
                 <Icon v-else name="arrowRight" size="sm" />
@@ -114,6 +127,35 @@
                 <Icon v-if="leaving" name="refresh" size="sm" class="animate-spin" />
                 <span>{{ leaving ? t('team.leave.leaving') : t('team.leave.button') }}</span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.level') }}</p><p class="mt-1 text-lg font-semibold">{{ team.level }}</p></div>
+          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.memberLimit') }}</p><p class="mt-1 text-lg font-semibold">{{ team.member_count }} / {{ team.member_limit }}</p></div>
+          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.recharge') }}</p><p class="mt-1 text-lg font-semibold">{{ formatCurrency(team.effective_recharge) }}</p></div>
+          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.spend7d') }}</p><p class="mt-1 text-lg font-semibold">{{ formatCurrency(team.spend_7d) }}</p></div>
+        </div>
+
+        <div v-if="isOwner" class="card p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div><h3 class="font-semibold text-gray-900 dark:text-white">{{ t('team.governance.title') }}</h3><p v-if="team.review_required" class="mt-1 text-sm text-amber-600">{{ t('team.governance.reviewRequired') }}</p></div>
+            <button class="btn btn-primary" :disabled="upgrading || team.review_required" @click="handleUpgrade"><Icon v-if="upgrading" name="refresh" size="sm" class="animate-spin" /><Icon v-else name="arrowUp" size="sm" /><span>{{ t('team.governance.upgrade') }}</span></button>
+          </div>
+          <div class="mt-4 grid gap-3 md:grid-cols-[160px_1fr_auto]">
+            <input v-model.number="expandForm.target_limit" type="number" min="41" class="input" :placeholder="t('team.governance.targetLimit')" />
+            <input v-model="expandForm.reason" class="input" :placeholder="t('team.governance.expandReason')" />
+            <button class="btn btn-secondary" :disabled="expanding || team.review_required" @click="handleExpansion">{{ t('team.governance.requestExpansion') }}</button>
+          </div>
+        </div>
+
+        <div v-if="isOwner && joinRequests.length" class="card p-6">
+          <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('team.joinRequests.title') }}</h3>
+          <div class="mt-4 divide-y divide-gray-200 dark:divide-dark-700">
+            <div v-for="request in joinRequests" :key="request.id" class="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div><p class="font-medium">{{ request.applicant_email }}</p><p v-if="request.message" class="text-sm text-gray-500">{{ request.message }}</p></div>
+              <div class="flex gap-2"><button class="btn btn-secondary btn-sm" @click="handleJoinReview(request.id, false)">{{ t('common.reject') }}</button><button class="btn btn-primary btn-sm" @click="handleJoinReview(request.id, true)">{{ t('common.approve') }}</button></div>
             </div>
           </div>
         </div>
@@ -401,6 +443,7 @@
             </template>
             <template v-else>
               {{ t('team.fund.depositHint') }}
+              <span v-if="team" class="mt-1 block font-medium text-emerald-600">{{ t('team.fund.transferable', { amount: formatCurrency(team.transferable_balance) }) }}</span>
             </template>
           </p>
 
@@ -455,8 +498,14 @@ import { extractApiErrorMessage } from '@/utils/apiError'
 import { resolveUsageRequestType } from '@/utils/usageRequestType'
 import {
   createTeam,
+  getMyCreateApplication,
+	getCreationEligibility,
   getMyTeam,
   joinTeam,
+  listJoinRequests,
+  reviewJoinRequest,
+  upgradeTeam,
+  requestTeamExpansion,
   leaveTeam,
   listMembers,
   refreshInviteCode,
@@ -466,7 +515,7 @@ import {
   depositFund,
   allocateFund
 } from '@/api/team'
-import type { Team, TeamMember, UsageLog } from '@/types'
+import type { Team, TeamApplication, TeamCreationEligibility, TeamJoinRequest, TeamMember, UsageLog } from '@/types'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -480,11 +529,20 @@ const membersLoading = ref(false)
 const memberSearch = ref('')
 
 const createName = ref('')
+const createReason = ref('')
+const createAdditionalInfo = ref('')
+const createApplication = ref<TeamApplication | null>(null)
+const creationEligibility = ref<TeamCreationEligibility | null>(null)
 const joinCode = ref('')
+const joinMessage = ref('')
 const creating = ref(false)
 const joining = ref(false)
 const leaving = ref(false)
 const refreshing = ref(false)
+const upgrading = ref(false)
+const expanding = ref(false)
+const expandForm = ref({ target_limit: 41, reason: '' })
+const joinRequests = ref<TeamJoinRequest[]>([])
 const removingId = ref<number | null>(null)
 
 const transferTarget = ref<TeamMember | null>(null)
@@ -573,6 +631,11 @@ async function loadTeam() {
     team.value = await getMyTeam()
     if (team.value) {
       await loadMembers()
+      if (team.value.role === 'owner') joinRequests.value = await listJoinRequests()
+    } else {
+	  const [application, eligibility] = await Promise.all([getMyCreateApplication(), getCreationEligibility()])
+	  createApplication.value = application
+	  creationEligibility.value = eligibility
     }
   } catch (err) {
     appStore.showError(extractApiErrorMessage(err, t('team.loadError')))
@@ -657,10 +720,11 @@ async function handleCreate() {
   }
   creating.value = true
   try {
-    team.value = await createTeam(name)
+    createApplication.value = await createTeam(name, createReason.value, createAdditionalInfo.value)
     createName.value = ''
+    createReason.value = ''
+    createAdditionalInfo.value = ''
     appStore.showSuccess(t('team.create.success'))
-    await loadMembers()
   } catch (err) {
     appStore.showError(extractApiErrorMessage(err, t('team.create.error')))
   } finally {
@@ -676,14 +740,51 @@ async function handleJoin() {
   }
   joining.value = true
   try {
-    await joinTeam(code)
+    await joinTeam(code, joinMessage.value)
     joinCode.value = ''
+    joinMessage.value = ''
     appStore.showSuccess(t('team.join.success'))
-    await loadTeam()
   } catch (err) {
     appStore.showError(extractApiErrorMessage(err, t('team.join.error')))
   } finally {
     joining.value = false
+  }
+}
+
+async function handleUpgrade() {
+  upgrading.value = true
+  try {
+    await upgradeTeam()
+    appStore.showSuccess(t('team.governance.upgradeSuccess'))
+    await loadTeam()
+  } catch (err) {
+    appStore.showError(extractApiErrorMessage(err, t('team.governance.upgradeError')))
+  } finally {
+    upgrading.value = false
+  }
+}
+
+async function handleExpansion() {
+  if (expandForm.value.target_limit <= 40 || !expandForm.value.reason.trim()) return
+  expanding.value = true
+  try {
+    await requestTeamExpansion(expandForm.value.target_limit, expandForm.value.reason.trim())
+    expandForm.value = { target_limit: 41, reason: '' }
+    appStore.showSuccess(t('team.governance.expandSuccess'))
+  } catch (err) {
+    appStore.showError(extractApiErrorMessage(err, t('team.governance.expandError')))
+  } finally {
+    expanding.value = false
+  }
+}
+
+async function handleJoinReview(id: number, approve: boolean) {
+  try {
+    await reviewJoinRequest(id, approve)
+    joinRequests.value = await listJoinRequests()
+    await loadMembers()
+  } catch (err) {
+    appStore.showError(extractApiErrorMessage(err, t('team.joinRequests.reviewError')))
   }
 }
 

@@ -15,9 +15,13 @@ type UserSubscription struct {
 	WeeklyWindowStart  *time.Time
 	MonthlyWindowStart *time.Time
 
-	DailyUsageUSD   float64
-	WeeklyUsageUSD  float64
-	MonthlyUsageUSD float64
+	DailyUsageUSD        float64
+	WeeklyUsageUSD       float64
+	MonthlyUsageUSD      float64
+	RequestUsage5h       int
+	RequestUsage1d       int
+	RequestWindow5hStart *time.Time
+	RequestWindow1dStart *time.Time
 
 	AssignedBy *int64
 	AssignedAt time.Time
@@ -30,6 +34,24 @@ type UserSubscription struct {
 	User           *User
 	Group          *Group
 	AssignedByUser *User
+}
+
+const (
+	SubscriptionRequestReservationPending   = "pending"
+	SubscriptionRequestReservationCommitted = "committed"
+	SubscriptionRequestReservationReleased  = "released"
+)
+
+type SubscriptionRequestReservation struct {
+	ID             int64
+	RequestID      string
+	APIKeyID       int64
+	UserID         int64
+	SubscriptionID int64
+	Status         string
+	Window5hStart  *time.Time
+	Window1dStart  *time.Time
+	ExpiresAt      time.Time
 }
 
 func (s *UserSubscription) IsActive() bool {

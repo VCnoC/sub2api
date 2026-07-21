@@ -85,15 +85,18 @@ func NewGroupHandler(adminService service.AdminService, dashboardService *servic
 
 // CreateGroupRequest represents create group request
 type CreateGroupRequest struct {
-	Name             string             `json:"name" binding:"required"`
-	Description      string             `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
-	RateMultiplier   float64            `json:"rate_multiplier"`
-	IsExclusive      bool               `json:"is_exclusive"`
-	SubscriptionType string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
-	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
-	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
-	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
+	Name                    string             `json:"name" binding:"required"`
+	Description             string             `json:"description"`
+	Platform                string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
+	RateMultiplier          float64            `json:"rate_multiplier"`
+	IsExclusive             bool               `json:"is_exclusive"`
+	SubscriptionType        string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
+	SubscriptionBillingMode string             `json:"subscription_billing_mode" binding:"omitempty,oneof=usd request_count"`
+	RequestLimit5h          int                `json:"request_limit_5h" binding:"omitempty,min=0"`
+	RequestLimit1d          int                `json:"request_limit_1d" binding:"omitempty,min=0"`
+	DailyLimitUSD           optionalLimitField `json:"daily_limit_usd"`
+	WeeklyLimitUSD          optionalLimitField `json:"weekly_limit_usd"`
+	MonthlyLimitUSD         optionalLimitField `json:"monthly_limit_usd"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	AllowImageGeneration            bool     `json:"allow_image_generation"`
 	AllowBatchImageGeneration       bool     `json:"allow_batch_image_generation"`
@@ -139,16 +142,19 @@ type CreateGroupRequest struct {
 
 // UpdateGroupRequest represents update group request
 type UpdateGroupRequest struct {
-	Name             string             `json:"name"`
-	Description      *string            `json:"description"`
-	Platform         string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
-	RateMultiplier   *float64           `json:"rate_multiplier"`
-	IsExclusive      *bool              `json:"is_exclusive"`
-	Status           string             `json:"status" binding:"omitempty,oneof=active inactive"`
-	SubscriptionType string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
-	DailyLimitUSD    optionalLimitField `json:"daily_limit_usd"`
-	WeeklyLimitUSD   optionalLimitField `json:"weekly_limit_usd"`
-	MonthlyLimitUSD  optionalLimitField `json:"monthly_limit_usd"`
+	Name                    string             `json:"name"`
+	Description             *string            `json:"description"`
+	Platform                string             `json:"platform" binding:"omitempty,oneof=anthropic openai gemini antigravity grok video"`
+	RateMultiplier          *float64           `json:"rate_multiplier"`
+	IsExclusive             *bool              `json:"is_exclusive"`
+	Status                  string             `json:"status" binding:"omitempty,oneof=active inactive"`
+	SubscriptionType        string             `json:"subscription_type" binding:"omitempty,oneof=standard subscription"`
+	SubscriptionBillingMode string             `json:"subscription_billing_mode" binding:"omitempty,oneof=usd request_count"`
+	RequestLimit5h          *int               `json:"request_limit_5h" binding:"omitempty,min=0"`
+	RequestLimit1d          *int               `json:"request_limit_1d" binding:"omitempty,min=0"`
+	DailyLimitUSD           optionalLimitField `json:"daily_limit_usd"`
+	WeeklyLimitUSD          optionalLimitField `json:"weekly_limit_usd"`
+	MonthlyLimitUSD         optionalLimitField `json:"monthly_limit_usd"`
 	// 图片生成计费配置（antigravity 和 gemini 平台使用，负数表示清除配置）
 	AllowImageGeneration            *bool    `json:"allow_image_generation"`
 	AllowBatchImageGeneration       *bool    `json:"allow_batch_image_generation"`
@@ -320,6 +326,9 @@ func (h *GroupHandler) Create(c *gin.Context) {
 		RateMultiplier:                  req.RateMultiplier,
 		IsExclusive:                     req.IsExclusive,
 		SubscriptionType:                req.SubscriptionType,
+		SubscriptionBillingMode:         req.SubscriptionBillingMode,
+		RequestLimit5h:                  req.RequestLimit5h,
+		RequestLimit1d:                  req.RequestLimit1d,
 		DailyLimitUSD:                   req.DailyLimitUSD.ToServiceInput(),
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),
@@ -437,6 +446,9 @@ func (h *GroupHandler) Update(c *gin.Context) {
 		IsExclusive:                     req.IsExclusive,
 		Status:                          req.Status,
 		SubscriptionType:                req.SubscriptionType,
+		SubscriptionBillingMode:         req.SubscriptionBillingMode,
+		RequestLimit5h:                  req.RequestLimit5h,
+		RequestLimit1d:                  req.RequestLimit1d,
 		DailyLimitUSD:                   req.DailyLimitUSD.ToServiceInput(),
 		WeeklyLimitUSD:                  req.WeeklyLimitUSD.ToServiceInput(),
 		MonthlyLimitUSD:                 req.MonthlyLimitUSD.ToServiceInput(),

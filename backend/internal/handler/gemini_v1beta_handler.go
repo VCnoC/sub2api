@@ -232,6 +232,20 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 		googleError(c, status, message)
 		return
 	}
+	countTextRequest := (action == "generateContent" || action == "streamGenerateContent") &&
+		!service.IsImageGenerationIntentForPlatform(c.Request.URL.Path, reqModel, body, openAICompatibleRequestPlatform(apiKey))
+	if countTextRequest {
+		if err := middleware.EnableSubscriptionRequestCount(c); err != nil {
+			status, _, message, retryAfter := billingErrorDetails(err)
+			if retryAfter > 0 {
+				c.Header("Retry-After", strconv.Itoa(retryAfter))
+			}
+			googleError(c, status, message)
+			return
+		}
+		defer middleware.ReleaseSubscriptionRequestCount(c)
+		subscription, _ = middleware.GetSubscriptionFromContext(c)
+	}
 
 	// 3) select account (sticky session based on request body)
 	// 优先使用 Gemini CLI 的会话标识（privileged-user-id + tmp 目录哈希）
@@ -562,6 +576,7 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 		// ForceCacheBilling 提前拍成标量，避免 worker 闭包保活 failover 状态里的响应体。
 		forceCacheBilling := fs.ForceCacheBilling
 		quotaPlatform := service.QuotaPlatform(c.Request.Context(), apiKey)
+		middleware.HandoffSubscriptionRequestCount(c)
 		h.submitUsageRecordTask(c.Request.Context(), func(ctx context.Context) {
 			if err := h.gatewayService.RecordUsageWithLongContext(ctx, &service.RecordUsageLongContextInput{
 				Result:                result,

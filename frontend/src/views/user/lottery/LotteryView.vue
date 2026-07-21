@@ -47,6 +47,20 @@
           </div>
         </section>
 
+        <dl
+          v-if="activePool.pool.starts_at || activePool.pool.ends_at"
+          class="lottery_page__schedule"
+        >
+          <div v-if="activePool.pool.starts_at">
+            <dt>{{ t('lottery.startsAt') }}</dt>
+            <dd><time :datetime="activePool.pool.starts_at">{{ formatDateTime(activePool.pool.starts_at) }}</time></dd>
+          </div>
+          <div v-if="activePool.pool.ends_at">
+            <dt>{{ t('lottery.endsAt') }}</dt>
+            <dd><time :datetime="activePool.pool.ends_at">{{ formatDateTime(activePool.pool.ends_at) }}</time></dd>
+          </div>
+        </dl>
+
         <LotteryReel ref="reel" :prizes="activePool.prizes" />
 
         <div class="lottery_page__action">
@@ -301,6 +315,25 @@ onMounted(load)
   font-variant-numeric: tabular-nums;
 }
 
+.lottery_page__schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  color: rgb(107 114 128);
+  font-size: 12px;
+}
+
+.lottery_page__schedule > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lottery_page__schedule dd {
+  color: rgb(55 65 81);
+  font-variant-numeric: tabular-nums;
+}
+
 .lottery_page__action {
   display: flex;
   justify-content: center;
@@ -427,6 +460,10 @@ onMounted(load)
 }
 
 :global(.dark) .lottery_page__history_row {
+  color: rgb(212 212 216);
+}
+
+:global(.dark) .lottery_page__schedule dd {
   color: rgb(212 212 216);
 }
 

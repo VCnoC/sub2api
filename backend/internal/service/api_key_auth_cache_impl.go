@@ -14,7 +14,7 @@ import (
 	"github.com/dgraph-io/ristretto"
 )
 
-const apiKeyAuthSnapshotVersion = 16 // v16: include ordered API key group candidates
+const apiKeyAuthSnapshotVersion = 17 // v17: include subscription request-count billing fields
 
 type apiKeyAuthCacheConfig struct {
 	l1Size        int
@@ -266,6 +266,7 @@ func apiKeyAuthGroupSnapshotFromGroup(group *Group, override *int) APIKeyAuthGro
 	return APIKeyAuthGroupSnapshot{
 		ID: group.ID, Name: group.Name, Platform: group.Platform, IsExclusive: group.IsExclusive,
 		Status: group.Status, SubscriptionType: group.SubscriptionType, RateMultiplier: group.RateMultiplier,
+		SubscriptionBillingMode: group.SubscriptionBillingMode, RequestLimit5h: group.RequestLimit5h, RequestLimit1d: group.RequestLimit1d,
 		DailyLimitUSD: group.DailyLimitUSD, WeeklyLimitUSD: group.WeeklyLimitUSD, MonthlyLimitUSD: group.MonthlyLimitUSD,
 		AllowImageGeneration: group.AllowImageGeneration, AllowBatchImageGeneration: group.AllowBatchImageGeneration,
 		ImageRateIndependent: group.ImageRateIndependent, ImageRateMultiplier: group.ImageRateMultiplier,
@@ -348,6 +349,7 @@ func apiKeyAuthGroupFromSnapshot(snapshot *APIKeyAuthGroupSnapshot) *Group {
 	return &Group{
 		ID: snapshot.ID, Name: snapshot.Name, Platform: snapshot.Platform, IsExclusive: snapshot.IsExclusive,
 		Status: snapshot.Status, Hydrated: true, SubscriptionType: snapshot.SubscriptionType,
+		SubscriptionBillingMode: snapshot.SubscriptionBillingMode, RequestLimit5h: snapshot.RequestLimit5h, RequestLimit1d: snapshot.RequestLimit1d,
 		RateMultiplier: snapshot.RateMultiplier, DailyLimitUSD: snapshot.DailyLimitUSD,
 		WeeklyLimitUSD: snapshot.WeeklyLimitUSD, MonthlyLimitUSD: snapshot.MonthlyLimitUSD,
 		AllowImageGeneration: snapshot.AllowImageGeneration, AllowBatchImageGeneration: snapshot.AllowBatchImageGeneration,

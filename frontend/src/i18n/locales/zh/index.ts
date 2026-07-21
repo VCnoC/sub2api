@@ -7,6 +7,7 @@ import playground from './playground'
 import team from './team'
 import tickets from './tickets'
 import lottery from './lottery'
+import teamAdmin from './teamAdmin'
 
 export default {
   ...landing,
@@ -18,4 +19,5 @@ export default {
   ...team,
   ...tickets,
   ...lottery,
+  ...teamAdmin,
 }

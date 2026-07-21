@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/Wei-Shaw/sub2api/ent/group"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
@@ -189,6 +190,62 @@ func (_c *UserSubscriptionCreate) SetNillableMonthlyUsageUsd(v *float64) *UserSu
 	return _c
 }
 
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (_c *UserSubscriptionCreate) SetRequestUsage5h(v int) *UserSubscriptionCreate {
+	_c.mutation.SetRequestUsage5h(v)
+	return _c
+}
+
+// SetNillableRequestUsage5h sets the "request_usage_5h" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableRequestUsage5h(v *int) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetRequestUsage5h(*v)
+	}
+	return _c
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (_c *UserSubscriptionCreate) SetRequestUsage1d(v int) *UserSubscriptionCreate {
+	_c.mutation.SetRequestUsage1d(v)
+	return _c
+}
+
+// SetNillableRequestUsage1d sets the "request_usage_1d" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableRequestUsage1d(v *int) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetRequestUsage1d(*v)
+	}
+	return _c
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (_c *UserSubscriptionCreate) SetRequestWindow5hStart(v time.Time) *UserSubscriptionCreate {
+	_c.mutation.SetRequestWindow5hStart(v)
+	return _c
+}
+
+// SetNillableRequestWindow5hStart sets the "request_window_5h_start" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableRequestWindow5hStart(v *time.Time) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetRequestWindow5hStart(*v)
+	}
+	return _c
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (_c *UserSubscriptionCreate) SetRequestWindow1dStart(v time.Time) *UserSubscriptionCreate {
+	_c.mutation.SetRequestWindow1dStart(v)
+	return _c
+}
+
+// SetNillableRequestWindow1dStart sets the "request_window_1d_start" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableRequestWindow1dStart(v *time.Time) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetRequestWindow1dStart(*v)
+	}
+	return _c
+}
+
 // SetAssignedBy sets the "assigned_by" field.
 func (_c *UserSubscriptionCreate) SetAssignedBy(v int64) *UserSubscriptionCreate {
 	_c.mutation.SetAssignedBy(v)
@@ -275,6 +332,21 @@ func (_c *UserSubscriptionCreate) AddUsageLogs(v ...*UsageLog) *UserSubscription
 	return _c.AddUsageLogIDs(ids...)
 }
 
+// AddRequestReservationIDs adds the "request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_c *UserSubscriptionCreate) AddRequestReservationIDs(ids ...int64) *UserSubscriptionCreate {
+	_c.mutation.AddRequestReservationIDs(ids...)
+	return _c
+}
+
+// AddRequestReservations adds the "request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_c *UserSubscriptionCreate) AddRequestReservations(v ...*SubscriptionRequestReservation) *UserSubscriptionCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRequestReservationIDs(ids...)
+}
+
 // Mutation returns the UserSubscriptionMutation object of the builder.
 func (_c *UserSubscriptionCreate) Mutation() *UserSubscriptionMutation {
 	return _c.mutation
@@ -342,6 +414,14 @@ func (_c *UserSubscriptionCreate) defaults() error {
 		v := usersubscription.DefaultMonthlyUsageUsd
 		_c.mutation.SetMonthlyUsageUsd(v)
 	}
+	if _, ok := _c.mutation.RequestUsage5h(); !ok {
+		v := usersubscription.DefaultRequestUsage5h
+		_c.mutation.SetRequestUsage5h(v)
+	}
+	if _, ok := _c.mutation.RequestUsage1d(); !ok {
+		v := usersubscription.DefaultRequestUsage1d
+		_c.mutation.SetRequestUsage1d(v)
+	}
 	if _, ok := _c.mutation.AssignedAt(); !ok {
 		if usersubscription.DefaultAssignedAt == nil {
 			return fmt.Errorf("ent: uninitialized usersubscription.DefaultAssignedAt (forgotten import ent/runtime?)")
@@ -388,6 +468,22 @@ func (_c *UserSubscriptionCreate) check() error {
 	}
 	if _, ok := _c.mutation.MonthlyUsageUsd(); !ok {
 		return &ValidationError{Name: "monthly_usage_usd", err: errors.New(`ent: missing required field "UserSubscription.monthly_usage_usd"`)}
+	}
+	if _, ok := _c.mutation.RequestUsage5h(); !ok {
+		return &ValidationError{Name: "request_usage_5h", err: errors.New(`ent: missing required field "UserSubscription.request_usage_5h"`)}
+	}
+	if v, ok := _c.mutation.RequestUsage5h(); ok {
+		if err := usersubscription.RequestUsage5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_5h", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_5h": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RequestUsage1d(); !ok {
+		return &ValidationError{Name: "request_usage_1d", err: errors.New(`ent: missing required field "UserSubscription.request_usage_1d"`)}
+	}
+	if v, ok := _c.mutation.RequestUsage1d(); ok {
+		if err := usersubscription.RequestUsage1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_1d", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_1d": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.AssignedAt(); !ok {
 		return &ValidationError{Name: "assigned_at", err: errors.New(`ent: missing required field "UserSubscription.assigned_at"`)}
@@ -473,6 +569,22 @@ func (_c *UserSubscriptionCreate) createSpec() (*UserSubscription, *sqlgraph.Cre
 		_spec.SetField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
 		_node.MonthlyUsageUsd = value
 	}
+	if value, ok := _c.mutation.RequestUsage5h(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage5h, field.TypeInt, value)
+		_node.RequestUsage5h = value
+	}
+	if value, ok := _c.mutation.RequestUsage1d(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage1d, field.TypeInt, value)
+		_node.RequestUsage1d = value
+	}
+	if value, ok := _c.mutation.RequestWindow5hStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow5hStart, field.TypeTime, value)
+		_node.RequestWindow5hStart = &value
+	}
+	if value, ok := _c.mutation.RequestWindow1dStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow1dStart, field.TypeTime, value)
+		_node.RequestWindow1dStart = &value
+	}
 	if value, ok := _c.mutation.AssignedAt(); ok {
 		_spec.SetField(usersubscription.FieldAssignedAt, field.TypeTime, value)
 		_node.AssignedAt = value
@@ -541,6 +653,22 @@ func (_c *UserSubscriptionCreate) createSpec() (*UserSubscription, *sqlgraph.Cre
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -795,6 +923,78 @@ func (u *UserSubscriptionUpsert) UpdateMonthlyUsageUsd() *UserSubscriptionUpsert
 // AddMonthlyUsageUsd adds v to the "monthly_usage_usd" field.
 func (u *UserSubscriptionUpsert) AddMonthlyUsageUsd(v float64) *UserSubscriptionUpsert {
 	u.Add(usersubscription.FieldMonthlyUsageUsd, v)
+	return u
+}
+
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (u *UserSubscriptionUpsert) SetRequestUsage5h(v int) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldRequestUsage5h, v)
+	return u
+}
+
+// UpdateRequestUsage5h sets the "request_usage_5h" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateRequestUsage5h() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldRequestUsage5h)
+	return u
+}
+
+// AddRequestUsage5h adds v to the "request_usage_5h" field.
+func (u *UserSubscriptionUpsert) AddRequestUsage5h(v int) *UserSubscriptionUpsert {
+	u.Add(usersubscription.FieldRequestUsage5h, v)
+	return u
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (u *UserSubscriptionUpsert) SetRequestUsage1d(v int) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldRequestUsage1d, v)
+	return u
+}
+
+// UpdateRequestUsage1d sets the "request_usage_1d" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateRequestUsage1d() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldRequestUsage1d)
+	return u
+}
+
+// AddRequestUsage1d adds v to the "request_usage_1d" field.
+func (u *UserSubscriptionUpsert) AddRequestUsage1d(v int) *UserSubscriptionUpsert {
+	u.Add(usersubscription.FieldRequestUsage1d, v)
+	return u
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsert) SetRequestWindow5hStart(v time.Time) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldRequestWindow5hStart, v)
+	return u
+}
+
+// UpdateRequestWindow5hStart sets the "request_window_5h_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateRequestWindow5hStart() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldRequestWindow5hStart)
+	return u
+}
+
+// ClearRequestWindow5hStart clears the value of the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsert) ClearRequestWindow5hStart() *UserSubscriptionUpsert {
+	u.SetNull(usersubscription.FieldRequestWindow5hStart)
+	return u
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsert) SetRequestWindow1dStart(v time.Time) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldRequestWindow1dStart, v)
+	return u
+}
+
+// UpdateRequestWindow1dStart sets the "request_window_1d_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateRequestWindow1dStart() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldRequestWindow1dStart)
+	return u
+}
+
+// ClearRequestWindow1dStart clears the value of the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsert) ClearRequestWindow1dStart() *UserSubscriptionUpsert {
+	u.SetNull(usersubscription.FieldRequestWindow1dStart)
 	return u
 }
 
@@ -1119,6 +1319,90 @@ func (u *UserSubscriptionUpsertOne) AddMonthlyUsageUsd(v float64) *UserSubscript
 func (u *UserSubscriptionUpsertOne) UpdateMonthlyUsageUsd() *UserSubscriptionUpsertOne {
 	return u.Update(func(s *UserSubscriptionUpsert) {
 		s.UpdateMonthlyUsageUsd()
+	})
+}
+
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (u *UserSubscriptionUpsertOne) SetRequestUsage5h(v int) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestUsage5h(v)
+	})
+}
+
+// AddRequestUsage5h adds v to the "request_usage_5h" field.
+func (u *UserSubscriptionUpsertOne) AddRequestUsage5h(v int) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddRequestUsage5h(v)
+	})
+}
+
+// UpdateRequestUsage5h sets the "request_usage_5h" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateRequestUsage5h() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestUsage5h()
+	})
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (u *UserSubscriptionUpsertOne) SetRequestUsage1d(v int) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestUsage1d(v)
+	})
+}
+
+// AddRequestUsage1d adds v to the "request_usage_1d" field.
+func (u *UserSubscriptionUpsertOne) AddRequestUsage1d(v int) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddRequestUsage1d(v)
+	})
+}
+
+// UpdateRequestUsage1d sets the "request_usage_1d" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateRequestUsage1d() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestUsage1d()
+	})
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsertOne) SetRequestWindow5hStart(v time.Time) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestWindow5hStart(v)
+	})
+}
+
+// UpdateRequestWindow5hStart sets the "request_window_5h_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateRequestWindow5hStart() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestWindow5hStart()
+	})
+}
+
+// ClearRequestWindow5hStart clears the value of the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsertOne) ClearRequestWindow5hStart() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearRequestWindow5hStart()
+	})
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsertOne) SetRequestWindow1dStart(v time.Time) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestWindow1dStart(v)
+	})
+}
+
+// UpdateRequestWindow1dStart sets the "request_window_1d_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateRequestWindow1dStart() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestWindow1dStart()
+	})
+}
+
+// ClearRequestWindow1dStart clears the value of the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsertOne) ClearRequestWindow1dStart() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearRequestWindow1dStart()
 	})
 }
 
@@ -1617,6 +1901,90 @@ func (u *UserSubscriptionUpsertBulk) AddMonthlyUsageUsd(v float64) *UserSubscrip
 func (u *UserSubscriptionUpsertBulk) UpdateMonthlyUsageUsd() *UserSubscriptionUpsertBulk {
 	return u.Update(func(s *UserSubscriptionUpsert) {
 		s.UpdateMonthlyUsageUsd()
+	})
+}
+
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (u *UserSubscriptionUpsertBulk) SetRequestUsage5h(v int) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestUsage5h(v)
+	})
+}
+
+// AddRequestUsage5h adds v to the "request_usage_5h" field.
+func (u *UserSubscriptionUpsertBulk) AddRequestUsage5h(v int) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddRequestUsage5h(v)
+	})
+}
+
+// UpdateRequestUsage5h sets the "request_usage_5h" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateRequestUsage5h() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestUsage5h()
+	})
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (u *UserSubscriptionUpsertBulk) SetRequestUsage1d(v int) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestUsage1d(v)
+	})
+}
+
+// AddRequestUsage1d adds v to the "request_usage_1d" field.
+func (u *UserSubscriptionUpsertBulk) AddRequestUsage1d(v int) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddRequestUsage1d(v)
+	})
+}
+
+// UpdateRequestUsage1d sets the "request_usage_1d" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateRequestUsage1d() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestUsage1d()
+	})
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsertBulk) SetRequestWindow5hStart(v time.Time) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestWindow5hStart(v)
+	})
+}
+
+// UpdateRequestWindow5hStart sets the "request_window_5h_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateRequestWindow5hStart() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestWindow5hStart()
+	})
+}
+
+// ClearRequestWindow5hStart clears the value of the "request_window_5h_start" field.
+func (u *UserSubscriptionUpsertBulk) ClearRequestWindow5hStart() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearRequestWindow5hStart()
+	})
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsertBulk) SetRequestWindow1dStart(v time.Time) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetRequestWindow1dStart(v)
+	})
+}
+
+// UpdateRequestWindow1dStart sets the "request_window_1d_start" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateRequestWindow1dStart() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateRequestWindow1dStart()
+	})
+}
+
+// ClearRequestWindow1dStart clears the value of the "request_window_1d_start" field.
+func (u *UserSubscriptionUpsertBulk) ClearRequestWindow1dStart() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearRequestWindow1dStart()
 	})
 }
 

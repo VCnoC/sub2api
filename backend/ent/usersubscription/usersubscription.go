@@ -43,6 +43,14 @@ const (
 	FieldWeeklyUsageUsd = "weekly_usage_usd"
 	// FieldMonthlyUsageUsd holds the string denoting the monthly_usage_usd field in the database.
 	FieldMonthlyUsageUsd = "monthly_usage_usd"
+	// FieldRequestUsage5h holds the string denoting the request_usage_5h field in the database.
+	FieldRequestUsage5h = "request_usage_5h"
+	// FieldRequestUsage1d holds the string denoting the request_usage_1d field in the database.
+	FieldRequestUsage1d = "request_usage_1d"
+	// FieldRequestWindow5hStart holds the string denoting the request_window_5h_start field in the database.
+	FieldRequestWindow5hStart = "request_window_5h_start"
+	// FieldRequestWindow1dStart holds the string denoting the request_window_1d_start field in the database.
+	FieldRequestWindow1dStart = "request_window_1d_start"
 	// FieldAssignedBy holds the string denoting the assigned_by field in the database.
 	FieldAssignedBy = "assigned_by"
 	// FieldAssignedAt holds the string denoting the assigned_at field in the database.
@@ -57,6 +65,8 @@ const (
 	EdgeAssignedByUser = "assigned_by_user"
 	// EdgeUsageLogs holds the string denoting the usage_logs edge name in mutations.
 	EdgeUsageLogs = "usage_logs"
+	// EdgeRequestReservations holds the string denoting the request_reservations edge name in mutations.
+	EdgeRequestReservations = "request_reservations"
 	// Table holds the table name of the usersubscription in the database.
 	Table = "user_subscriptions"
 	// UserTable is the table that holds the user relation/edge.
@@ -87,6 +97,13 @@ const (
 	UsageLogsInverseTable = "usage_logs"
 	// UsageLogsColumn is the table column denoting the usage_logs relation/edge.
 	UsageLogsColumn = "subscription_id"
+	// RequestReservationsTable is the table that holds the request_reservations relation/edge.
+	RequestReservationsTable = "subscription_request_reservations"
+	// RequestReservationsInverseTable is the table name for the SubscriptionRequestReservation entity.
+	// It exists in this package in order to avoid circular dependency with the "subscriptionrequestreservation" package.
+	RequestReservationsInverseTable = "subscription_request_reservations"
+	// RequestReservationsColumn is the table column denoting the request_reservations relation/edge.
+	RequestReservationsColumn = "subscription_id"
 )
 
 // Columns holds all SQL columns for usersubscription fields.
@@ -106,6 +123,10 @@ var Columns = []string{
 	FieldDailyUsageUsd,
 	FieldWeeklyUsageUsd,
 	FieldMonthlyUsageUsd,
+	FieldRequestUsage5h,
+	FieldRequestUsage1d,
+	FieldRequestWindow5hStart,
+	FieldRequestWindow1dStart,
 	FieldAssignedBy,
 	FieldAssignedAt,
 	FieldNotes,
@@ -145,6 +166,14 @@ var (
 	DefaultWeeklyUsageUsd float64
 	// DefaultMonthlyUsageUsd holds the default value on creation for the "monthly_usage_usd" field.
 	DefaultMonthlyUsageUsd float64
+	// DefaultRequestUsage5h holds the default value on creation for the "request_usage_5h" field.
+	DefaultRequestUsage5h int
+	// RequestUsage5hValidator is a validator for the "request_usage_5h" field. It is called by the builders before save.
+	RequestUsage5hValidator func(int) error
+	// DefaultRequestUsage1d holds the default value on creation for the "request_usage_1d" field.
+	DefaultRequestUsage1d int
+	// RequestUsage1dValidator is a validator for the "request_usage_1d" field. It is called by the builders before save.
+	RequestUsage1dValidator func(int) error
 	// DefaultAssignedAt holds the default value on creation for the "assigned_at" field.
 	DefaultAssignedAt func() time.Time
 )
@@ -227,6 +256,26 @@ func ByMonthlyUsageUsd(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMonthlyUsageUsd, opts...).ToFunc()
 }
 
+// ByRequestUsage5h orders the results by the request_usage_5h field.
+func ByRequestUsage5h(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestUsage5h, opts...).ToFunc()
+}
+
+// ByRequestUsage1d orders the results by the request_usage_1d field.
+func ByRequestUsage1d(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestUsage1d, opts...).ToFunc()
+}
+
+// ByRequestWindow5hStart orders the results by the request_window_5h_start field.
+func ByRequestWindow5hStart(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestWindow5hStart, opts...).ToFunc()
+}
+
+// ByRequestWindow1dStart orders the results by the request_window_1d_start field.
+func ByRequestWindow1dStart(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestWindow1dStart, opts...).ToFunc()
+}
+
 // ByAssignedBy orders the results by the assigned_by field.
 func ByAssignedBy(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAssignedBy, opts...).ToFunc()
@@ -276,6 +325,20 @@ func ByUsageLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newUsageLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRequestReservationsCount orders the results by request_reservations count.
+func ByRequestReservationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRequestReservationsStep(), opts...)
+	}
+}
+
+// ByRequestReservations orders the results by request_reservations terms.
+func ByRequestReservations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRequestReservationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -302,5 +365,12 @@ func newUsageLogsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UsageLogsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UsageLogsTable, UsageLogsColumn),
+	)
+}
+func newRequestReservationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RequestReservationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RequestReservationsTable, RequestReservationsColumn),
 	)
 }

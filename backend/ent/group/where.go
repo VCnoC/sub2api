@@ -130,6 +130,21 @@ func SubscriptionType(v string) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldSubscriptionType, v))
 }
 
+// SubscriptionBillingMode applies equality check predicate on the "subscription_billing_mode" field. It's identical to SubscriptionBillingModeEQ.
+func SubscriptionBillingMode(v string) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSubscriptionBillingMode, v))
+}
+
+// RequestLimit5h applies equality check predicate on the "request_limit_5h" field. It's identical to RequestLimit5hEQ.
+func RequestLimit5h(v int) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldRequestLimit5h, v))
+}
+
+// RequestLimit1d applies equality check predicate on the "request_limit_1d" field. It's identical to RequestLimit1dEQ.
+func RequestLimit1d(v int) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldRequestLimit1d, v))
+}
+
 // DailyLimitUsd applies equality check predicate on the "daily_limit_usd" field. It's identical to DailyLimitUsdEQ.
 func DailyLimitUsd(v float64) predicate.Group {
 	return predicate.Group(sql.FieldEQ(FieldDailyLimitUsd, v))
@@ -1053,6 +1068,151 @@ func SubscriptionTypeEqualFold(v string) predicate.Group {
 // SubscriptionTypeContainsFold applies the ContainsFold predicate on the "subscription_type" field.
 func SubscriptionTypeContainsFold(v string) predicate.Group {
 	return predicate.Group(sql.FieldContainsFold(FieldSubscriptionType, v))
+}
+
+// SubscriptionBillingModeEQ applies the EQ predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeEQ(v string) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeNEQ applies the NEQ predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeNEQ(v string) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeIn applies the In predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeIn(vs ...string) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldSubscriptionBillingMode, vs...))
+}
+
+// SubscriptionBillingModeNotIn applies the NotIn predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeNotIn(vs ...string) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldSubscriptionBillingMode, vs...))
+}
+
+// SubscriptionBillingModeGT applies the GT predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeGT(v string) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeGTE applies the GTE predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeGTE(v string) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeLT applies the LT predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeLT(v string) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeLTE applies the LTE predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeLTE(v string) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeContains applies the Contains predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeContains(v string) predicate.Group {
+	return predicate.Group(sql.FieldContains(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeHasPrefix applies the HasPrefix predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeHasPrefix(v string) predicate.Group {
+	return predicate.Group(sql.FieldHasPrefix(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeHasSuffix applies the HasSuffix predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeHasSuffix(v string) predicate.Group {
+	return predicate.Group(sql.FieldHasSuffix(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeEqualFold applies the EqualFold predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeEqualFold(v string) predicate.Group {
+	return predicate.Group(sql.FieldEqualFold(FieldSubscriptionBillingMode, v))
+}
+
+// SubscriptionBillingModeContainsFold applies the ContainsFold predicate on the "subscription_billing_mode" field.
+func SubscriptionBillingModeContainsFold(v string) predicate.Group {
+	return predicate.Group(sql.FieldContainsFold(FieldSubscriptionBillingMode, v))
+}
+
+// RequestLimit5hEQ applies the EQ predicate on the "request_limit_5h" field.
+func RequestLimit5hEQ(v int) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldRequestLimit5h, v))
+}
+
+// RequestLimit5hNEQ applies the NEQ predicate on the "request_limit_5h" field.
+func RequestLimit5hNEQ(v int) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldRequestLimit5h, v))
+}
+
+// RequestLimit5hIn applies the In predicate on the "request_limit_5h" field.
+func RequestLimit5hIn(vs ...int) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldRequestLimit5h, vs...))
+}
+
+// RequestLimit5hNotIn applies the NotIn predicate on the "request_limit_5h" field.
+func RequestLimit5hNotIn(vs ...int) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldRequestLimit5h, vs...))
+}
+
+// RequestLimit5hGT applies the GT predicate on the "request_limit_5h" field.
+func RequestLimit5hGT(v int) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldRequestLimit5h, v))
+}
+
+// RequestLimit5hGTE applies the GTE predicate on the "request_limit_5h" field.
+func RequestLimit5hGTE(v int) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldRequestLimit5h, v))
+}
+
+// RequestLimit5hLT applies the LT predicate on the "request_limit_5h" field.
+func RequestLimit5hLT(v int) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldRequestLimit5h, v))
+}
+
+// RequestLimit5hLTE applies the LTE predicate on the "request_limit_5h" field.
+func RequestLimit5hLTE(v int) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldRequestLimit5h, v))
+}
+
+// RequestLimit1dEQ applies the EQ predicate on the "request_limit_1d" field.
+func RequestLimit1dEQ(v int) predicate.Group {
+	return predicate.Group(sql.FieldEQ(FieldRequestLimit1d, v))
+}
+
+// RequestLimit1dNEQ applies the NEQ predicate on the "request_limit_1d" field.
+func RequestLimit1dNEQ(v int) predicate.Group {
+	return predicate.Group(sql.FieldNEQ(FieldRequestLimit1d, v))
+}
+
+// RequestLimit1dIn applies the In predicate on the "request_limit_1d" field.
+func RequestLimit1dIn(vs ...int) predicate.Group {
+	return predicate.Group(sql.FieldIn(FieldRequestLimit1d, vs...))
+}
+
+// RequestLimit1dNotIn applies the NotIn predicate on the "request_limit_1d" field.
+func RequestLimit1dNotIn(vs ...int) predicate.Group {
+	return predicate.Group(sql.FieldNotIn(FieldRequestLimit1d, vs...))
+}
+
+// RequestLimit1dGT applies the GT predicate on the "request_limit_1d" field.
+func RequestLimit1dGT(v int) predicate.Group {
+	return predicate.Group(sql.FieldGT(FieldRequestLimit1d, v))
+}
+
+// RequestLimit1dGTE applies the GTE predicate on the "request_limit_1d" field.
+func RequestLimit1dGTE(v int) predicate.Group {
+	return predicate.Group(sql.FieldGTE(FieldRequestLimit1d, v))
+}
+
+// RequestLimit1dLT applies the LT predicate on the "request_limit_1d" field.
+func RequestLimit1dLT(v int) predicate.Group {
+	return predicate.Group(sql.FieldLT(FieldRequestLimit1d, v))
+}
+
+// RequestLimit1dLTE applies the LTE predicate on the "request_limit_1d" field.
+func RequestLimit1dLTE(v int) predicate.Group {
+	return predicate.Group(sql.FieldLTE(FieldRequestLimit1d, v))
 }
 
 // DailyLimitUsdEQ applies the EQ predicate on the "daily_limit_usd" field.

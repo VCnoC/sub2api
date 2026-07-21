@@ -31,6 +31,10 @@ flowchart LR
     LotteryAPI --> LotteryService[抽奖服务]
     LotteryService --> PG
     LotteryService --> Billing
+    UserUI --> TeamAPI[团队申请与资金 API]
+    Admin --> TeamAPI
+    TeamAPI --> TeamService[团队治理服务]
+    TeamService --> PG
 ```
 
 ## 核心约束
@@ -40,6 +44,7 @@ flowchart LR
 - 管理操作审计与提示词审计使用独立存储和权限边界；敏感管理员操作通过 step-up 2FA 再验证。
 - 异步图片任务只在对象存储配置完整时启用，Redis 保存紧凑任务状态，图片结果写入 S3 兼容存储。
 - 同组多张订阅独立计时和记账，鉴权按最早到期顺序选择当前仍有额度的具体 `subscription_id`。
+- 次数订阅在 PostgreSQL 中请求前占位；pending 与已确认请求共同占用容量，成功并入 `usage_billing` 幂等事务确认，失败按窗口快照释放。
 - 当前分组计费资格不可用或组内账号安全重试耗尽时按 Key 自定义顺序推进；切组重新检查订阅/余额/RPM 并重置账号 failover 状态。
 - 响应已提交、客户端取消、不可重试错误和异步任务可能已创建后禁止跨组重放；成功组写入最终用量与计费记录。
 - 视频扣余额与 `video_tasks` 写入在同一数据库事务中提交。
@@ -51,11 +56,18 @@ flowchart LR
 - 工单正文和系统事件不可变，附件保存在非静态目录并通过鉴权接口访问；关闭 30 天后只物理清理附件，文字和删除元数据长期保留。
 - 抽奖使用固定普通/豪华双奖池；服务端以百万分比安全随机决定结果，前端轮带只展示已确定结果。
 - 抽奖在单个数据库事务内锁定次数与库存并完成余额或订阅发奖；邀请、兑换、充值及退款通过幂等流水发放或冲正额外次数。
+- 团队创建和超 40 人扩容由管理员审核，邀请码加入由 owner 审核；申请状态与团队正常/冻结状态分离。
+- 团队等级固定为 5/15/40，由 owner 主动检查并只升不降；管理员可随时直接修改单团队人数上限。
+- 团队资金操作按团队、用户、可转赠额度统一锁序执行；数据库触发器随符合来源的兑换入账和所有余额下降维护可转赠额度。
 
 ## 重大架构决策
 
 | adr_id | title | date | status | affected_modules | details |
 |--------|-------|------|--------|------------------|---------|
+| ADR-TEAM-001 | 团队治理使用原生 SQL 扩展仓储 | 2026-07-21 | ✅已实施 | 团队、用户、资金、管理端 | [方案](../history/2026-07/202607210307_team_governance/how.md#adr-team-001-团队治理使用原生-sql-扩展仓储) |
+| ADR-20260720-COUNT-SUB-001 | 次数配置绑定订阅分组 | 2026-07-20 | ✅已实施 | 分组、套餐、订阅 | [方案](../history/2026-07/202607202113_request_count_subscription/how.md#adr-20260720-count-sub-001-次数配置绑定订阅分组) |
+| ADR-20260720-COUNT-SUB-002 | PostgreSQL 占位账本保证成功扣次 | 2026-07-20 | ✅已实施 | 订阅、网关、计费、数据模型 | [方案](../history/2026-07/202607202113_request_count_subscription/how.md#adr-20260720-count-sub-002-postgresql-占位账本保证成功扣次) |
+| ADR-20260720-COUNT-SUB-003 | 占位时增加计数失败时回退 | 2026-07-20 | ✅已实施 | 订阅、计费 | [方案](../history/2026-07/202607202113_request_count_subscription/how.md#adr-20260720-count-sub-003-占位时增加计数失败时回退) |
 | ADR-20260718-APIKEY-GROUPS-001 | 使用有序关联表保存候选分组 | 2026-07-18 | ✅已实施 | API Key、分组、数据模型 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-001-使用有序关联表保存候选分组) |
 | ADR-20260718-APIKEY-GROUPS-002 | 复用组内 Failover 并增加分组推进 | 2026-07-18 | ✅已实施 | 鉴权、网关、调度、计费 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-002-复用组内-failover-并增加外层分组推进) |
 | ADR-20260718-APIKEY-GROUPS-003 | 保留 group_id 作为兼容镜像 | 2026-07-18 | ✅已实施 | API、Repository、迁移 | [方案](../history/2026-07/202607181905_api_key_group_failover/how.md#adr-20260718-apikey-groups-003-保留-group_id-作为兼容镜像) |

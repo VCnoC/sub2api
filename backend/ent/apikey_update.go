@@ -16,6 +16,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/apikeygroup"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
@@ -439,6 +440,21 @@ func (_u *APIKeyUpdate) ClearWindow7dStart() *APIKeyUpdate {
 	return _u
 }
 
+// AddSubscriptionRequestReservationIDs adds the "subscription_request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_u *APIKeyUpdate) AddSubscriptionRequestReservationIDs(ids ...int64) *APIKeyUpdate {
+	_u.mutation.AddSubscriptionRequestReservationIDs(ids...)
+	return _u
+}
+
+// AddSubscriptionRequestReservations adds the "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *APIKeyUpdate) AddSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *APIKeyUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSubscriptionRequestReservationIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *APIKeyUpdate) SetUser(v *User) *APIKeyUpdate {
 	return _u.SetUserID(v.ID)
@@ -482,6 +498,27 @@ func (_u *APIKeyUpdate) AddUsageLogs(v ...*UsageLog) *APIKeyUpdate {
 // Mutation returns the APIKeyMutation object of the builder.
 func (_u *APIKeyUpdate) Mutation() *APIKeyMutation {
 	return _u.mutation
+}
+
+// ClearSubscriptionRequestReservations clears all "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *APIKeyUpdate) ClearSubscriptionRequestReservations() *APIKeyUpdate {
+	_u.mutation.ClearSubscriptionRequestReservations()
+	return _u
+}
+
+// RemoveSubscriptionRequestReservationIDs removes the "subscription_request_reservations" edge to SubscriptionRequestReservation entities by IDs.
+func (_u *APIKeyUpdate) RemoveSubscriptionRequestReservationIDs(ids ...int64) *APIKeyUpdate {
+	_u.mutation.RemoveSubscriptionRequestReservationIDs(ids...)
+	return _u
+}
+
+// RemoveSubscriptionRequestReservations removes "subscription_request_reservations" edges to SubscriptionRequestReservation entities.
+func (_u *APIKeyUpdate) RemoveSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *APIKeyUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSubscriptionRequestReservationIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -732,6 +769,51 @@ func (_u *APIKeyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.Window7dStartCleared() {
 		_spec.ClearField(apikey.FieldWindow7dStart, field.TypeTime)
+	}
+	if _u.mutation.SubscriptionRequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSubscriptionRequestReservationsIDs(); len(nodes) > 0 && !_u.mutation.SubscriptionRequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubscriptionRequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1307,6 +1389,21 @@ func (_u *APIKeyUpdateOne) ClearWindow7dStart() *APIKeyUpdateOne {
 	return _u
 }
 
+// AddSubscriptionRequestReservationIDs adds the "subscription_request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_u *APIKeyUpdateOne) AddSubscriptionRequestReservationIDs(ids ...int64) *APIKeyUpdateOne {
+	_u.mutation.AddSubscriptionRequestReservationIDs(ids...)
+	return _u
+}
+
+// AddSubscriptionRequestReservations adds the "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *APIKeyUpdateOne) AddSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *APIKeyUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSubscriptionRequestReservationIDs(ids...)
+}
+
 // SetUser sets the "user" edge to the User entity.
 func (_u *APIKeyUpdateOne) SetUser(v *User) *APIKeyUpdateOne {
 	return _u.SetUserID(v.ID)
@@ -1350,6 +1447,27 @@ func (_u *APIKeyUpdateOne) AddUsageLogs(v ...*UsageLog) *APIKeyUpdateOne {
 // Mutation returns the APIKeyMutation object of the builder.
 func (_u *APIKeyUpdateOne) Mutation() *APIKeyMutation {
 	return _u.mutation
+}
+
+// ClearSubscriptionRequestReservations clears all "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *APIKeyUpdateOne) ClearSubscriptionRequestReservations() *APIKeyUpdateOne {
+	_u.mutation.ClearSubscriptionRequestReservations()
+	return _u
+}
+
+// RemoveSubscriptionRequestReservationIDs removes the "subscription_request_reservations" edge to SubscriptionRequestReservation entities by IDs.
+func (_u *APIKeyUpdateOne) RemoveSubscriptionRequestReservationIDs(ids ...int64) *APIKeyUpdateOne {
+	_u.mutation.RemoveSubscriptionRequestReservationIDs(ids...)
+	return _u
+}
+
+// RemoveSubscriptionRequestReservations removes "subscription_request_reservations" edges to SubscriptionRequestReservation entities.
+func (_u *APIKeyUpdateOne) RemoveSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *APIKeyUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSubscriptionRequestReservationIDs(ids...)
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -1630,6 +1748,51 @@ func (_u *APIKeyUpdateOne) sqlSave(ctx context.Context) (_node *APIKey, err erro
 	}
 	if _u.mutation.Window7dStartCleared() {
 		_spec.ClearField(apikey.FieldWindow7dStart, field.TypeTime)
+	}
+	if _u.mutation.SubscriptionRequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSubscriptionRequestReservationsIDs(); len(nodes) > 0 && !_u.mutation.SubscriptionRequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubscriptionRequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

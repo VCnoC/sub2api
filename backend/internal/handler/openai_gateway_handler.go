@@ -100,7 +100,18 @@ func usageRecordContext(parent context.Context, base context.Context) context.Co
 	if requestID, _ := parent.Value(ctxkey.RequestID).(string); strings.TrimSpace(requestID) != "" {
 		base = context.WithValue(base, ctxkey.RequestID, strings.TrimSpace(requestID))
 	}
+	if reservationID, _ := parent.Value(ctxkey.SubscriptionRequestReservationID).(int64); reservationID > 0 {
+		base = context.WithValue(base, ctxkey.SubscriptionRequestReservationID, reservationID)
+	}
 	return base
+}
+
+func subscriptionRequestReservationID(ctx context.Context) int64 {
+	if ctx == nil {
+		return 0
+	}
+	reservationID, _ := ctx.Value(ctxkey.SubscriptionRequestReservationID).(int64)
+	return reservationID
 }
 
 func wrapUsageRecordTaskContext(parent context.Context, task service.UsageRecordTask) service.UsageRecordTask {
@@ -338,6 +349,18 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 		}
 		h.handleStreamingAwareError(c, status, code, message, streamStarted)
 		return
+	}
+	if !imageIntent {
+		if err := middleware2.EnableSubscriptionRequestCount(c); err != nil {
+			status, code, message, retryAfter := billingErrorDetails(err)
+			if retryAfter > 0 {
+				c.Header("Retry-After", strconv.Itoa(retryAfter))
+			}
+			h.handleStreamingAwareError(c, status, code, message, streamStarted)
+			return
+		}
+		defer middleware2.ReleaseSubscriptionRequestCount(c)
+		subscription, _ = middleware2.GetSubscriptionFromContext(c)
 	}
 
 	// Generate session hash (header first; fallback to prompt_cache_key)
@@ -642,6 +665,7 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 
 		// 使用量记录通过有界 worker 池提交，避免请求热路径创建无界 goroutine。
 		cyberBlocked := service.GetOpsCyberPolicy(c) != nil
+		middleware2.HandoffSubscriptionRequestCount(c)
 		h.submitOpenAIUsageRecordTask(c.Request.Context(), result, func(ctx context.Context) {
 			if err := h.gatewayService.RecordUsage(ctx, &service.OpenAIRecordUsageInput{
 				Result:             result,
@@ -934,6 +958,16 @@ func (h *OpenAIGatewayHandler) Messages(c *gin.Context) {
 		h.anthropicStreamingAwareError(c, status, code, message, streamStarted)
 		return
 	}
+	if err := middleware2.EnableSubscriptionRequestCount(c); err != nil {
+		status, code, message, retryAfter := billingErrorDetails(err)
+		if retryAfter > 0 {
+			c.Header("Retry-After", strconv.Itoa(retryAfter))
+		}
+		h.anthropicStreamingAwareError(c, status, code, message, streamStarted)
+		return
+	}
+	defer middleware2.ReleaseSubscriptionRequestCount(c)
+	subscription, _ = middleware2.GetSubscriptionFromContext(c)
 
 	sessionHash := h.gatewayService.GenerateSessionHash(c, body)
 	promptCacheKey := h.gatewayService.ExtractSessionID(c, body)
@@ -1184,6 +1218,7 @@ func (h *OpenAIGatewayHandler) Messages(c *gin.Context) {
 		quotaPlatform := service.QuotaPlatform(c.Request.Context(), apiKey)
 
 		cyberBlocked := service.GetOpsCyberPolicy(c) != nil
+		middleware2.HandoffSubscriptionRequestCount(c)
 		h.submitOpenAIUsageRecordTask(c.Request.Context(), result, func(ctx context.Context) {
 			if err := h.gatewayService.RecordUsage(ctx, &service.OpenAIRecordUsageInput{
 				Result:             result,
@@ -2103,6 +2138,10 @@ func getContextInt64(c *gin.Context, key string) (int64, bool) {
 
 func (h *OpenAIGatewayHandler) submitUsageRecordTask(parent context.Context, task service.UsageRecordTask) {
 	if task == nil {
+		return
+	}
+	if subscriptionRequestReservationID(parent) > 0 {
+		h.submitMandatoryUsageRecordTask(parent, task)
 		return
 	}
 	task = wrapUsageRecordTaskContext(parent, task)

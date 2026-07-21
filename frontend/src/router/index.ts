@@ -510,6 +510,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/admin/teams',
+    name: 'AdminTeams',
+    component: () => import('@/views/admin/teams/AdminTeamsView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Team Management',
+      titleKey: 'teamAdmin.title',
+      descriptionKey: 'teamAdmin.description'
+    }
+  },
+  {
     path: '/admin/tickets/:id',
     name: 'AdminTicketDetail',
     component: () => import('@/views/admin/tickets/AdminTicketDetailView.vue'),

@@ -38,16 +38,19 @@ var (
 	ErrDailyLimitExceeded          = infraerrors.TooManyRequests("DAILY_LIMIT_EXCEEDED", "daily usage limit exceeded")
 	ErrWeeklyLimitExceeded         = infraerrors.TooManyRequests("WEEKLY_LIMIT_EXCEEDED", "weekly usage limit exceeded")
 	ErrMonthlyLimitExceeded        = infraerrors.TooManyRequests("MONTHLY_LIMIT_EXCEEDED", "monthly usage limit exceeded")
+	ErrRequestCountLimitExceeded   = infraerrors.TooManyRequests("REQUEST_COUNT_LIMIT_EXCEEDED", "request count limit exceeded")
+	ErrRequestReservationReleased  = errors.New("subscription request reservation was released")
 	ErrSubscriptionNilInput        = infraerrors.BadRequest("SUBSCRIPTION_NIL_INPUT", "subscription input cannot be nil")
 	ErrAdjustWouldExpire           = infraerrors.BadRequest("ADJUST_WOULD_EXPIRE", "adjustment would result in expired subscription (remaining days must be > 0)")
 )
 
 // SubscriptionService 订阅服务
 type SubscriptionService struct {
-	groupRepo           GroupRepository
-	userSubRepo         UserSubscriptionRepository
-	billingCacheService *BillingCacheService
-	entClient           *dbent.Client
+	groupRepo              GroupRepository
+	userSubRepo            UserSubscriptionRepository
+	requestReservationRepo SubscriptionRequestReservationRepository
+	billingCacheService    *BillingCacheService
+	entClient              *dbent.Client
 
 	// L1 缓存：加速中间件热路径的订阅查询
 	subCacheL1     *ristretto.Cache
@@ -65,6 +68,9 @@ func NewSubscriptionService(groupRepo GroupRepository, userSubRepo UserSubscript
 		userSubRepo:         userSubRepo,
 		billingCacheService: billingCacheService,
 		entClient:           entClient,
+	}
+	if repo, ok := userSubRepo.(SubscriptionRequestReservationRepository); ok {
+		svc.requestReservationRepo = repo
 	}
 	svc.initSubCache(cfg)
 	svc.initMaintenanceQueue(cfg)
@@ -831,10 +837,34 @@ func (s *SubscriptionService) GetActiveSubscription(ctx context.Context, userID,
 	return nil, ErrSubscriptionNotFound
 }
 
+func (s *SubscriptionService) ReserveRequestCount(ctx context.Context, requestID string, apiKeyID, userID, groupID int64, expiresAt time.Time) (*SubscriptionRequestReservation, *UserSubscription, error) {
+	if s == nil || s.requestReservationRepo == nil {
+		return nil, nil, errors.New("subscription request reservation repository is not configured")
+	}
+	reservation, err := s.requestReservationRepo.ReserveRequestCount(ctx, requestID, apiKeyID, userID, groupID, expiresAt)
+	if err != nil {
+		return nil, nil, err
+	}
+	subscription, err := s.userSubRepo.GetByID(ctx, reservation.SubscriptionID)
+	if err != nil {
+		_ = s.requestReservationRepo.ReleaseRequestCount(context.WithoutCancel(ctx), reservation.ID)
+		return nil, nil, err
+	}
+	return reservation, subscription, nil
+}
+
+func (s *SubscriptionService) ReleaseRequestCount(ctx context.Context, reservationID int64) error {
+	if reservationID <= 0 || s == nil || s.requestReservationRepo == nil {
+		return nil
+	}
+	return s.requestReservationRepo.ReleaseRequestCount(ctx, reservationID)
+}
+
 func IsSubscriptionLimitError(err error) bool {
 	return errors.Is(err, ErrDailyLimitExceeded) ||
 		errors.Is(err, ErrWeeklyLimitExceeded) ||
-		errors.Is(err, ErrMonthlyLimitExceeded)
+		errors.Is(err, ErrMonthlyLimitExceeded) ||
+		errors.Is(err, ErrRequestCountLimitExceeded)
 }
 
 // ListUserSubscriptions 获取用户的所有订阅
@@ -885,6 +915,7 @@ func (s *SubscriptionService) List(ctx context.Context, page, pageSize int, user
 // normalizeExpiredWindows 将已过期窗口的数据清零（仅影响返回数据，不影响数据库）
 // 这确保前端显示正确的当前窗口状态，而不是过期窗口的历史数据
 func normalizeExpiredWindows(subs []UserSubscription) {
+	now := time.Now()
 	for i := range subs {
 		sub := &subs[i]
 		// 日窗口过期：清零展示数据
@@ -901,6 +932,14 @@ func normalizeExpiredWindows(subs []UserSubscription) {
 		if sub.NeedsMonthlyReset() {
 			sub.MonthlyWindowStart = nil
 			sub.MonthlyUsageUSD = 0
+		}
+		if sub.RequestWindow5hStart != nil && !now.Before(sub.RequestWindow5hStart.Add(5*time.Hour)) {
+			sub.RequestWindow5hStart = nil
+			sub.RequestUsage5h = 0
+		}
+		if sub.RequestWindow1dStart != nil && !now.Before(sub.RequestWindow1dStart.Add(24*time.Hour)) {
+			sub.RequestWindow1dStart = nil
+			sub.RequestUsage1d = 0
 		}
 	}
 }
@@ -1145,13 +1184,15 @@ func (s *SubscriptionService) RecordUsage(ctx context.Context, subscriptionID in
 
 // SubscriptionProgress 订阅进度
 type SubscriptionProgress struct {
-	ID            int64                `json:"id"`
-	GroupName     string               `json:"group_name"`
-	ExpiresAt     time.Time            `json:"expires_at"`
-	ExpiresInDays int                  `json:"expires_in_days"`
-	Daily         *UsageWindowProgress `json:"daily,omitempty"`
-	Weekly        *UsageWindowProgress `json:"weekly,omitempty"`
-	Monthly       *UsageWindowProgress `json:"monthly,omitempty"`
+	ID            int64                  `json:"id"`
+	GroupName     string                 `json:"group_name"`
+	ExpiresAt     time.Time              `json:"expires_at"`
+	ExpiresInDays int                    `json:"expires_in_days"`
+	Daily         *UsageWindowProgress   `json:"daily,omitempty"`
+	Weekly        *UsageWindowProgress   `json:"weekly,omitempty"`
+	Monthly       *UsageWindowProgress   `json:"monthly,omitempty"`
+	Request5h     *RequestWindowProgress `json:"request_5h,omitempty"`
+	Request1d     *RequestWindowProgress `json:"request_1d,omitempty"`
 }
 
 // UsageWindowProgress 使用窗口进度
@@ -1163,6 +1204,17 @@ type UsageWindowProgress struct {
 	WindowStart     time.Time `json:"window_start"`
 	ResetsAt        time.Time `json:"resets_at"`
 	ResetsInSeconds int64     `json:"resets_in_seconds"`
+}
+
+// RequestWindowProgress 次数计费窗口进度。
+type RequestWindowProgress struct {
+	Limit           int        `json:"limit"`
+	Used            int        `json:"used"`
+	Remaining       int        `json:"remaining"`
+	Percentage      float64    `json:"percentage"`
+	WindowStart     *time.Time `json:"window_start,omitempty"`
+	ResetsAt        *time.Time `json:"resets_at,omitempty"`
+	ResetsInSeconds *int64     `json:"resets_in_seconds,omitempty"`
 }
 
 // GetSubscriptionProgress 获取订阅使用进度
@@ -1190,6 +1242,10 @@ func (s *SubscriptionService) calculateProgress(sub *UserSubscription, group *Gr
 		GroupName:     group.Name,
 		ExpiresAt:     sub.ExpiresAt,
 		ExpiresInDays: sub.DaysRemaining(),
+	}
+	if group.SubscriptionBillingMode == SubscriptionBillingModeRequestCount {
+		progress.Request5h = calculateRequestWindowProgress(group.RequestLimit5h, sub.RequestUsage5h, sub.RequestWindow5hStart, 5*time.Hour)
+		progress.Request1d = calculateRequestWindowProgress(group.RequestLimit1d, sub.RequestUsage1d, sub.RequestWindow1dStart, 24*time.Hour)
 	}
 
 	// 日进度
@@ -1267,6 +1323,37 @@ func (s *SubscriptionService) calculateProgress(sub *UserSubscription, group *Gr
 		}
 	}
 
+	return progress
+}
+
+func calculateRequestWindowProgress(limit, used int, windowStart *time.Time, duration time.Duration) *RequestWindowProgress {
+	if limit <= 0 {
+		return nil
+	}
+	remaining := limit - used
+	if remaining < 0 {
+		remaining = 0
+	}
+	percentage := float64(used) / float64(limit) * 100
+	if percentage > 100 {
+		percentage = 100
+	}
+	progress := &RequestWindowProgress{
+		Limit:       limit,
+		Used:        used,
+		Remaining:   remaining,
+		Percentage:  percentage,
+		WindowStart: windowStart,
+	}
+	if windowStart != nil {
+		resetsAt := windowStart.Add(duration)
+		resetsInSeconds := int64(time.Until(resetsAt).Seconds())
+		if resetsInSeconds < 0 {
+			resetsInSeconds = 0
+		}
+		progress.ResetsAt = &resetsAt
+		progress.ResetsInSeconds = &resetsInSeconds
+	}
 	return progress
 }
 

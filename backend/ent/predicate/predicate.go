@@ -99,6 +99,9 @@ type Setting func(*sql.Selector)
 // SubscriptionPlan is the predicate function for subscriptionplan builders.
 type SubscriptionPlan func(*sql.Selector)
 
+// SubscriptionRequestReservation is the predicate function for subscriptionrequestreservation builders.
+type SubscriptionRequestReservation func(*sql.Selector)
+
 // SupportTicket is the predicate function for supportticket builders.
 type SupportTicket func(*sql.Selector)
 

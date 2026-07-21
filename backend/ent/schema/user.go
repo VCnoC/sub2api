@@ -139,6 +139,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("api_keys", APIKey.Type),
 		edge.To("redeem_codes", RedeemCode.Type),
 		edge.To("subscriptions", UserSubscription.Type),
+		edge.To("subscription_request_reservations", SubscriptionRequestReservation.Type),
 		edge.To("assigned_subscriptions", UserSubscription.Type),
 		edge.To("announcement_reads", AnnouncementRead.Type),
 		edge.To("support_tickets", SupportTicket.Type),

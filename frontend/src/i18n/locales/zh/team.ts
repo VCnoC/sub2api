@@ -14,7 +14,10 @@ export default {
       button: '创建团队',
       creating: '创建中...',
       nameRequired: '请输入团队名称',
-      success: '团队创建成功',
+      reasonPlaceholder: '创建团队的用途或说明',
+      additionalInfoPlaceholder: '补充信息（可选）',
+	  eligibility: '注册 {days}/{requiredDays} 天，充值 {recharge}/{requiredRecharge}',
+      success: '创建申请已提交',
       error: '创建团队失败'
     },
     join: {
@@ -24,7 +27,8 @@ export default {
       button: '加入团队',
       joining: '加入中...',
       codeRequired: '请输入团队码',
-      success: '加入团队成功',
+      messagePlaceholder: '给团队发起人的申请说明（可选）',
+      success: '加入申请已提交',
       error: '加入团队失败'
     },
     inviteCode: {
@@ -78,6 +82,7 @@ export default {
       depositButton: '存入资金',
       depositTitle: '存入团队资金',
       depositHint: '从你的个人余额存入团队资金池',
+	  transferable: '当前可转赠：{amount}',
       allocateButton: '分配',
       allocateTitle: '分配团队资金',
       allocateTo: '从团队资金分配给 {email}',
@@ -107,6 +112,31 @@ export default {
       passwordRequired: '请输入登录密码',
       success: '余额划拨成功',
       error: '余额划拨失败'
+    },
+    application: {
+      pending: '创建申请待管理员审核',
+      approved: '创建申请已批准',
+      rejected: '创建申请已拒绝，可补充后重新提交'
+    },
+    governance: {
+      title: '团队等级与扩容',
+      level: '团队等级',
+      memberLimit: '成员数 / 上限',
+      recharge: '有效累计充值',
+      spend7d: '近 7 天消费',
+      reviewRequired: '现有团队需管理员复审后才能自助扩容',
+      upgrade: '检查升级',
+      upgradeSuccess: '团队等级已更新',
+      upgradeError: '当前不满足更高等级条件',
+      targetLimit: '目标人数',
+      expandReason: '扩容理由',
+      requestExpansion: '申请扩容',
+      expandSuccess: '扩容申请已提交',
+      expandError: '提交扩容申请失败'
+    },
+    joinRequests: {
+      title: '待处理加入申请',
+      reviewError: '处理加入申请失败'
     }
   },
 }

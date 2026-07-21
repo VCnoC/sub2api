@@ -232,6 +232,48 @@ func (_c *GroupCreate) SetNillableSubscriptionType(v *string) *GroupCreate {
 	return _c
 }
 
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (_c *GroupCreate) SetSubscriptionBillingMode(v string) *GroupCreate {
+	_c.mutation.SetSubscriptionBillingMode(v)
+	return _c
+}
+
+// SetNillableSubscriptionBillingMode sets the "subscription_billing_mode" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableSubscriptionBillingMode(v *string) *GroupCreate {
+	if v != nil {
+		_c.SetSubscriptionBillingMode(*v)
+	}
+	return _c
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (_c *GroupCreate) SetRequestLimit5h(v int) *GroupCreate {
+	_c.mutation.SetRequestLimit5h(v)
+	return _c
+}
+
+// SetNillableRequestLimit5h sets the "request_limit_5h" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableRequestLimit5h(v *int) *GroupCreate {
+	if v != nil {
+		_c.SetRequestLimit5h(*v)
+	}
+	return _c
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (_c *GroupCreate) SetRequestLimit1d(v int) *GroupCreate {
+	_c.mutation.SetRequestLimit1d(v)
+	return _c
+}
+
+// SetNillableRequestLimit1d sets the "request_limit_1d" field if the given value is not nil.
+func (_c *GroupCreate) SetNillableRequestLimit1d(v *int) *GroupCreate {
+	if v != nil {
+		_c.SetRequestLimit1d(*v)
+	}
+	return _c
+}
+
 // SetDailyLimitUsd sets the "daily_limit_usd" field.
 func (_c *GroupCreate) SetDailyLimitUsd(v float64) *GroupCreate {
 	_c.mutation.SetDailyLimitUsd(v)
@@ -898,6 +940,18 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultSubscriptionType
 		_c.mutation.SetSubscriptionType(v)
 	}
+	if _, ok := _c.mutation.SubscriptionBillingMode(); !ok {
+		v := group.DefaultSubscriptionBillingMode
+		_c.mutation.SetSubscriptionBillingMode(v)
+	}
+	if _, ok := _c.mutation.RequestLimit5h(); !ok {
+		v := group.DefaultRequestLimit5h
+		_c.mutation.SetRequestLimit5h(v)
+	}
+	if _, ok := _c.mutation.RequestLimit1d(); !ok {
+		v := group.DefaultRequestLimit1d
+		_c.mutation.SetRequestLimit1d(v)
+	}
 	if _, ok := _c.mutation.DefaultValidityDays(); !ok {
 		v := group.DefaultDefaultValidityDays
 		_c.mutation.SetDefaultValidityDays(v)
@@ -1062,6 +1116,30 @@ func (_c *GroupCreate) check() error {
 			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.SubscriptionBillingMode(); !ok {
+		return &ValidationError{Name: "subscription_billing_mode", err: errors.New(`ent: missing required field "Group.subscription_billing_mode"`)}
+	}
+	if v, ok := _c.mutation.SubscriptionBillingMode(); ok {
+		if err := group.SubscriptionBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "subscription_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_billing_mode": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RequestLimit5h(); !ok {
+		return &ValidationError{Name: "request_limit_5h", err: errors.New(`ent: missing required field "Group.request_limit_5h"`)}
+	}
+	if v, ok := _c.mutation.RequestLimit5h(); ok {
+		if err := group.RequestLimit5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_5h", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_5h": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RequestLimit1d(); !ok {
+		return &ValidationError{Name: "request_limit_1d", err: errors.New(`ent: missing required field "Group.request_limit_1d"`)}
+	}
+	if v, ok := _c.mutation.RequestLimit1d(); ok {
+		if err := group.RequestLimit1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_1d", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_1d": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.DefaultValidityDays(); !ok {
 		return &ValidationError{Name: "default_validity_days", err: errors.New(`ent: missing required field "Group.default_validity_days"`)}
 	}
@@ -1224,6 +1302,18 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SubscriptionType(); ok {
 		_spec.SetField(group.FieldSubscriptionType, field.TypeString, value)
 		_node.SubscriptionType = value
+	}
+	if value, ok := _c.mutation.SubscriptionBillingMode(); ok {
+		_spec.SetField(group.FieldSubscriptionBillingMode, field.TypeString, value)
+		_node.SubscriptionBillingMode = value
+	}
+	if value, ok := _c.mutation.RequestLimit5h(); ok {
+		_spec.SetField(group.FieldRequestLimit5h, field.TypeInt, value)
+		_node.RequestLimit5h = value
+	}
+	if value, ok := _c.mutation.RequestLimit1d(); ok {
+		_spec.SetField(group.FieldRequestLimit1d, field.TypeInt, value)
+		_node.RequestLimit1d = value
 	}
 	if value, ok := _c.mutation.DailyLimitUsd(); ok {
 		_spec.SetField(group.FieldDailyLimitUsd, field.TypeFloat64, value)
@@ -1714,6 +1804,54 @@ func (u *GroupUpsert) SetSubscriptionType(v string) *GroupUpsert {
 // UpdateSubscriptionType sets the "subscription_type" field to the value that was provided on create.
 func (u *GroupUpsert) UpdateSubscriptionType() *GroupUpsert {
 	u.SetExcluded(group.FieldSubscriptionType)
+	return u
+}
+
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (u *GroupUpsert) SetSubscriptionBillingMode(v string) *GroupUpsert {
+	u.Set(group.FieldSubscriptionBillingMode, v)
+	return u
+}
+
+// UpdateSubscriptionBillingMode sets the "subscription_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateSubscriptionBillingMode() *GroupUpsert {
+	u.SetExcluded(group.FieldSubscriptionBillingMode)
+	return u
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (u *GroupUpsert) SetRequestLimit5h(v int) *GroupUpsert {
+	u.Set(group.FieldRequestLimit5h, v)
+	return u
+}
+
+// UpdateRequestLimit5h sets the "request_limit_5h" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateRequestLimit5h() *GroupUpsert {
+	u.SetExcluded(group.FieldRequestLimit5h)
+	return u
+}
+
+// AddRequestLimit5h adds v to the "request_limit_5h" field.
+func (u *GroupUpsert) AddRequestLimit5h(v int) *GroupUpsert {
+	u.Add(group.FieldRequestLimit5h, v)
+	return u
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (u *GroupUpsert) SetRequestLimit1d(v int) *GroupUpsert {
+	u.Set(group.FieldRequestLimit1d, v)
+	return u
+}
+
+// UpdateRequestLimit1d sets the "request_limit_1d" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateRequestLimit1d() *GroupUpsert {
+	u.SetExcluded(group.FieldRequestLimit1d)
+	return u
+}
+
+// AddRequestLimit1d adds v to the "request_limit_1d" field.
+func (u *GroupUpsert) AddRequestLimit1d(v int) *GroupUpsert {
+	u.Add(group.FieldRequestLimit1d, v)
 	return u
 }
 
@@ -2584,6 +2722,62 @@ func (u *GroupUpsertOne) SetSubscriptionType(v string) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateSubscriptionType() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSubscriptionType()
+	})
+}
+
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (u *GroupUpsertOne) SetSubscriptionBillingMode(v string) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSubscriptionBillingMode(v)
+	})
+}
+
+// UpdateSubscriptionBillingMode sets the "subscription_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateSubscriptionBillingMode() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSubscriptionBillingMode()
+	})
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (u *GroupUpsertOne) SetRequestLimit5h(v int) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetRequestLimit5h(v)
+	})
+}
+
+// AddRequestLimit5h adds v to the "request_limit_5h" field.
+func (u *GroupUpsertOne) AddRequestLimit5h(v int) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddRequestLimit5h(v)
+	})
+}
+
+// UpdateRequestLimit5h sets the "request_limit_5h" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateRequestLimit5h() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateRequestLimit5h()
+	})
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (u *GroupUpsertOne) SetRequestLimit1d(v int) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetRequestLimit1d(v)
+	})
+}
+
+// AddRequestLimit1d adds v to the "request_limit_1d" field.
+func (u *GroupUpsertOne) AddRequestLimit1d(v int) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddRequestLimit1d(v)
+	})
+}
+
+// UpdateRequestLimit1d sets the "request_limit_1d" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateRequestLimit1d() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateRequestLimit1d()
 	})
 }
 
@@ -3722,6 +3916,62 @@ func (u *GroupUpsertBulk) SetSubscriptionType(v string) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateSubscriptionType() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateSubscriptionType()
+	})
+}
+
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (u *GroupUpsertBulk) SetSubscriptionBillingMode(v string) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSubscriptionBillingMode(v)
+	})
+}
+
+// UpdateSubscriptionBillingMode sets the "subscription_billing_mode" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateSubscriptionBillingMode() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSubscriptionBillingMode()
+	})
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (u *GroupUpsertBulk) SetRequestLimit5h(v int) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetRequestLimit5h(v)
+	})
+}
+
+// AddRequestLimit5h adds v to the "request_limit_5h" field.
+func (u *GroupUpsertBulk) AddRequestLimit5h(v int) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddRequestLimit5h(v)
+	})
+}
+
+// UpdateRequestLimit5h sets the "request_limit_5h" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateRequestLimit5h() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateRequestLimit5h()
+	})
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (u *GroupUpsertBulk) SetRequestLimit1d(v int) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetRequestLimit1d(v)
+	})
+}
+
+// AddRequestLimit1d adds v to the "request_limit_1d" field.
+func (u *GroupUpsertBulk) AddRequestLimit1d(v int) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.AddRequestLimit1d(v)
+	})
+}
+
+// UpdateRequestLimit1d sets the "request_limit_1d" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateRequestLimit1d() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateRequestLimit1d()
 	})
 }
 

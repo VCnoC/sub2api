@@ -4,15 +4,25 @@
  */
 
 import { apiClient } from './client'
-import type { Team, TeamMember, UsageLog, PaginationParams, PaginatedResponse } from '@/types'
+import type { Team, TeamApplication, TeamCreationEligibility, TeamGovernanceState, TeamJoinRequest, TeamMember, UsageLog, PaginationParams, PaginatedResponse } from '@/types'
 
 /**
  * Create a new team
  * @param name - Team name
  * @returns Created team information
  */
-export async function createTeam(name: string): Promise<Team> {
-  const { data } = await apiClient.post<Team>('/user/team', { name })
+export async function createTeam(name: string, reason = '', additionalInfo = ''): Promise<TeamApplication> {
+  const { data } = await apiClient.post<TeamApplication>('/user/team', { name, reason, additional_info: additionalInfo })
+  return data
+}
+
+export async function getMyCreateApplication(): Promise<TeamApplication | null> {
+  const { data } = await apiClient.get<TeamApplication | null>('/user/team/application')
+  return data
+}
+
+export async function getCreationEligibility(): Promise<TeamCreationEligibility> {
+  const { data } = await apiClient.get<TeamCreationEligibility>('/user/team/eligibility')
   return data
 }
 
@@ -38,8 +48,34 @@ export async function refreshInviteCode(): Promise<{ invite_code: string }> {
  * Join a team by invite code
  * @param inviteCode - Team invite code
  */
-export async function joinTeam(inviteCode: string): Promise<void> {
-  await apiClient.post('/user/team/join', { invite_code: inviteCode })
+export async function joinTeam(inviteCode: string, message = ''): Promise<TeamJoinRequest> {
+  const { data } = await apiClient.post<TeamJoinRequest>('/user/team/join', { invite_code: inviteCode, message })
+  return data
+}
+
+export async function listJoinRequests(status = 'pending'): Promise<TeamJoinRequest[]> {
+  const { data } = await apiClient.get<TeamJoinRequest[]>('/user/team/join-requests', { params: { status } })
+  return data
+}
+
+export async function reviewJoinRequest(id: number, approve: boolean, reason = ''): Promise<TeamJoinRequest> {
+  const { data } = await apiClient.post<TeamJoinRequest>(`/user/team/join-requests/${id}/review`, { approve, reason })
+  return data
+}
+
+export async function getTeamGovernance(): Promise<TeamGovernanceState> {
+  const { data } = await apiClient.get<TeamGovernanceState>('/user/team/governance')
+  return data
+}
+
+export async function upgradeTeam(): Promise<TeamGovernanceState> {
+  const { data } = await apiClient.post<TeamGovernanceState>('/user/team/upgrade')
+  return data
+}
+
+export async function requestTeamExpansion(targetLimit: number, reason: string): Promise<TeamApplication> {
+  const { data } = await apiClient.post<TeamApplication>('/user/team/expand', { target_limit: targetLimit, reason })
+  return data
 }
 
 /**

@@ -797,6 +797,7 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/dashboard', label: t('nav.dashboard'), icon: DashboardIcon },
     { path: '/admin/ops', label: t('nav.ops'), icon: ChartIcon, featureFlag: flagOpsMonitoring },
     { path: '/admin/users', label: t('nav.users'), icon: UsersIcon, hideInSimpleMode: true },
+	{ path: '/admin/teams', label: t('nav.teamManagement'), icon: UsersIcon, hideInSimpleMode: true },
     { path: '/admin/tickets', label: t('nav.ticketManagement'), icon: TicketIcon, badge: ticketStore.unreadCount },
     { path: '/admin/groups', label: t('nav.groups'), icon: FolderIcon, hideInSimpleMode: true },
     {

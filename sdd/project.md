@@ -3,6 +3,8 @@
 | ID | 名称 | 状态 | 规格 |
 |----|------|------|------|
 | api-key-group-failover | API Key 有序多分组容灾 | completed | [spec](specs/api-key-group-failover/spec.md) |
+| request-count-subscription | 纯次数订阅套餐 | completed | [spec](specs/request-count-subscription/spec.md) |
+| team-governance | 团队治理与资金防滥用 | completed | [spec](specs/team-governance/spec.md) |
 | support-tickets | 站内工单系统 | in_progress（已部署，待完整功能验收） | [spec](specs/support-tickets/spec.md) |
 | video-platform | 独立视频平台与失败退款 | in_progress | [spec](specs/video-platform/spec.md) |
 | video-platform/playground-video | 对话广场视频生成 | completed | [spec](specs/video-platform/changes/playground-video/spec.md) |

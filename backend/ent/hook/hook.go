@@ -381,6 +381,18 @@ func (f SubscriptionPlanFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SubscriptionPlanMutation", m)
 }
 
+// The SubscriptionRequestReservationFunc type is an adapter to allow the use of ordinary
+// function as SubscriptionRequestReservation mutator.
+type SubscriptionRequestReservationFunc func(context.Context, *ent.SubscriptionRequestReservationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SubscriptionRequestReservationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SubscriptionRequestReservationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SubscriptionRequestReservationMutation", m)
+}
+
 // The SupportTicketFunc type is an adapter to allow the use of ordinary
 // function as SupportTicket mutator.
 type SupportTicketFunc func(context.Context, *ent.SupportTicketMutation) (ent.Value, error)

@@ -4,10 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/usagestats"
 )
@@ -27,10 +26,17 @@ type TeamRepository interface {
 
 // TeamService defines the business operations for teams.
 type TeamService interface {
-	CreateTeam(ctx context.Context, ownerID int64, name string) (*Team, error)
+	CreateTeam(ctx context.Context, ownerID int64, name, reason, additionalInfo string) (*TeamApplication, error)
+	GetMyCreateApplication(ctx context.Context, userID int64) (*TeamApplication, error)
+	GetCreationEligibility(ctx context.Context, userID int64) (*TeamCreationEligibility, error)
 	GetMyTeam(ctx context.Context, userID int64) (*Team, string, error)
 	RefreshInviteCode(ctx context.Context, ownerID int64) (string, error)
-	JoinTeamByCode(ctx context.Context, userID int64, code string) error
+	JoinTeamByCode(ctx context.Context, userID int64, code, message string) (*TeamJoinRequest, error)
+	ListJoinRequests(ctx context.Context, ownerID int64, status string) ([]TeamJoinRequest, error)
+	ReviewJoinRequest(ctx context.Context, ownerID, requestID int64, approve bool, reason string) (*TeamJoinRequest, error)
+	GetGovernanceState(ctx context.Context, userID int64) (*TeamGovernanceState, error)
+	UpgradeTeam(ctx context.Context, ownerID int64) (*TeamGovernanceState, error)
+	SubmitExpandApplication(ctx context.Context, ownerID int64, targetLimit int, reason string) (*TeamApplication, error)
 	LeaveTeam(ctx context.Context, userID int64) error
 	RemoveMember(ctx context.Context, ownerID, memberID int64) error
 	ListMembers(ctx context.Context, userID int64, page, pageSize int) ([]TeamMember, int64, error)
@@ -38,18 +44,36 @@ type TeamService interface {
 	ListMemberUsage(ctx context.Context, requesterID, memberID int64, startTime, endTime time.Time, page, pageSize int) ([]UsageLog, *pagination.PaginationResult, error)
 	DepositToFund(ctx context.Context, userID int64, amount float64, password string) error
 	AllocateFund(ctx context.Context, ownerID, memberID int64, amount float64, password string) error
+	GetSettings(ctx context.Context) (*TeamGovernanceSettings, error)
+	UpdateSettings(ctx context.Context, adminID int64, settings TeamGovernanceSettings) (*TeamGovernanceSettings, error)
+	GetAdminStats(ctx context.Context) (*TeamAdminStats, error)
+	ListAdminTeams(ctx context.Context, search, status string, page, pageSize int) ([]AdminTeamSummary, int64, error)
+	GetAdminTeam(ctx context.Context, teamID int64) (*AdminTeamDetail, error)
+	ListApplications(ctx context.Context, status string, page, pageSize int) ([]TeamApplication, int64, error)
+	ReviewApplication(ctx context.Context, applicationID, adminID int64, input ReviewTeamApplicationInput) (*TeamApplication, error)
+	SetTeamStatus(ctx context.Context, teamID int64, status string) error
+	SetTeamMemberLimit(ctx context.Context, teamID int64, limit int) error
+	MarkTeamReviewed(ctx context.Context, teamID int64) error
+	AdminRemoveMember(ctx context.Context, teamID, memberID int64) error
 }
 
 // Team represents a team.
 type Team struct {
-	ID         int64
-	Name       string
-	OwnerID    int64
-	InviteCode string
-	Status     string
-	Balance    float64
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID                  int64
+	Name                string
+	OwnerID             int64
+	InviteCode          string
+	Status              string
+	Balance             float64
+	MemberLimit         int
+	Level               int
+	ReviewRequired      bool
+	MemberCount         int
+	EffectiveRecharge   float64
+	Spend7Days          float64
+	TransferableBalance float64
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 // TeamMember extends User with team-specific usage information.
@@ -64,9 +88,9 @@ type TeamMember struct {
 
 type teamServiceImpl struct {
 	teamRepo            TeamRepository
+	governanceRepo      TeamGovernanceRepository
 	userRepo            UserRepository
 	usageLogRepo        UsageLogRepository
-	redeemCodeRepo      RedeemCodeRepository
 	authService         *AuthService
 	billingCacheService *BillingCacheService
 }
@@ -74,23 +98,27 @@ type teamServiceImpl struct {
 // NewTeamService creates a new TeamService.
 func NewTeamService(
 	teamRepo TeamRepository,
+	governanceRepo TeamGovernanceRepository,
 	userRepo UserRepository,
 	usageLogRepo UsageLogRepository,
-	redeemCodeRepo RedeemCodeRepository,
 	authService *AuthService,
 	billingCacheService *BillingCacheService,
 ) TeamService {
 	return &teamServiceImpl{
 		teamRepo:            teamRepo,
+		governanceRepo:      governanceRepo,
 		userRepo:            userRepo,
 		usageLogRepo:        usageLogRepo,
-		redeemCodeRepo:      redeemCodeRepo,
 		authService:         authService,
 		billingCacheService: billingCacheService,
 	}
 }
 
-func (s *teamServiceImpl) CreateTeam(ctx context.Context, ownerID int64, name string) (*Team, error) {
+func (s *teamServiceImpl) CreateTeam(ctx context.Context, ownerID int64, name, reason, additionalInfo string) (*TeamApplication, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || len([]rune(name)) > 100 {
+		return nil, ErrInvalidTeamName
+	}
 	owner, err := s.userRepo.GetByID(ctx, ownerID)
 	if err != nil {
 		return nil, err
@@ -99,27 +127,27 @@ func (s *teamServiceImpl) CreateTeam(ctx context.Context, ownerID int64, name st
 		return nil, ErrAlreadyInTeam
 	}
 
-	code, err := generateTeamInviteCode()
+	return s.governanceRepo.SubmitCreateApplication(ctx, ownerID, name, strings.TrimSpace(reason), strings.TrimSpace(additionalInfo))
+}
+
+func (s *teamServiceImpl) GetMyCreateApplication(ctx context.Context, userID int64) (*TeamApplication, error) {
+	return s.governanceRepo.GetLatestCreateApplication(ctx, userID)
+}
+
+func (s *teamServiceImpl) GetCreationEligibility(ctx context.Context, userID int64) (*TeamCreationEligibility, error) {
+	days, recharge, err := s.governanceRepo.GetUserEligibility(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-
-	team := &Team{
-		Name:       name,
-		OwnerID:    ownerID,
-		InviteCode: code,
-		Status:     StatusActive,
-	}
-	if err := s.teamRepo.Create(ctx, team); err != nil {
+	settings, err := s.governanceRepo.GetSettings(ctx)
+	if err != nil {
 		return nil, err
 	}
-
-	// Bind owner to the team
-	if err := s.userRepo.UpdateTeamMembership(ctx, ownerID, team.ID, TeamRoleOwner); err != nil {
-		return nil, err
-	}
-
-	return team, nil
+	return &TeamCreationEligibility{
+		RegistrationDays: days, EffectiveRecharge: recharge,
+		Eligible: settings.Configured && days >= settings.MinRegistrationDays && recharge >= settings.MinTotalRecharge,
+		Settings: *settings,
+	}, nil
 }
 
 func (s *teamServiceImpl) GetMyTeam(ctx context.Context, userID int64) (*Team, string, error) {
@@ -135,6 +163,17 @@ func (s *teamServiceImpl) GetMyTeam(ctx context.Context, userID int64) (*Team, s
 	if err != nil {
 		return nil, "", err
 	}
+	state, err := s.governanceRepo.GetGovernanceState(ctx, userID, team.ID)
+	if err != nil {
+		return nil, "", err
+	}
+	team.MemberLimit = state.MemberLimit
+	team.Level = state.Level
+	team.ReviewRequired = state.ReviewRequired
+	team.MemberCount = state.MemberCount
+	team.EffectiveRecharge = state.EffectiveRecharge
+	team.Spend7Days = state.Spend7Days
+	team.TransferableBalance = state.TransferableBalance
 	return team, user.TeamRole, nil
 }
 
@@ -142,6 +181,9 @@ func (s *teamServiceImpl) RefreshInviteCode(ctx context.Context, ownerID int64) 
 	team, err := s.teamRepo.GetByOwnerID(ctx, ownerID)
 	if err != nil {
 		return "", err
+	}
+	if team.Status != StatusActive {
+		return "", ErrTeamFrozen
 	}
 
 	code, err := generateTeamInviteCode()
@@ -155,25 +197,63 @@ func (s *teamServiceImpl) RefreshInviteCode(ctx context.Context, ownerID int64) 
 	return code, nil
 }
 
-func (s *teamServiceImpl) JoinTeamByCode(ctx context.Context, userID int64, code string) error {
+func (s *teamServiceImpl) JoinTeamByCode(ctx context.Context, userID int64, code, message string) (*TeamJoinRequest, error) {
 	if code == "" {
-		return ErrInviteCodeInvalid
+		return nil, ErrInviteCodeInvalid
 	}
 
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if user.TeamID != nil && *user.TeamID != 0 {
-		return ErrAlreadyInTeam
+		return nil, ErrAlreadyInTeam
 	}
+	return s.governanceRepo.SubmitJoinRequest(ctx, userID, strings.TrimSpace(code), strings.TrimSpace(message))
+}
 
-	team, err := s.teamRepo.GetByInviteCode(ctx, code)
+func (s *teamServiceImpl) ListJoinRequests(ctx context.Context, ownerID int64, status string) ([]TeamJoinRequest, error) {
+	return s.governanceRepo.ListJoinRequests(ctx, ownerID, status)
+}
+
+func (s *teamServiceImpl) ReviewJoinRequest(ctx context.Context, ownerID, requestID int64, approve bool, reason string) (*TeamJoinRequest, error) {
+	return s.governanceRepo.ReviewJoinRequest(ctx, ownerID, requestID, approve, strings.TrimSpace(reason))
+}
+
+func (s *teamServiceImpl) GetGovernanceState(ctx context.Context, userID int64) (*TeamGovernanceState, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return ErrInviteCodeInvalid
+		return nil, err
 	}
+	if user.TeamID == nil {
+		return nil, ErrNotInTeam
+	}
+	return s.governanceRepo.GetGovernanceState(ctx, userID, *user.TeamID)
+}
 
-	return s.userRepo.UpdateTeamMembership(ctx, userID, team.ID, TeamRoleMember)
+func (s *teamServiceImpl) UpgradeTeam(ctx context.Context, ownerID int64) (*TeamGovernanceState, error) {
+	owner, err := s.userRepo.GetByID(ctx, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if owner.TeamID == nil || owner.TeamRole != TeamRoleOwner {
+		return nil, ErrNotTeamOwner
+	}
+	return s.governanceRepo.UpgradeTeam(ctx, ownerID, *owner.TeamID)
+}
+
+func (s *teamServiceImpl) SubmitExpandApplication(ctx context.Context, ownerID int64, targetLimit int, reason string) (*TeamApplication, error) {
+	if targetLimit <= 40 || strings.TrimSpace(reason) == "" {
+		return nil, ErrInvalidTeamLimit
+	}
+	owner, err := s.userRepo.GetByID(ctx, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if owner.TeamID == nil || owner.TeamRole != TeamRoleOwner {
+		return nil, ErrNotTeamOwner
+	}
+	return s.governanceRepo.SubmitExpandApplication(ctx, ownerID, *owner.TeamID, targetLimit, strings.TrimSpace(reason))
 }
 
 func (s *teamServiceImpl) LeaveTeam(ctx context.Context, userID int64) error {
@@ -290,53 +370,8 @@ func (s *teamServiceImpl) TransferBalance(ctx context.Context, ownerID, memberID
 		return ErrTeamPasswordIncorrect
 	}
 
-	if owner.Balance < amount {
-		return ErrInsufficientTeamBalance
-	}
-
-	// Deduct from owner and add to member atomically via repository operations.
-	// Both UpdateBalance calls support negative amounts; we run them sequentially
-	// inside the service. The repository UpdateBalance uses an UPDATE statement
-	// which is atomic at the row level. For stricter atomicity, this can later be
-	// wrapped in a DB transaction.
-	if err := s.userRepo.UpdateBalance(ctx, ownerID, -amount); err != nil {
+	if err := s.governanceRepo.TransferTeamBalance(ctx, ownerID, memberID, *owner.TeamID, amount); err != nil {
 		return err
-	}
-	if err := s.userRepo.UpdateBalance(ctx, memberID, amount); err != nil {
-		// Best-effort rollback: restore owner balance.
-		_ = s.userRepo.UpdateBalance(ctx, ownerID, amount)
-		return err
-	}
-
-	// Record audit redeem codes
-	outCode, _ := GenerateRedeemCode()
-	inCode, _ := GenerateRedeemCode()
-	now := time.Now()
-
-	outRecord := &RedeemCode{
-		Code:   outCode,
-		Type:   RedeemTypeTeamTransferOut,
-		Value:  -amount,
-		Status: StatusUsed,
-		UsedBy: &ownerID,
-		Notes:  fmt.Sprintf("transfer to team member %d", memberID),
-		UsedAt: &now,
-	}
-	inRecord := &RedeemCode{
-		Code:   inCode,
-		Type:   RedeemTypeTeamTransferIn,
-		Value:  amount,
-		Status: StatusUsed,
-		UsedBy: &memberID,
-		Notes:  fmt.Sprintf("transfer from team owner %d", ownerID),
-		UsedAt: &now,
-	}
-
-	if err := s.redeemCodeRepo.Create(ctx, outRecord); err != nil {
-		logger.LegacyPrintf("service.team", "failed to create team transfer out record: %v", err)
-	}
-	if err := s.redeemCodeRepo.Create(ctx, inRecord); err != nil {
-		logger.LegacyPrintf("service.team", "failed to create team transfer in record: %v", err)
 	}
 
 	// Invalidate billing cache for both users
@@ -369,33 +404,8 @@ func (s *teamServiceImpl) DepositToFund(ctx context.Context, userID int64, amoun
 	if !s.authService.CheckPassword(password, user.PasswordHash) {
 		return ErrTeamPasswordIncorrect
 	}
-	if user.Balance < amount {
-		return ErrInsufficientTeamBalance
-	}
-
-	// 先扣个人余额，再入团队资金；入账失败则尽力回滚个人余额
-	if err := s.userRepo.UpdateBalance(ctx, userID, -amount); err != nil {
+	if err := s.governanceRepo.DepositTeamFund(ctx, userID, *user.TeamID, amount); err != nil {
 		return err
-	}
-	if err := s.teamRepo.AddBalance(ctx, *user.TeamID, amount); err != nil {
-		_ = s.userRepo.UpdateBalance(ctx, userID, amount)
-		return err
-	}
-
-	// 审计记录
-	code, _ := GenerateRedeemCode()
-	now := time.Now()
-	record := &RedeemCode{
-		Code:   code,
-		Type:   RedeemTypeTeamFundDeposit,
-		Value:  -amount,
-		Status: StatusUsed,
-		UsedBy: &userID,
-		Notes:  fmt.Sprintf("deposit to team %d fund", *user.TeamID),
-		UsedAt: &now,
-	}
-	if err := s.redeemCodeRepo.Create(ctx, record); err != nil {
-		logger.LegacyPrintf("service.team", "failed to create team fund deposit record: %v", err)
 	}
 
 	if s.billingCacheService != nil {
@@ -435,29 +445,8 @@ func (s *teamServiceImpl) AllocateFund(ctx context.Context, ownerID, memberID in
 		return ErrTeamPasswordIncorrect
 	}
 
-	// 条件扣减团队资金（余额不足时原子失败），再给成员入账；失败则尽力回滚团队资金
-	if err := s.teamRepo.DeductBalance(ctx, *owner.TeamID, amount); err != nil {
+	if err := s.governanceRepo.AllocateTeamFund(ctx, ownerID, memberID, *owner.TeamID, amount); err != nil {
 		return err
-	}
-	if err := s.userRepo.UpdateBalance(ctx, memberID, amount); err != nil {
-		_ = s.teamRepo.AddBalance(ctx, *owner.TeamID, amount)
-		return err
-	}
-
-	// 审计记录
-	code, _ := GenerateRedeemCode()
-	now := time.Now()
-	record := &RedeemCode{
-		Code:   code,
-		Type:   RedeemTypeTeamFundAllocate,
-		Value:  amount,
-		Status: StatusUsed,
-		UsedBy: &memberID,
-		Notes:  fmt.Sprintf("allocated from team %d fund by owner %d", *owner.TeamID, ownerID),
-		UsedAt: &now,
-	}
-	if err := s.redeemCodeRepo.Create(ctx, record); err != nil {
-		logger.LegacyPrintf("service.team", "failed to create team fund allocate record: %v", err)
 	}
 
 	if s.billingCacheService != nil {
@@ -471,7 +460,8 @@ func (s *teamServiceImpl) AllocateFund(ctx context.Context, ownerID, memberID in
 	return nil
 }
 
-func (s *teamServiceImpl) aggregateUsageByUserIDs(ctx context.Context, userIDs []int64) (map[int64]float64, error) {	result := make(map[int64]float64, len(userIDs))
+func (s *teamServiceImpl) aggregateUsageByUserIDs(ctx context.Context, userIDs []int64) (map[int64]float64, error) {
+	result := make(map[int64]float64, len(userIDs))
 	if len(userIDs) == 0 || s.usageLogRepo == nil {
 		return result, nil
 	}
@@ -520,6 +510,73 @@ func (s *teamServiceImpl) ListMemberUsage(ctx context.Context, requesterID, memb
 	}
 
 	return s.usageLogRepo.ListWithFilters(ctx, params, filters)
+}
+
+func (s *teamServiceImpl) GetSettings(ctx context.Context) (*TeamGovernanceSettings, error) {
+	return s.governanceRepo.GetSettings(ctx)
+}
+
+func (s *teamServiceImpl) UpdateSettings(ctx context.Context, adminID int64, settings TeamGovernanceSettings) (*TeamGovernanceSettings, error) {
+	if settings.MinRegistrationDays < 0 || settings.MinTotalRecharge < 0 {
+		return nil, ErrInvalidTeamSettings
+	}
+	for _, level := range settings.Levels {
+		if (level.Limit != 5 && level.Limit != 15 && level.Limit != 40) || level.Recharge < 0 || level.Spend7Days < 0 || (level.Mode != "and" && level.Mode != "or") {
+			return nil, ErrInvalidTeamSettings
+		}
+	}
+	return s.governanceRepo.UpdateSettings(ctx, adminID, settings)
+}
+
+func (s *teamServiceImpl) GetAdminStats(ctx context.Context) (*TeamAdminStats, error) {
+	return s.governanceRepo.GetAdminStats(ctx)
+}
+
+func (s *teamServiceImpl) ListAdminTeams(ctx context.Context, search, status string, page, pageSize int) ([]AdminTeamSummary, int64, error) {
+	return s.governanceRepo.ListAdminTeams(ctx, strings.TrimSpace(search), strings.TrimSpace(status), page, pageSize)
+}
+
+func (s *teamServiceImpl) GetAdminTeam(ctx context.Context, teamID int64) (*AdminTeamDetail, error) {
+	return s.governanceRepo.GetAdminTeam(ctx, teamID)
+}
+
+func (s *teamServiceImpl) ListApplications(ctx context.Context, status string, page, pageSize int) ([]TeamApplication, int64, error) {
+	return s.governanceRepo.ListApplications(ctx, strings.TrimSpace(status), page, pageSize)
+}
+
+func (s *teamServiceImpl) ReviewApplication(ctx context.Context, applicationID, adminID int64, input ReviewTeamApplicationInput) (*TeamApplication, error) {
+	code := ""
+	if input.Approve {
+		var err error
+		code, err = generateTeamInviteCode()
+		if err != nil {
+			return nil, err
+		}
+	}
+	input.ReviewReason = strings.TrimSpace(input.ReviewReason)
+	return s.governanceRepo.ReviewApplication(ctx, applicationID, adminID, input, code)
+}
+
+func (s *teamServiceImpl) SetTeamStatus(ctx context.Context, teamID int64, status string) error {
+	if status != StatusActive && status != StatusDisabled {
+		return ErrTeamNotFound
+	}
+	return s.governanceRepo.SetTeamStatus(ctx, teamID, status)
+}
+
+func (s *teamServiceImpl) SetTeamMemberLimit(ctx context.Context, teamID int64, limit int) error {
+	if limit <= 0 {
+		return ErrInvalidTeamLimit
+	}
+	return s.governanceRepo.SetTeamMemberLimit(ctx, teamID, limit)
+}
+
+func (s *teamServiceImpl) MarkTeamReviewed(ctx context.Context, teamID int64) error {
+	return s.governanceRepo.MarkTeamReviewed(ctx, teamID)
+}
+
+func (s *teamServiceImpl) AdminRemoveMember(ctx context.Context, teamID, memberID int64) error {
+	return s.governanceRepo.AdminRemoveMember(ctx, teamID, memberID)
 }
 
 func generateTeamInviteCode() (string, error) {

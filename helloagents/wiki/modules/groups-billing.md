@@ -57,7 +57,22 @@
 - 参数错误、权限错误、客户端取消、响应已提交或异步任务可能已创建时不切换。
 - 用量和扣费始终归属实际成功的 `group_id`、`subscription_id` 与账号。
 
+### 需求: 纯次数订阅套餐
+**模块:** 分组与计费
+
+#### 场景: 管理员创建次数套餐
+- 继续使用“订阅分组 -> 套餐绑定分组”流程，不新增独立次卡入口。
+- 订阅分组可选择 `usd` 或 `request_count`；次数模式配置 5 小时和 24 小时上限，0 表示该窗口不限，两个窗口不能同时为 0。
+- 次数模式清空日/周/月 USD 限额；套餐卡和用户订阅页展示次数权益。
+
+#### 场景: 文本请求扣次
+- Messages、Chat Completions、Responses 和 Gemini 文本生成在请求上游前精确占位；图片、视频、count_tokens 和只读接口不占次数。
+- 成功请求确认 1 次；校验失败、超时和上游 4xx/5xx 释放。上游已开始成功响应后客户端中断仍确认。
+- 账号重试复用同一占位，跨组前释放旧占位；同组多张权益按 `expires_at ASC, id ASC` 使用。
+- 5 小时和 24 小时窗口从首次成功请求开始；并发 pending 参与上限检查，防止超发。
+
 ## 变更历史
+- [202607202113_request_count_subscription](../../history/2026-07/202607202113_request_count_subscription/) - 纯次数订阅分组、PostgreSQL 请求占位与成功扣次。
 - [202607202023_api_key_group_rate_display](../../history/2026-07/202607202023_api_key_group_rate_display/) - 恢复 Key 分组下拉选项的倍率展示。
 - [202607181905_api_key_group_failover](../../history/2026-07/202607181905_api_key_group_failover/) - API Key 有序多分组、按优先级容灾与实际分组计费。
 - [202607181652_upstream_0_1_160_merge](../../history/2026-07/202607181652_upstream_0_1_160_merge/) - 将本地多订阅迁移顺延至 183/184，并保留独立权益消费语义。

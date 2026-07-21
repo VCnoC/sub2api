@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/supportticket"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
@@ -430,6 +431,21 @@ func (_c *UserCreate) AddSubscriptions(v ...*UserSubscription) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddSubscriptionIDs(ids...)
+}
+
+// AddSubscriptionRequestReservationIDs adds the "subscription_request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_c *UserCreate) AddSubscriptionRequestReservationIDs(ids ...int64) *UserCreate {
+	_c.mutation.AddSubscriptionRequestReservationIDs(ids...)
+	return _c
+}
+
+// AddSubscriptionRequestReservations adds the "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_c *UserCreate) AddSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *UserCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSubscriptionRequestReservationIDs(ids...)
 }
 
 // AddAssignedSubscriptionIDs adds the "assigned_subscriptions" edge to the UserSubscription entity by IDs.
@@ -1068,6 +1084,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usersubscription.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SubscriptionRequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SubscriptionRequestReservationsTable,
+			Columns: []string{user.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

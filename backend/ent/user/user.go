@@ -73,6 +73,8 @@ const (
 	EdgeRedeemCodes = "redeem_codes"
 	// EdgeSubscriptions holds the string denoting the subscriptions edge name in mutations.
 	EdgeSubscriptions = "subscriptions"
+	// EdgeSubscriptionRequestReservations holds the string denoting the subscription_request_reservations edge name in mutations.
+	EdgeSubscriptionRequestReservations = "subscription_request_reservations"
 	// EdgeAssignedSubscriptions holds the string denoting the assigned_subscriptions edge name in mutations.
 	EdgeAssignedSubscriptions = "assigned_subscriptions"
 	// EdgeAnnouncementReads holds the string denoting the announcement_reads edge name in mutations.
@@ -134,6 +136,13 @@ const (
 	SubscriptionsInverseTable = "user_subscriptions"
 	// SubscriptionsColumn is the table column denoting the subscriptions relation/edge.
 	SubscriptionsColumn = "user_id"
+	// SubscriptionRequestReservationsTable is the table that holds the subscription_request_reservations relation/edge.
+	SubscriptionRequestReservationsTable = "subscription_request_reservations"
+	// SubscriptionRequestReservationsInverseTable is the table name for the SubscriptionRequestReservation entity.
+	// It exists in this package in order to avoid circular dependency with the "subscriptionrequestreservation" package.
+	SubscriptionRequestReservationsInverseTable = "subscription_request_reservations"
+	// SubscriptionRequestReservationsColumn is the table column denoting the subscription_request_reservations relation/edge.
+	SubscriptionRequestReservationsColumn = "user_id"
 	// AssignedSubscriptionsTable is the table that holds the assigned_subscriptions relation/edge.
 	AssignedSubscriptionsTable = "user_subscriptions"
 	// AssignedSubscriptionsInverseTable is the table name for the UserSubscription entity.
@@ -554,6 +563,20 @@ func BySubscriptions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// BySubscriptionRequestReservationsCount orders the results by subscription_request_reservations count.
+func BySubscriptionRequestReservationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSubscriptionRequestReservationsStep(), opts...)
+	}
+}
+
+// BySubscriptionRequestReservations orders the results by subscription_request_reservations terms.
+func BySubscriptionRequestReservations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSubscriptionRequestReservationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByAssignedSubscriptionsCount orders the results by assigned_subscriptions count.
 func ByAssignedSubscriptionsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -831,6 +854,13 @@ func newSubscriptionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SubscriptionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionsTable, SubscriptionsColumn),
+	)
+}
+func newSubscriptionRequestReservationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SubscriptionRequestReservationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionRequestReservationsTable, SubscriptionRequestReservationsColumn),
 	)
 }
 func newAssignedSubscriptionsStep() *sqlgraph.Step {

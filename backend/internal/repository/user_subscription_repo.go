@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
@@ -38,6 +40,10 @@ func (r *userSubscriptionRepository) Create(ctx context.Context, sub *service.Us
 		SetDailyUsageUsd(sub.DailyUsageUSD).
 		SetWeeklyUsageUsd(sub.WeeklyUsageUSD).
 		SetMonthlyUsageUsd(sub.MonthlyUsageUSD).
+		SetRequestUsage5h(sub.RequestUsage5h).
+		SetRequestUsage1d(sub.RequestUsage1d).
+		SetNillableRequestWindow5hStart(sub.RequestWindow5hStart).
+		SetNillableRequestWindow1dStart(sub.RequestWindow1dStart).
 		SetNillableAssignedBy(sub.AssignedBy)
 
 	if sub.StartsAt.IsZero() {
@@ -139,6 +145,10 @@ func (r *userSubscriptionRepository) Update(ctx context.Context, sub *service.Us
 		SetDailyUsageUsd(sub.DailyUsageUSD).
 		SetWeeklyUsageUsd(sub.WeeklyUsageUSD).
 		SetMonthlyUsageUsd(sub.MonthlyUsageUSD).
+		SetRequestUsage5h(sub.RequestUsage5h).
+		SetRequestUsage1d(sub.RequestUsage1d).
+		SetNillableRequestWindow5hStart(sub.RequestWindow5hStart).
+		SetNillableRequestWindow1dStart(sub.RequestWindow1dStart).
 		SetNillableAssignedBy(sub.AssignedBy).
 		SetAssignedAt(sub.AssignedAt).
 		SetNotes(sub.Notes)
@@ -486,6 +496,279 @@ func (r *userSubscriptionRepository) IncrementUsage(ctx context.Context, id int6
 	return service.ErrSubscriptionNotFound
 }
 
+func (r *userSubscriptionRepository) ReserveRequestCount(ctx context.Context, requestID string, apiKeyID, userID, groupID int64, expiresAt time.Time) (_ *service.SubscriptionRequestReservation, err error) {
+	if requestID == "" || apiKeyID <= 0 || userID <= 0 || groupID <= 0 {
+		return nil, service.ErrInvalidInput
+	}
+
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if tx != nil {
+			_ = tx.Rollback()
+		}
+	}()
+	txClient := tx.Client()
+
+	if existing, findErr := findRequestCountReservation(ctx, txClient, requestID, apiKeyID, groupID); findErr == nil {
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+		tx = nil
+		return existing, nil
+	} else if !errors.Is(findErr, sql.ErrNoRows) {
+		return nil, findErr
+	}
+
+	if _, err := txClient.ExecContext(ctx, releaseExpiredRequestCountReservationsSQL, userID, groupID); err != nil {
+		return nil, err
+	}
+
+	var subscriptionID int64
+	var window5hStart, window1dStart sql.NullTime
+	err = scanSingleRow(ctx, txClient, reserveRequestCountSubscriptionSQL, []any{userID, groupID},
+		&subscriptionID,
+		&window5hStart,
+		&window1dStart,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		exists, existsErr := txClient.UserSubscription.Query().
+			Where(
+				usersubscription.UserIDEQ(userID),
+				usersubscription.GroupIDEQ(groupID),
+				usersubscription.StatusEQ(service.SubscriptionStatusActive),
+				usersubscription.ExpiresAtGT(time.Now()),
+			).
+			Exist(ctx)
+		if existsErr != nil {
+			return nil, existsErr
+		}
+		if !exists {
+			return nil, service.ErrSubscriptionNotFound
+		}
+		return nil, service.ErrRequestCountLimitExceeded
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	reservation := &service.SubscriptionRequestReservation{
+		RequestID:      requestID,
+		APIKeyID:       apiKeyID,
+		UserID:         userID,
+		SubscriptionID: subscriptionID,
+		Status:         service.SubscriptionRequestReservationPending,
+		Window5hStart:  nullTimePointer(window5hStart),
+		Window1dStart:  nullTimePointer(window1dStart),
+		ExpiresAt:      expiresAt,
+	}
+	err = scanSingleRow(ctx, txClient, `
+			INSERT INTO subscription_request_reservations (
+			request_id, api_key_id, user_id, subscription_id, status,
+			window_5h_start, window_1d_start, expires_at, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, NOW(), NOW())
+		ON CONFLICT (request_id, subscription_id) DO UPDATE SET
+			api_key_id = EXCLUDED.api_key_id,
+			user_id = EXCLUDED.user_id,
+			status = 'pending',
+			window_5h_start = EXCLUDED.window_5h_start,
+			window_1d_start = EXCLUDED.window_1d_start,
+			expires_at = EXCLUDED.expires_at,
+			updated_at = NOW()
+		WHERE subscription_request_reservations.status = 'released'
+			RETURNING id
+		`, []any{requestID, apiKeyID, userID, subscriptionID, reservation.Window5hStart, reservation.Window1dStart, expiresAt}, &reservation.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	tx = nil
+	return reservation, nil
+}
+
+func (r *userSubscriptionRepository) ReleaseRequestCount(ctx context.Context, reservationID int64) (_ error) {
+	if reservationID <= 0 {
+		return nil
+	}
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	txClient := tx.Client()
+
+	var subscriptionID int64
+	var window5hStart, window1dStart sql.NullTime
+	err = scanSingleRow(ctx, txClient, `
+			UPDATE subscription_request_reservations
+		SET status = 'released', updated_at = NOW()
+		WHERE id = $1 AND status = 'pending'
+			RETURNING subscription_id, window_5h_start, window_1d_start
+		`, []any{reservationID}, &subscriptionID, &window5hStart, &window1dStart)
+	if errors.Is(err, sql.ErrNoRows) {
+		return tx.Commit()
+	}
+	if err != nil {
+		return err
+	}
+
+	if _, err := txClient.ExecContext(ctx, releaseRequestCountUsageSQL,
+		subscriptionID,
+		nullTimeValue(window5hStart),
+		nullTimeValue(window1dStart),
+	); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func findRequestCountReservation(ctx context.Context, client *dbent.Client, requestID string, apiKeyID, groupID int64) (*service.SubscriptionRequestReservation, error) {
+	var reservation service.SubscriptionRequestReservation
+	var window5hStart, window1dStart sql.NullTime
+	err := scanSingleRow(ctx, client, `
+		SELECT r.id, r.request_id, r.api_key_id, r.user_id, r.subscription_id,
+			r.status, r.window_5h_start, r.window_1d_start, r.expires_at
+		FROM subscription_request_reservations r
+		JOIN user_subscriptions us ON us.id = r.subscription_id
+		WHERE r.request_id = $1 AND r.api_key_id = $2 AND us.group_id = $3
+			AND r.status IN ('pending', 'committed')
+		ORDER BY r.id
+		LIMIT 1
+		FOR UPDATE OF r
+	`, []any{requestID, apiKeyID, groupID},
+		&reservation.ID,
+		&reservation.RequestID,
+		&reservation.APIKeyID,
+		&reservation.UserID,
+		&reservation.SubscriptionID,
+		&reservation.Status,
+		&window5hStart,
+		&window1dStart,
+		&reservation.ExpiresAt)
+	reservation.Window5hStart = nullTimePointer(window5hStart)
+	reservation.Window1dStart = nullTimePointer(window1dStart)
+	return &reservation, err
+}
+
+func nullTimePointer(value sql.NullTime) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	t := value.Time
+	return &t
+}
+
+func nullTimeValue(value sql.NullTime) any {
+	if !value.Valid {
+		return nil
+	}
+	return value.Time
+}
+
+const releaseExpiredRequestCountReservationsSQL = `
+	WITH expired AS (
+		UPDATE subscription_request_reservations r
+		SET status = 'released', updated_at = NOW()
+		FROM user_subscriptions target
+		WHERE r.subscription_id = target.id
+			AND target.user_id = $1
+			AND target.group_id = $2
+			AND r.status = 'pending'
+			AND r.expires_at <= NOW()
+		RETURNING r.subscription_id, r.window_5h_start, r.window_1d_start
+	), released AS (
+		SELECT e.subscription_id,
+			COUNT(*) FILTER (
+				WHERE e.window_5h_start IS NOT DISTINCT FROM us.request_window_5h_start
+			) AS count_5h,
+			COUNT(*) FILTER (
+				WHERE e.window_1d_start IS NOT DISTINCT FROM us.request_window_1d_start
+			) AS count_1d
+		FROM expired e
+		JOIN user_subscriptions us ON us.id = e.subscription_id
+		GROUP BY e.subscription_id
+	)
+	UPDATE user_subscriptions us
+	SET request_window_5h_start = CASE
+			WHEN released.count_5h >= us.request_usage_5h THEN NULL
+			ELSE us.request_window_5h_start END,
+		request_window_1d_start = CASE
+			WHEN released.count_1d >= us.request_usage_1d THEN NULL
+			ELSE us.request_window_1d_start END,
+		request_usage_5h = GREATEST(0, us.request_usage_5h - released.count_5h),
+		request_usage_1d = GREATEST(0, us.request_usage_1d - released.count_1d),
+		updated_at = NOW()
+	FROM released
+	WHERE us.id = released.subscription_id
+`
+
+const reserveRequestCountSubscriptionSQL = `
+	WITH candidate AS (
+		SELECT us.id,
+			g.request_limit_5h,
+			g.request_limit_1d,
+			CASE WHEN us.request_window_5h_start IS NULL OR us.request_window_5h_start + INTERVAL '5 hours' <= NOW()
+				THEN 0 ELSE us.request_usage_5h END AS usage_5h,
+			CASE WHEN us.request_window_1d_start IS NULL OR us.request_window_1d_start + INTERVAL '24 hours' <= NOW()
+				THEN 0 ELSE us.request_usage_1d END AS usage_1d,
+			CASE WHEN us.request_window_5h_start IS NULL OR us.request_window_5h_start + INTERVAL '5 hours' <= NOW()
+				THEN NOW() ELSE us.request_window_5h_start END AS window_5h_start,
+			CASE WHEN us.request_window_1d_start IS NULL OR us.request_window_1d_start + INTERVAL '24 hours' <= NOW()
+				THEN NOW() ELSE us.request_window_1d_start END AS window_1d_start
+		FROM user_subscriptions us
+		JOIN groups g ON g.id = us.group_id AND g.deleted_at IS NULL
+		WHERE us.user_id = $1
+			AND us.group_id = $2
+			AND us.deleted_at IS NULL
+			AND us.status = 'active'
+			AND us.starts_at <= NOW()
+			AND us.expires_at > NOW()
+			AND g.subscription_type = 'subscription'
+			AND g.subscription_billing_mode = 'request_count'
+			AND (g.request_limit_5h = 0 OR
+				CASE WHEN us.request_window_5h_start IS NULL OR us.request_window_5h_start + INTERVAL '5 hours' <= NOW()
+					THEN 0 ELSE us.request_usage_5h END < g.request_limit_5h)
+			AND (g.request_limit_1d = 0 OR
+				CASE WHEN us.request_window_1d_start IS NULL OR us.request_window_1d_start + INTERVAL '24 hours' <= NOW()
+					THEN 0 ELSE us.request_usage_1d END < g.request_limit_1d)
+		ORDER BY us.expires_at ASC, us.id ASC
+		LIMIT 1
+		FOR UPDATE OF us
+	)
+	UPDATE user_subscriptions us
+	SET request_usage_5h = CASE WHEN c.request_limit_5h > 0 THEN c.usage_5h + 1 ELSE 0 END,
+		request_usage_1d = CASE WHEN c.request_limit_1d > 0 THEN c.usage_1d + 1 ELSE 0 END,
+		request_window_5h_start = CASE WHEN c.request_limit_5h > 0 THEN c.window_5h_start ELSE NULL END,
+		request_window_1d_start = CASE WHEN c.request_limit_1d > 0 THEN c.window_1d_start ELSE NULL END,
+		updated_at = NOW()
+	FROM candidate c
+	WHERE us.id = c.id
+	RETURNING us.id, us.request_window_5h_start, us.request_window_1d_start
+`
+
+const releaseRequestCountUsageSQL = `
+	UPDATE user_subscriptions
+	SET request_window_5h_start = CASE
+			WHEN request_window_5h_start IS NOT DISTINCT FROM $2 AND request_usage_5h <= 1 THEN NULL
+			ELSE request_window_5h_start END,
+		request_window_1d_start = CASE
+			WHEN request_window_1d_start IS NOT DISTINCT FROM $3 AND request_usage_1d <= 1 THEN NULL
+			ELSE request_window_1d_start END,
+		request_usage_5h = CASE
+			WHEN request_window_5h_start IS NOT DISTINCT FROM $2 THEN GREATEST(0, request_usage_5h - 1)
+			ELSE request_usage_5h END,
+		request_usage_1d = CASE
+			WHEN request_window_1d_start IS NOT DISTINCT FROM $3 THEN GREATEST(0, request_usage_1d - 1)
+			ELSE request_usage_1d END,
+		updated_at = NOW()
+	WHERE id = $1 AND deleted_at IS NULL
+`
+
 func (r *userSubscriptionRepository) BatchUpdateExpiredStatus(ctx context.Context) (int64, error) {
 	client := clientFromContext(ctx, r.client)
 	n, err := client.UserSubscription.Update().
@@ -625,24 +908,28 @@ func userSubscriptionEntityToServiceWithStatusMapping(m *dbent.UserSubscription,
 		status = service.SubscriptionStatusRevoked
 	}
 	out := &service.UserSubscription{
-		ID:                 m.ID,
-		UserID:             m.UserID,
-		GroupID:            m.GroupID,
-		StartsAt:           m.StartsAt,
-		ExpiresAt:          m.ExpiresAt,
-		Status:             status,
-		DailyWindowStart:   m.DailyWindowStart,
-		WeeklyWindowStart:  m.WeeklyWindowStart,
-		MonthlyWindowStart: m.MonthlyWindowStart,
-		DailyUsageUSD:      m.DailyUsageUsd,
-		WeeklyUsageUSD:     m.WeeklyUsageUsd,
-		MonthlyUsageUSD:    m.MonthlyUsageUsd,
-		AssignedBy:         m.AssignedBy,
-		AssignedAt:         m.AssignedAt,
-		Notes:              derefString(m.Notes),
-		CreatedAt:          m.CreatedAt,
-		UpdatedAt:          m.UpdatedAt,
-		DeletedAt:          m.DeletedAt,
+		ID:                   m.ID,
+		UserID:               m.UserID,
+		GroupID:              m.GroupID,
+		StartsAt:             m.StartsAt,
+		ExpiresAt:            m.ExpiresAt,
+		Status:               status,
+		DailyWindowStart:     m.DailyWindowStart,
+		WeeklyWindowStart:    m.WeeklyWindowStart,
+		MonthlyWindowStart:   m.MonthlyWindowStart,
+		DailyUsageUSD:        m.DailyUsageUsd,
+		WeeklyUsageUSD:       m.WeeklyUsageUsd,
+		MonthlyUsageUSD:      m.MonthlyUsageUsd,
+		RequestUsage5h:       m.RequestUsage5h,
+		RequestUsage1d:       m.RequestUsage1d,
+		RequestWindow5hStart: m.RequestWindow5hStart,
+		RequestWindow1dStart: m.RequestWindow1dStart,
+		AssignedBy:           m.AssignedBy,
+		AssignedAt:           m.AssignedAt,
+		Notes:                derefString(m.Notes),
+		CreatedAt:            m.CreatedAt,
+		UpdatedAt:            m.UpdatedAt,
+		DeletedAt:            m.DeletedAt,
 	}
 	if m.Edges.User != nil {
 		out.User = userEntityToService(m.Edges.User)

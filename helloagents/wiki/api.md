@@ -11,9 +11,11 @@
 - `POST /api/v1/admin/accounts`：创建上游账号并绑定分组。
 - `POST /api/v1/admin/accounts/models/sync-upstream-preview`：使用未保存的凭证获取上游模型。
 - `POST /api/v1/admin/accounts/:id/models/sync-upstream`：获取已保存账号的上游模型。
-- `POST /api/v1/admin/groups`、`PUT /api/v1/admin/groups/:id`：维护分组与媒体价格。
+- `POST /api/v1/admin/groups`、`PUT /api/v1/admin/groups/:id`：维护分组与媒体价格；订阅分组支持 `subscription_billing_mode=usd|request_count`、`request_limit_5h` 和 `request_limit_1d`。
 
 视频账号使用 `platform=video` 和 API Key 认证，凭证包含 `base_url` 与 `api_key`；只能绑定 `video` 分组。视频分组的 `video_billing_mode` 取值为 `per_second` 或 `per_request`，且只允许标准余额计费。
+
+次数订阅仅统计成功的文本生成请求。`GET /api/v1/subscriptions` 返回 `request_usage_5h`、`request_usage_1d` 和对应窗口起点；`GET /api/v1/subscriptions/progress` 在次数模式返回 `request_5h`、`request_1d` 的上限、已用、剩余和重置信息。
 
 ## 网关 API
 - `GET /v1/models`：返回当前 API Key 分组可用模型。
@@ -79,3 +81,26 @@
 - `GET /api/v1/admin/lottery/chance-ledger`：按用户、奖池、动作和时间分页查询次数流水。
 
 主要业务错误为 `LOTTERY_POOL_NOT_FOUND`、`LOTTERY_PRIZE_NOT_FOUND`、`LOTTERY_RULE_NOT_FOUND`、`LOTTERY_DRAW_NOT_FOUND`、`LOTTERY_INACTIVE`、`LOTTERY_NO_CHANCE`、`LOTTERY_INVALID_INPUT`、`LOTTERY_PROBABILITY_INVALID`、`LOTTERY_IMAGE_INVALID`、`LOTTERY_FULFILL_FAILED` 和 `LOTTERY_RULE_IMMUTABLE`。
+
+## 团队治理 API
+
+用户接口使用登录 JWT：
+
+- `POST /api/v1/user/team`：提交创建团队申请，不直接创建团队；请求包含 `name`、`reason`、`additional_info`。
+- `GET /api/v1/user/team/application`：读取本人最近一次创建申请。
+- `GET /api/v1/user/team/eligibility`：读取注册天数、有效累计充值、管理员门槛及当前是否满足。
+- `POST /api/v1/user/team/join`：按邀请码提交加入申请，不直接加入。
+- `GET /api/v1/user/team/join-requests`、`POST /api/v1/user/team/join-requests/:id/review`：owner 查看并审批加入申请；批准时锁定团队并校验人数上限。
+- `GET /api/v1/user/team/governance`：读取等级、人数、有效充值、近 7 天消费、可转赠余额与升级配置。
+- `POST /api/v1/user/team/upgrade`：owner 主动升级到当前满足的最高 5/15/40 档；条件未配置或团队待复审时拒绝。
+- `POST /api/v1/user/team/expand`：提交超过 40 人的扩容申请。
+- 既有资金接口保持路径不变，但存入和 owner 直接转赠同时受可转赠额度约束。
+
+管理员接口使用管理员 JWT：
+
+- `GET /api/v1/admin/teams/stats`、`GET /api/v1/admin/teams`、`GET /api/v1/admin/teams/:id`：读取团队总数、列表、成员、指标、申请和资金流水。
+- `GET|PUT /api/v1/admin/teams/settings`：维护创建门槛与 5/15/40 各档充值、近 7 天消费和 AND/OR 条件。
+- `GET /api/v1/admin/teams/applications`、`POST /api/v1/admin/teams/applications/:id/review`：审核创建/扩容；创建门槛不足时只有填写原因并设置 `waive=true` 才可批准。
+- `PUT /api/v1/admin/teams/:id/status`：冻结或恢复团队。
+- `PUT /api/v1/admin/teams/:id/member-limit`：直接修改单团队人数上限，不受自动升级条件限制，但不能低于当前人数。
+- `POST /api/v1/admin/teams/:id/review-complete`、`DELETE /api/v1/admin/teams/:id/members/:member_id`：完成现有团队复审或移除普通成员。

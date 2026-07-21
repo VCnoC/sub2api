@@ -36,7 +36,9 @@ function mountCard(
             rate: () => 'Rate',
             quota: () => 'Quota',
             unlimited: () => 'Unlimited',
-            models: () => 'Models'
+            models: () => 'Models',
+            requestLimit5h: () => '5-hour requests',
+            requestLimit1d: () => '24-hour requests'
           }
         }
       }
@@ -78,5 +80,22 @@ describe('SubscriptionPlanCard', () => {
     expect(text).toContain('Claude')
     expect(text).toContain('Gemini')
     expect(text).toContain('Imagen')
+  })
+
+  it('shows request-count limits instead of USD quota labels', () => {
+    const text = mountCard([], {
+      subscription_billing_mode: 'request_count',
+      request_limit_5h: 20,
+      request_limit_1d: 50,
+      daily_limit_usd: null,
+      weekly_limit_usd: null,
+      monthly_limit_usd: null
+    }).text()
+
+    expect(text).toContain('5-hour requests')
+    expect(text).toContain('20')
+    expect(text).toContain('24-hour requests')
+    expect(text).toContain('50')
+    expect(text).not.toContain('Unlimited')
   })
 })

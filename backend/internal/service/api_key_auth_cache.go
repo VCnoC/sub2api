@@ -63,6 +63,9 @@ type APIKeyAuthGroupSnapshot struct {
 	IsExclusive                     bool     `json:"is_exclusive"`
 	Status                          string   `json:"status"`
 	SubscriptionType                string   `json:"subscription_type"`
+	SubscriptionBillingMode         string   `json:"subscription_billing_mode"`
+	RequestLimit5h                  int      `json:"request_limit_5h"`
+	RequestLimit1d                  int      `json:"request_limit_1d"`
 	RateMultiplier                  float64  `json:"rate_multiplier"`
 	DailyLimitUSD                   *float64 `json:"daily_limit_usd,omitempty"`
 	WeeklyLimitUSD                  *float64 `json:"weekly_limit_usd,omitempty"`

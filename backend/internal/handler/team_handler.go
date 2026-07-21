@@ -24,12 +24,25 @@ func NewTeamHandler(teamService service.TeamService) *TeamHandler {
 
 // CreateTeamRequest represents the create team request payload
 type CreateTeamRequest struct {
-	Name string `json:"name" binding:"required,max=100"`
+	Name           string `json:"name" binding:"required,max=100"`
+	Reason         string `json:"reason" binding:"max=2000"`
+	AdditionalInfo string `json:"additional_info" binding:"max=4000"`
 }
 
 // JoinTeamRequest represents the join team request payload
 type JoinTeamRequest struct {
 	InviteCode string `json:"invite_code" binding:"required"`
+	Message    string `json:"message" binding:"max=1000"`
+}
+
+type ReviewTeamJoinRequest struct {
+	Approve bool   `json:"approve"`
+	Reason  string `json:"reason" binding:"max=1000"`
+}
+
+type ExpandTeamRequest struct {
+	TargetLimit int    `json:"target_limit" binding:"required,gt=40"`
+	Reason      string `json:"reason" binding:"required,max=2000"`
 }
 
 // TransferBalanceRequest represents the transfer balance request payload
@@ -46,15 +59,22 @@ type TeamFundRequest struct {
 
 // TeamResponse represents the team response
 type TeamResponse struct {
-	ID         int64   `json:"id"`
-	Name       string  `json:"name"`
-	OwnerID    int64   `json:"owner_id"`
-	InviteCode string  `json:"invite_code,omitempty"`
-	Status     string  `json:"status"`
-	Role       string  `json:"role,omitempty"`
-	Balance    float64 `json:"balance"`
-	CreatedAt  int64   `json:"created_at"`
-	UpdatedAt  int64   `json:"updated_at"`
+	ID                  int64   `json:"id"`
+	Name                string  `json:"name"`
+	OwnerID             int64   `json:"owner_id"`
+	InviteCode          string  `json:"invite_code,omitempty"`
+	Status              string  `json:"status"`
+	Role                string  `json:"role,omitempty"`
+	Balance             float64 `json:"balance"`
+	MemberLimit         int     `json:"member_limit"`
+	Level               int     `json:"level"`
+	ReviewRequired      bool    `json:"review_required"`
+	MemberCount         int     `json:"member_count"`
+	EffectiveRecharge   float64 `json:"effective_recharge"`
+	Spend7Days          float64 `json:"spend_7d"`
+	TransferableBalance float64 `json:"transferable_balance"`
+	CreatedAt           int64   `json:"created_at"`
+	UpdatedAt           int64   `json:"updated_at"`
 }
 
 // TeamMemberResponse represents a team member response
@@ -84,13 +104,41 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	team, err := h.teamService.CreateTeam(c.Request.Context(), subject.UserID, req.Name)
+	application, err := h.teamService.CreateTeam(c.Request.Context(), subject.UserID, req.Name, req.Reason, req.AdditionalInfo)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
 
-	response.Success(c, teamToResponse(team, service.TeamRoleOwner))
+	response.Success(c, application)
+}
+
+func (h *TeamHandler) GetMyCreateApplication(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	application, err := h.teamService.GetMyCreateApplication(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, application)
+}
+
+func (h *TeamHandler) GetCreationEligibility(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	eligibility, err := h.teamService.GetCreationEligibility(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, eligibility)
 }
 
 // GetMyTeam returns the current user's team information
@@ -148,12 +196,98 @@ func (h *TeamHandler) JoinTeam(c *gin.Context) {
 		return
 	}
 
-	if err := h.teamService.JoinTeamByCode(c.Request.Context(), subject.UserID, req.InviteCode); err != nil {
+	request, err := h.teamService.JoinTeamByCode(c.Request.Context(), subject.UserID, req.InviteCode, req.Message)
+	if err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
 
-	response.Success(c, gin.H{"message": "joined team successfully"})
+	response.Success(c, request)
+}
+
+func (h *TeamHandler) ListJoinRequests(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	items, err := h.teamService.ListJoinRequests(c.Request.Context(), subject.UserID, c.Query("status"))
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, items)
+}
+
+func (h *TeamHandler) ReviewJoinRequest(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	requestID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || requestID <= 0 {
+		response.BadRequest(c, "Invalid request ID")
+		return
+	}
+	var req ReviewTeamJoinRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	item, err := h.teamService.ReviewJoinRequest(c.Request.Context(), subject.UserID, requestID, req.Approve, req.Reason)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, item)
+}
+
+func (h *TeamHandler) GetGovernanceState(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	state, err := h.teamService.GetGovernanceState(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, state)
+}
+
+func (h *TeamHandler) UpgradeTeam(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	state, err := h.teamService.UpgradeTeam(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, state)
+}
+
+func (h *TeamHandler) SubmitExpandApplication(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+	var req ExpandTeamRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	application, err := h.teamService.SubmitExpandApplication(c.Request.Context(), subject.UserID, req.TargetLimit, req.Reason)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, application)
 }
 
 // LeaveTeam allows a member to leave their team
@@ -356,15 +490,22 @@ func teamToResponse(team *service.Team, role string) *TeamResponse {
 		return nil
 	}
 	return &TeamResponse{
-		ID:         team.ID,
-		Name:       team.Name,
-		OwnerID:    team.OwnerID,
-		InviteCode: team.InviteCode,
-		Status:     team.Status,
-		Role:       role,
-		Balance:    team.Balance,
-		CreatedAt:  team.CreatedAt.Unix(),
-		UpdatedAt:  team.UpdatedAt.Unix(),
+		ID:                  team.ID,
+		Name:                team.Name,
+		OwnerID:             team.OwnerID,
+		InviteCode:          team.InviteCode,
+		Status:              team.Status,
+		Role:                role,
+		Balance:             team.Balance,
+		MemberLimit:         team.MemberLimit,
+		Level:               team.Level,
+		ReviewRequired:      team.ReviewRequired,
+		MemberCount:         team.MemberCount,
+		EffectiveRecharge:   team.EffectiveRecharge,
+		Spend7Days:          team.Spend7Days,
+		TransferableBalance: team.TransferableBalance,
+		CreatedAt:           team.CreatedAt.Unix(),
+		UpdatedAt:           team.UpdatedAt.Unix(),
 	}
 }
 

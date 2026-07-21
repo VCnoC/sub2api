@@ -22,6 +22,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
 	"github.com/Wei-Shaw/sub2api/ent/promocodeusage"
 	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/supportticket"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
@@ -45,6 +46,7 @@ type UserQuery struct {
 	withAPIKeys                         *APIKeyQuery
 	withRedeemCodes                     *RedeemCodeQuery
 	withSubscriptions                   *UserSubscriptionQuery
+	withSubscriptionRequestReservations *SubscriptionRequestReservationQuery
 	withAssignedSubscriptions           *UserSubscriptionQuery
 	withAnnouncementReads               *AnnouncementReadQuery
 	withSupportTickets                  *SupportTicketQuery
@@ -160,6 +162,28 @@ func (_q *UserQuery) QuerySubscriptions() *UserSubscriptionQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(usersubscription.Table, usersubscription.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.SubscriptionsTable, user.SubscriptionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubscriptionRequestReservations chains the current query on the "subscription_request_reservations" edge.
+func (_q *UserQuery) QuerySubscriptionRequestReservations() *SubscriptionRequestReservationQuery {
+	query := (&SubscriptionRequestReservationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SubscriptionRequestReservationsTable, user.SubscriptionRequestReservationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -780,6 +804,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withAPIKeys:                         _q.withAPIKeys.Clone(),
 		withRedeemCodes:                     _q.withRedeemCodes.Clone(),
 		withSubscriptions:                   _q.withSubscriptions.Clone(),
+		withSubscriptionRequestReservations: _q.withSubscriptionRequestReservations.Clone(),
 		withAssignedSubscriptions:           _q.withAssignedSubscriptions.Clone(),
 		withAnnouncementReads:               _q.withAnnouncementReads.Clone(),
 		withSupportTickets:                  _q.withSupportTickets.Clone(),
@@ -835,6 +860,17 @@ func (_q *UserQuery) WithSubscriptions(opts ...func(*UserSubscriptionQuery)) *Us
 		opt(query)
 	}
 	_q.withSubscriptions = query
+	return _q
+}
+
+// WithSubscriptionRequestReservations tells the query-builder to eager-load the nodes that are connected to
+// the "subscription_request_reservations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithSubscriptionRequestReservations(opts ...func(*SubscriptionRequestReservationQuery)) *UserQuery {
+	query := (&SubscriptionRequestReservationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSubscriptionRequestReservations = query
 	return _q
 }
 
@@ -1125,10 +1161,11 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [22]bool{
+		loadedTypes = [23]bool{
 			_q.withAPIKeys != nil,
 			_q.withRedeemCodes != nil,
 			_q.withSubscriptions != nil,
+			_q.withSubscriptionRequestReservations != nil,
 			_q.withAssignedSubscriptions != nil,
 			_q.withAnnouncementReads != nil,
 			_q.withSupportTickets != nil,
@@ -1189,6 +1226,15 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadSubscriptions(ctx, query, nodes,
 			func(n *User) { n.Edges.Subscriptions = []*UserSubscription{} },
 			func(n *User, e *UserSubscription) { n.Edges.Subscriptions = append(n.Edges.Subscriptions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSubscriptionRequestReservations; query != nil {
+		if err := _q.loadSubscriptionRequestReservations(ctx, query, nodes,
+			func(n *User) { n.Edges.SubscriptionRequestReservations = []*SubscriptionRequestReservation{} },
+			func(n *User, e *SubscriptionRequestReservation) {
+				n.Edges.SubscriptionRequestReservations = append(n.Edges.SubscriptionRequestReservations, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -1421,6 +1467,36 @@ func (_q *UserQuery) loadSubscriptions(ctx context.Context, query *UserSubscript
 	}
 	query.Where(predicate.UserSubscription(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.SubscriptionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadSubscriptionRequestReservations(ctx context.Context, query *SubscriptionRequestReservationQuery, nodes []*User, init func(*User), assign func(*User, *SubscriptionRequestReservation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(subscriptionrequestreservation.FieldUserID)
+	}
+	query.Where(predicate.SubscriptionRequestReservation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.SubscriptionRequestReservationsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

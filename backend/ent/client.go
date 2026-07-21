@@ -46,6 +46,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/subscriptionplan"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/supportticket"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
@@ -132,6 +133,8 @@ type Client struct {
 	Setting *SettingClient
 	// SubscriptionPlan is the client for interacting with the SubscriptionPlan builders.
 	SubscriptionPlan *SubscriptionPlanClient
+	// SubscriptionRequestReservation is the client for interacting with the SubscriptionRequestReservation builders.
+	SubscriptionRequestReservation *SubscriptionRequestReservationClient
 	// SupportTicket is the client for interacting with the SupportTicket builders.
 	SupportTicket *SupportTicketClient
 	// SupportTicketAttachment is the client for interacting with the SupportTicketAttachment builders.
@@ -204,6 +207,7 @@ func (c *Client) init() {
 	c.SecuritySecret = NewSecuritySecretClient(c.config)
 	c.Setting = NewSettingClient(c.config)
 	c.SubscriptionPlan = NewSubscriptionPlanClient(c.config)
+	c.SubscriptionRequestReservation = NewSubscriptionRequestReservationClient(c.config)
 	c.SupportTicket = NewSupportTicketClient(c.config)
 	c.SupportTicketAttachment = NewSupportTicketAttachmentClient(c.config)
 	c.SupportTicketMessage = NewSupportTicketMessageClient(c.config)
@@ -309,54 +313,55 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                           ctx,
-		config:                        cfg,
-		APIKey:                        NewAPIKeyClient(cfg),
-		APIKeyGroup:                   NewAPIKeyGroupClient(cfg),
-		Account:                       NewAccountClient(cfg),
-		AccountGroup:                  NewAccountGroupClient(cfg),
-		Announcement:                  NewAnnouncementClient(cfg),
-		AnnouncementRead:              NewAnnouncementReadClient(cfg),
-		AuthIdentity:                  NewAuthIdentityClient(cfg),
-		AuthIdentityChannel:           NewAuthIdentityChannelClient(cfg),
-		BatchImageEvent:               NewBatchImageEventClient(cfg),
-		BatchImageItem:                NewBatchImageItemClient(cfg),
-		BatchImageJob:                 NewBatchImageJobClient(cfg),
-		ChannelMonitor:                NewChannelMonitorClient(cfg),
-		ChannelMonitorDailyRollup:     NewChannelMonitorDailyRollupClient(cfg),
-		ChannelMonitorHistory:         NewChannelMonitorHistoryClient(cfg),
-		ChannelMonitorRequestTemplate: NewChannelMonitorRequestTemplateClient(cfg),
-		ErrorPassthroughRule:          NewErrorPassthroughRuleClient(cfg),
-		Group:                         NewGroupClient(cfg),
-		IdempotencyRecord:             NewIdempotencyRecordClient(cfg),
-		IdentityAdoptionDecision:      NewIdentityAdoptionDecisionClient(cfg),
-		PaymentAuditLog:               NewPaymentAuditLogClient(cfg),
-		PaymentOrder:                  NewPaymentOrderClient(cfg),
-		PaymentProviderInstance:       NewPaymentProviderInstanceClient(cfg),
-		PendingAuthSession:            NewPendingAuthSessionClient(cfg),
-		PlaygroundConversation:        NewPlaygroundConversationClient(cfg),
-		PromoCode:                     NewPromoCodeClient(cfg),
-		PromoCodeUsage:                NewPromoCodeUsageClient(cfg),
-		Proxy:                         NewProxyClient(cfg),
-		RedeemCode:                    NewRedeemCodeClient(cfg),
-		SecuritySecret:                NewSecuritySecretClient(cfg),
-		Setting:                       NewSettingClient(cfg),
-		SubscriptionPlan:              NewSubscriptionPlanClient(cfg),
-		SupportTicket:                 NewSupportTicketClient(cfg),
-		SupportTicketAttachment:       NewSupportTicketAttachmentClient(cfg),
-		SupportTicketMessage:          NewSupportTicketMessageClient(cfg),
-		SupportTicketRead:             NewSupportTicketReadClient(cfg),
-		TLSFingerprintProfile:         NewTLSFingerprintProfileClient(cfg),
-		Team:                          NewTeamClient(cfg),
-		UsageCleanupTask:              NewUsageCleanupTaskClient(cfg),
-		UsageLog:                      NewUsageLogClient(cfg),
-		User:                          NewUserClient(cfg),
-		UserAllowedGroup:              NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition:       NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:            NewUserAttributeValueClient(cfg),
-		UserPlatformQuota:             NewUserPlatformQuotaClient(cfg),
-		UserSubscription:              NewUserSubscriptionClient(cfg),
-		VideoTask:                     NewVideoTaskClient(cfg),
+		ctx:                            ctx,
+		config:                         cfg,
+		APIKey:                         NewAPIKeyClient(cfg),
+		APIKeyGroup:                    NewAPIKeyGroupClient(cfg),
+		Account:                        NewAccountClient(cfg),
+		AccountGroup:                   NewAccountGroupClient(cfg),
+		Announcement:                   NewAnnouncementClient(cfg),
+		AnnouncementRead:               NewAnnouncementReadClient(cfg),
+		AuthIdentity:                   NewAuthIdentityClient(cfg),
+		AuthIdentityChannel:            NewAuthIdentityChannelClient(cfg),
+		BatchImageEvent:                NewBatchImageEventClient(cfg),
+		BatchImageItem:                 NewBatchImageItemClient(cfg),
+		BatchImageJob:                  NewBatchImageJobClient(cfg),
+		ChannelMonitor:                 NewChannelMonitorClient(cfg),
+		ChannelMonitorDailyRollup:      NewChannelMonitorDailyRollupClient(cfg),
+		ChannelMonitorHistory:          NewChannelMonitorHistoryClient(cfg),
+		ChannelMonitorRequestTemplate:  NewChannelMonitorRequestTemplateClient(cfg),
+		ErrorPassthroughRule:           NewErrorPassthroughRuleClient(cfg),
+		Group:                          NewGroupClient(cfg),
+		IdempotencyRecord:              NewIdempotencyRecordClient(cfg),
+		IdentityAdoptionDecision:       NewIdentityAdoptionDecisionClient(cfg),
+		PaymentAuditLog:                NewPaymentAuditLogClient(cfg),
+		PaymentOrder:                   NewPaymentOrderClient(cfg),
+		PaymentProviderInstance:        NewPaymentProviderInstanceClient(cfg),
+		PendingAuthSession:             NewPendingAuthSessionClient(cfg),
+		PlaygroundConversation:         NewPlaygroundConversationClient(cfg),
+		PromoCode:                      NewPromoCodeClient(cfg),
+		PromoCodeUsage:                 NewPromoCodeUsageClient(cfg),
+		Proxy:                          NewProxyClient(cfg),
+		RedeemCode:                     NewRedeemCodeClient(cfg),
+		SecuritySecret:                 NewSecuritySecretClient(cfg),
+		Setting:                        NewSettingClient(cfg),
+		SubscriptionPlan:               NewSubscriptionPlanClient(cfg),
+		SubscriptionRequestReservation: NewSubscriptionRequestReservationClient(cfg),
+		SupportTicket:                  NewSupportTicketClient(cfg),
+		SupportTicketAttachment:        NewSupportTicketAttachmentClient(cfg),
+		SupportTicketMessage:           NewSupportTicketMessageClient(cfg),
+		SupportTicketRead:              NewSupportTicketReadClient(cfg),
+		TLSFingerprintProfile:          NewTLSFingerprintProfileClient(cfg),
+		Team:                           NewTeamClient(cfg),
+		UsageCleanupTask:               NewUsageCleanupTaskClient(cfg),
+		UsageLog:                       NewUsageLogClient(cfg),
+		User:                           NewUserClient(cfg),
+		UserAllowedGroup:               NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:        NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:             NewUserAttributeValueClient(cfg),
+		UserPlatformQuota:              NewUserPlatformQuotaClient(cfg),
+		UserSubscription:               NewUserSubscriptionClient(cfg),
+		VideoTask:                      NewVideoTaskClient(cfg),
 	}, nil
 }
 
@@ -374,54 +379,55 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                           ctx,
-		config:                        cfg,
-		APIKey:                        NewAPIKeyClient(cfg),
-		APIKeyGroup:                   NewAPIKeyGroupClient(cfg),
-		Account:                       NewAccountClient(cfg),
-		AccountGroup:                  NewAccountGroupClient(cfg),
-		Announcement:                  NewAnnouncementClient(cfg),
-		AnnouncementRead:              NewAnnouncementReadClient(cfg),
-		AuthIdentity:                  NewAuthIdentityClient(cfg),
-		AuthIdentityChannel:           NewAuthIdentityChannelClient(cfg),
-		BatchImageEvent:               NewBatchImageEventClient(cfg),
-		BatchImageItem:                NewBatchImageItemClient(cfg),
-		BatchImageJob:                 NewBatchImageJobClient(cfg),
-		ChannelMonitor:                NewChannelMonitorClient(cfg),
-		ChannelMonitorDailyRollup:     NewChannelMonitorDailyRollupClient(cfg),
-		ChannelMonitorHistory:         NewChannelMonitorHistoryClient(cfg),
-		ChannelMonitorRequestTemplate: NewChannelMonitorRequestTemplateClient(cfg),
-		ErrorPassthroughRule:          NewErrorPassthroughRuleClient(cfg),
-		Group:                         NewGroupClient(cfg),
-		IdempotencyRecord:             NewIdempotencyRecordClient(cfg),
-		IdentityAdoptionDecision:      NewIdentityAdoptionDecisionClient(cfg),
-		PaymentAuditLog:               NewPaymentAuditLogClient(cfg),
-		PaymentOrder:                  NewPaymentOrderClient(cfg),
-		PaymentProviderInstance:       NewPaymentProviderInstanceClient(cfg),
-		PendingAuthSession:            NewPendingAuthSessionClient(cfg),
-		PlaygroundConversation:        NewPlaygroundConversationClient(cfg),
-		PromoCode:                     NewPromoCodeClient(cfg),
-		PromoCodeUsage:                NewPromoCodeUsageClient(cfg),
-		Proxy:                         NewProxyClient(cfg),
-		RedeemCode:                    NewRedeemCodeClient(cfg),
-		SecuritySecret:                NewSecuritySecretClient(cfg),
-		Setting:                       NewSettingClient(cfg),
-		SubscriptionPlan:              NewSubscriptionPlanClient(cfg),
-		SupportTicket:                 NewSupportTicketClient(cfg),
-		SupportTicketAttachment:       NewSupportTicketAttachmentClient(cfg),
-		SupportTicketMessage:          NewSupportTicketMessageClient(cfg),
-		SupportTicketRead:             NewSupportTicketReadClient(cfg),
-		TLSFingerprintProfile:         NewTLSFingerprintProfileClient(cfg),
-		Team:                          NewTeamClient(cfg),
-		UsageCleanupTask:              NewUsageCleanupTaskClient(cfg),
-		UsageLog:                      NewUsageLogClient(cfg),
-		User:                          NewUserClient(cfg),
-		UserAllowedGroup:              NewUserAllowedGroupClient(cfg),
-		UserAttributeDefinition:       NewUserAttributeDefinitionClient(cfg),
-		UserAttributeValue:            NewUserAttributeValueClient(cfg),
-		UserPlatformQuota:             NewUserPlatformQuotaClient(cfg),
-		UserSubscription:              NewUserSubscriptionClient(cfg),
-		VideoTask:                     NewVideoTaskClient(cfg),
+		ctx:                            ctx,
+		config:                         cfg,
+		APIKey:                         NewAPIKeyClient(cfg),
+		APIKeyGroup:                    NewAPIKeyGroupClient(cfg),
+		Account:                        NewAccountClient(cfg),
+		AccountGroup:                   NewAccountGroupClient(cfg),
+		Announcement:                   NewAnnouncementClient(cfg),
+		AnnouncementRead:               NewAnnouncementReadClient(cfg),
+		AuthIdentity:                   NewAuthIdentityClient(cfg),
+		AuthIdentityChannel:            NewAuthIdentityChannelClient(cfg),
+		BatchImageEvent:                NewBatchImageEventClient(cfg),
+		BatchImageItem:                 NewBatchImageItemClient(cfg),
+		BatchImageJob:                  NewBatchImageJobClient(cfg),
+		ChannelMonitor:                 NewChannelMonitorClient(cfg),
+		ChannelMonitorDailyRollup:      NewChannelMonitorDailyRollupClient(cfg),
+		ChannelMonitorHistory:          NewChannelMonitorHistoryClient(cfg),
+		ChannelMonitorRequestTemplate:  NewChannelMonitorRequestTemplateClient(cfg),
+		ErrorPassthroughRule:           NewErrorPassthroughRuleClient(cfg),
+		Group:                          NewGroupClient(cfg),
+		IdempotencyRecord:              NewIdempotencyRecordClient(cfg),
+		IdentityAdoptionDecision:       NewIdentityAdoptionDecisionClient(cfg),
+		PaymentAuditLog:                NewPaymentAuditLogClient(cfg),
+		PaymentOrder:                   NewPaymentOrderClient(cfg),
+		PaymentProviderInstance:        NewPaymentProviderInstanceClient(cfg),
+		PendingAuthSession:             NewPendingAuthSessionClient(cfg),
+		PlaygroundConversation:         NewPlaygroundConversationClient(cfg),
+		PromoCode:                      NewPromoCodeClient(cfg),
+		PromoCodeUsage:                 NewPromoCodeUsageClient(cfg),
+		Proxy:                          NewProxyClient(cfg),
+		RedeemCode:                     NewRedeemCodeClient(cfg),
+		SecuritySecret:                 NewSecuritySecretClient(cfg),
+		Setting:                        NewSettingClient(cfg),
+		SubscriptionPlan:               NewSubscriptionPlanClient(cfg),
+		SubscriptionRequestReservation: NewSubscriptionRequestReservationClient(cfg),
+		SupportTicket:                  NewSupportTicketClient(cfg),
+		SupportTicketAttachment:        NewSupportTicketAttachmentClient(cfg),
+		SupportTicketMessage:           NewSupportTicketMessageClient(cfg),
+		SupportTicketRead:              NewSupportTicketReadClient(cfg),
+		TLSFingerprintProfile:          NewTLSFingerprintProfileClient(cfg),
+		Team:                           NewTeamClient(cfg),
+		UsageCleanupTask:               NewUsageCleanupTaskClient(cfg),
+		UsageLog:                       NewUsageLogClient(cfg),
+		User:                           NewUserClient(cfg),
+		UserAllowedGroup:               NewUserAllowedGroupClient(cfg),
+		UserAttributeDefinition:        NewUserAttributeDefinitionClient(cfg),
+		UserAttributeValue:             NewUserAttributeValueClient(cfg),
+		UserPlatformQuota:              NewUserPlatformQuotaClient(cfg),
+		UserSubscription:               NewUserSubscriptionClient(cfg),
+		VideoTask:                      NewVideoTaskClient(cfg),
 	}, nil
 }
 
@@ -459,11 +465,12 @@ func (c *Client) Use(hooks ...Hook) {
 		c.IdempotencyRecord, c.IdentityAdoptionDecision, c.PaymentAuditLog,
 		c.PaymentOrder, c.PaymentProviderInstance, c.PendingAuthSession,
 		c.PlaygroundConversation, c.PromoCode, c.PromoCodeUsage, c.Proxy, c.RedeemCode,
-		c.SecuritySecret, c.Setting, c.SubscriptionPlan, c.SupportTicket,
-		c.SupportTicketAttachment, c.SupportTicketMessage, c.SupportTicketRead,
-		c.TLSFingerprintProfile, c.Team, c.UsageCleanupTask, c.UsageLog, c.User,
-		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
-		c.UserPlatformQuota, c.UserSubscription, c.VideoTask,
+		c.SecuritySecret, c.Setting, c.SubscriptionPlan,
+		c.SubscriptionRequestReservation, c.SupportTicket, c.SupportTicketAttachment,
+		c.SupportTicketMessage, c.SupportTicketRead, c.TLSFingerprintProfile, c.Team,
+		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
+		c.UserAttributeDefinition, c.UserAttributeValue, c.UserPlatformQuota,
+		c.UserSubscription, c.VideoTask,
 	} {
 		n.Use(hooks...)
 	}
@@ -481,11 +488,12 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.IdempotencyRecord, c.IdentityAdoptionDecision, c.PaymentAuditLog,
 		c.PaymentOrder, c.PaymentProviderInstance, c.PendingAuthSession,
 		c.PlaygroundConversation, c.PromoCode, c.PromoCodeUsage, c.Proxy, c.RedeemCode,
-		c.SecuritySecret, c.Setting, c.SubscriptionPlan, c.SupportTicket,
-		c.SupportTicketAttachment, c.SupportTicketMessage, c.SupportTicketRead,
-		c.TLSFingerprintProfile, c.Team, c.UsageCleanupTask, c.UsageLog, c.User,
-		c.UserAllowedGroup, c.UserAttributeDefinition, c.UserAttributeValue,
-		c.UserPlatformQuota, c.UserSubscription, c.VideoTask,
+		c.SecuritySecret, c.Setting, c.SubscriptionPlan,
+		c.SubscriptionRequestReservation, c.SupportTicket, c.SupportTicketAttachment,
+		c.SupportTicketMessage, c.SupportTicketRead, c.TLSFingerprintProfile, c.Team,
+		c.UsageCleanupTask, c.UsageLog, c.User, c.UserAllowedGroup,
+		c.UserAttributeDefinition, c.UserAttributeValue, c.UserPlatformQuota,
+		c.UserSubscription, c.VideoTask,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -556,6 +564,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Setting.mutate(ctx, m)
 	case *SubscriptionPlanMutation:
 		return c.SubscriptionPlan.mutate(ctx, m)
+	case *SubscriptionRequestReservationMutation:
+		return c.SubscriptionRequestReservation.mutate(ctx, m)
 	case *SupportTicketMutation:
 		return c.SupportTicket.mutate(ctx, m)
 	case *SupportTicketAttachmentMutation:
@@ -697,6 +707,22 @@ func (c *APIKeyClient) GetX(ctx context.Context, id int64) *APIKey {
 		panic(err)
 	}
 	return obj
+}
+
+// QuerySubscriptionRequestReservations queries the subscription_request_reservations edge of a APIKey.
+func (c *APIKeyClient) QuerySubscriptionRequestReservations(_m *APIKey) *SubscriptionRequestReservationQuery {
+	query := (&SubscriptionRequestReservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(apikey.Table, apikey.FieldID, id),
+			sqlgraph.To(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, apikey.SubscriptionRequestReservationsTable, apikey.SubscriptionRequestReservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // QueryUser queries the user edge of a APIKey.
@@ -5441,6 +5467,187 @@ func (c *SubscriptionPlanClient) mutate(ctx context.Context, m *SubscriptionPlan
 	}
 }
 
+// SubscriptionRequestReservationClient is a client for the SubscriptionRequestReservation schema.
+type SubscriptionRequestReservationClient struct {
+	config
+}
+
+// NewSubscriptionRequestReservationClient returns a client for the SubscriptionRequestReservation from the given config.
+func NewSubscriptionRequestReservationClient(c config) *SubscriptionRequestReservationClient {
+	return &SubscriptionRequestReservationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `subscriptionrequestreservation.Hooks(f(g(h())))`.
+func (c *SubscriptionRequestReservationClient) Use(hooks ...Hook) {
+	c.hooks.SubscriptionRequestReservation = append(c.hooks.SubscriptionRequestReservation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `subscriptionrequestreservation.Intercept(f(g(h())))`.
+func (c *SubscriptionRequestReservationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SubscriptionRequestReservation = append(c.inters.SubscriptionRequestReservation, interceptors...)
+}
+
+// Create returns a builder for creating a SubscriptionRequestReservation entity.
+func (c *SubscriptionRequestReservationClient) Create() *SubscriptionRequestReservationCreate {
+	mutation := newSubscriptionRequestReservationMutation(c.config, OpCreate)
+	return &SubscriptionRequestReservationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SubscriptionRequestReservation entities.
+func (c *SubscriptionRequestReservationClient) CreateBulk(builders ...*SubscriptionRequestReservationCreate) *SubscriptionRequestReservationCreateBulk {
+	return &SubscriptionRequestReservationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SubscriptionRequestReservationClient) MapCreateBulk(slice any, setFunc func(*SubscriptionRequestReservationCreate, int)) *SubscriptionRequestReservationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SubscriptionRequestReservationCreateBulk{err: fmt.Errorf("calling to SubscriptionRequestReservationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SubscriptionRequestReservationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SubscriptionRequestReservationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) Update() *SubscriptionRequestReservationUpdate {
+	mutation := newSubscriptionRequestReservationMutation(c.config, OpUpdate)
+	return &SubscriptionRequestReservationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SubscriptionRequestReservationClient) UpdateOne(_m *SubscriptionRequestReservation) *SubscriptionRequestReservationUpdateOne {
+	mutation := newSubscriptionRequestReservationMutation(c.config, OpUpdateOne, withSubscriptionRequestReservation(_m))
+	return &SubscriptionRequestReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SubscriptionRequestReservationClient) UpdateOneID(id int64) *SubscriptionRequestReservationUpdateOne {
+	mutation := newSubscriptionRequestReservationMutation(c.config, OpUpdateOne, withSubscriptionRequestReservationID(id))
+	return &SubscriptionRequestReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) Delete() *SubscriptionRequestReservationDelete {
+	mutation := newSubscriptionRequestReservationMutation(c.config, OpDelete)
+	return &SubscriptionRequestReservationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SubscriptionRequestReservationClient) DeleteOne(_m *SubscriptionRequestReservation) *SubscriptionRequestReservationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SubscriptionRequestReservationClient) DeleteOneID(id int64) *SubscriptionRequestReservationDeleteOne {
+	builder := c.Delete().Where(subscriptionrequestreservation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SubscriptionRequestReservationDeleteOne{builder}
+}
+
+// Query returns a query builder for SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) Query() *SubscriptionRequestReservationQuery {
+	return &SubscriptionRequestReservationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSubscriptionRequestReservation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SubscriptionRequestReservation entity by its id.
+func (c *SubscriptionRequestReservationClient) Get(ctx context.Context, id int64) (*SubscriptionRequestReservation, error) {
+	return c.Query().Where(subscriptionrequestreservation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SubscriptionRequestReservationClient) GetX(ctx context.Context, id int64) *SubscriptionRequestReservation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAPIKey queries the api_key edge of a SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) QueryAPIKey(_m *SubscriptionRequestReservation) *APIKeyQuery {
+	query := (&APIKeyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID, id),
+			sqlgraph.To(apikey.Table, apikey.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, subscriptionrequestreservation.APIKeyTable, subscriptionrequestreservation.APIKeyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) QueryUser(_m *SubscriptionRequestReservation) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, subscriptionrequestreservation.UserTable, subscriptionrequestreservation.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySubscription queries the subscription edge of a SubscriptionRequestReservation.
+func (c *SubscriptionRequestReservationClient) QuerySubscription(_m *SubscriptionRequestReservation) *UserSubscriptionQuery {
+	query := (&UserSubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID, id),
+			sqlgraph.To(usersubscription.Table, usersubscription.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, subscriptionrequestreservation.SubscriptionTable, subscriptionrequestreservation.SubscriptionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SubscriptionRequestReservationClient) Hooks() []Hook {
+	return c.hooks.SubscriptionRequestReservation
+}
+
+// Interceptors returns the client interceptors.
+func (c *SubscriptionRequestReservationClient) Interceptors() []Interceptor {
+	return c.inters.SubscriptionRequestReservation
+}
+
+func (c *SubscriptionRequestReservationClient) mutate(ctx context.Context, m *SubscriptionRequestReservationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SubscriptionRequestReservationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SubscriptionRequestReservationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SubscriptionRequestReservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SubscriptionRequestReservationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SubscriptionRequestReservation mutation op: %q", m.Op())
+	}
+}
+
 // SupportTicketClient is a client for the SupportTicket schema.
 type SupportTicketClient struct {
 	config
@@ -6981,6 +7188,22 @@ func (c *UserClient) QuerySubscriptions(_m *User) *UserSubscriptionQuery {
 	return query
 }
 
+// QuerySubscriptionRequestReservations queries the subscription_request_reservations edge of a User.
+func (c *UserClient) QuerySubscriptionRequestReservations(_m *User) *SubscriptionRequestReservationQuery {
+	query := (&SubscriptionRequestReservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SubscriptionRequestReservationsTable, user.SubscriptionRequestReservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryAssignedSubscriptions queries the assigned_subscriptions edge of a User.
 func (c *UserClient) QueryAssignedSubscriptions(_m *User) *UserSubscriptionQuery {
 	query := (&UserSubscriptionClient{config: c.config}).Query()
@@ -8067,6 +8290,22 @@ func (c *UserSubscriptionClient) QueryUsageLogs(_m *UserSubscription) *UsageLogQ
 	return query
 }
 
+// QueryRequestReservations queries the request_reservations edge of a UserSubscription.
+func (c *UserSubscriptionClient) QueryRequestReservations(_m *UserSubscription) *SubscriptionRequestReservationQuery {
+	query := (&SubscriptionRequestReservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(usersubscription.Table, usersubscription.FieldID, id),
+			sqlgraph.To(subscriptionrequestreservation.Table, subscriptionrequestreservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, usersubscription.RequestReservationsTable, usersubscription.RequestReservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserSubscriptionClient) Hooks() []Hook {
 	hooks := c.hooks.UserSubscription
@@ -8237,10 +8476,10 @@ type (
 		Group, IdempotencyRecord, IdentityAdoptionDecision, PaymentAuditLog,
 		PaymentOrder, PaymentProviderInstance, PendingAuthSession,
 		PlaygroundConversation, PromoCode, PromoCodeUsage, Proxy, RedeemCode,
-		SecuritySecret, Setting, SubscriptionPlan, SupportTicket,
-		SupportTicketAttachment, SupportTicketMessage, SupportTicketRead,
-		TLSFingerprintProfile, Team, UsageCleanupTask, UsageLog, User,
-		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
+		SecuritySecret, Setting, SubscriptionPlan, SubscriptionRequestReservation,
+		SupportTicket, SupportTicketAttachment, SupportTicketMessage,
+		SupportTicketRead, TLSFingerprintProfile, Team, UsageCleanupTask, UsageLog,
+		User, UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
 		UserPlatformQuota, UserSubscription, VideoTask []ent.Hook
 	}
 	inters struct {
@@ -8251,10 +8490,10 @@ type (
 		Group, IdempotencyRecord, IdentityAdoptionDecision, PaymentAuditLog,
 		PaymentOrder, PaymentProviderInstance, PendingAuthSession,
 		PlaygroundConversation, PromoCode, PromoCodeUsage, Proxy, RedeemCode,
-		SecuritySecret, Setting, SubscriptionPlan, SupportTicket,
-		SupportTicketAttachment, SupportTicketMessage, SupportTicketRead,
-		TLSFingerprintProfile, Team, UsageCleanupTask, UsageLog, User,
-		UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
+		SecuritySecret, Setting, SubscriptionPlan, SubscriptionRequestReservation,
+		SupportTicket, SupportTicketAttachment, SupportTicketMessage,
+		SupportTicketRead, TLSFingerprintProfile, Team, UsageCleanupTask, UsageLog,
+		User, UserAllowedGroup, UserAttributeDefinition, UserAttributeValue,
 		UserPlatformQuota, UserSubscription, VideoTask []ent.Interceptor
 	}
 )

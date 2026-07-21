@@ -177,7 +177,18 @@
                 class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400"
               >
                 <div
-                  v-if="
+                  v-if="row.subscription_billing_mode === 'request_count'"
+                  class="flex flex-wrap items-center gap-x-2 gap-y-0.5"
+                >
+                  <span v-if="row.request_limit_5h" class="whitespace-nowrap">
+                    {{ row.request_limit_5h }} / {{ t("admin.groups.subscription.window5h") }}
+                  </span>
+                  <span v-if="row.request_limit_1d" class="whitespace-nowrap">
+                    {{ row.request_limit_1d }} / {{ t("admin.groups.subscription.window1d") }}
+                  </span>
+                </div>
+                <div
+                  v-else-if="
                     row.daily_limit_usd ||
                     row.weekly_limit_usd ||
                     row.monthly_limit_usd
@@ -696,44 +707,35 @@
             class="space-y-4 border-l-2 border-primary-200 pl-4 dark:border-primary-800"
           >
             <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.dailyLimit")
-              }}</label>
-              <input
-                v-model.number="createForm.daily_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
+              <label class="input-label">{{ t("admin.groups.subscription.billingMode") }}</label>
+              <Select v-model="createForm.subscription_billing_mode" :options="subscriptionBillingModeOptions" />
+              <p class="input-hint">{{ t("admin.groups.subscription.billingModeHint") }}</p>
             </div>
-            <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.weeklyLimit")
-              }}</label>
-              <input
-                v-model.number="createForm.weekly_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
-            </div>
-            <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.monthlyLimit")
-              }}</label>
-              <input
-                v-model.number="createForm.monthly_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
-            </div>
+            <template v-if="createForm.subscription_billing_mode === 'request_count'">
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.requestLimit5h") }}</label>
+                <input v-model.number="createForm.request_limit_5h" type="number" step="1" min="0" class="input" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.requestLimit1d") }}</label>
+                <input v-model.number="createForm.request_limit_1d" type="number" step="1" min="0" class="input" />
+                <p class="input-hint">{{ t("admin.groups.subscription.requestLimitHint") }}</p>
+              </div>
+            </template>
+            <template v-else>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.dailyLimit") }}</label>
+                <input v-model.number="createForm.daily_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.weeklyLimit") }}</label>
+                <input v-model.number="createForm.weekly_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.monthlyLimit") }}</label>
+                <input v-model.number="createForm.monthly_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+            </template>
           </div>
         </div>
 
@@ -2214,44 +2216,35 @@
             class="space-y-4 border-l-2 border-primary-200 pl-4 dark:border-primary-800"
           >
             <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.dailyLimit")
-              }}</label>
-              <input
-                v-model.number="editForm.daily_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
+              <label class="input-label">{{ t("admin.groups.subscription.billingMode") }}</label>
+              <Select v-model="editForm.subscription_billing_mode" :options="subscriptionBillingModeOptions" />
+              <p class="input-hint">{{ t("admin.groups.subscription.billingModeHint") }}</p>
             </div>
-            <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.weeklyLimit")
-              }}</label>
-              <input
-                v-model.number="editForm.weekly_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
-            </div>
-            <div>
-              <label class="input-label">{{
-                t("admin.groups.subscription.monthlyLimit")
-              }}</label>
-              <input
-                v-model.number="editForm.monthly_limit_usd"
-                type="number"
-                step="0.01"
-                min="0"
-                class="input"
-                :placeholder="t('admin.groups.subscription.noLimit')"
-              />
-            </div>
+            <template v-if="editForm.subscription_billing_mode === 'request_count'">
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.requestLimit5h") }}</label>
+                <input v-model.number="editForm.request_limit_5h" type="number" step="1" min="0" class="input" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.requestLimit1d") }}</label>
+                <input v-model.number="editForm.request_limit_1d" type="number" step="1" min="0" class="input" />
+                <p class="input-hint">{{ t("admin.groups.subscription.requestLimitHint") }}</p>
+              </div>
+            </template>
+            <template v-else>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.dailyLimit") }}</label>
+                <input v-model.number="editForm.daily_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.weeklyLimit") }}</label>
+                <input v-model.number="editForm.weekly_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+              <div>
+                <label class="input-label">{{ t("admin.groups.subscription.monthlyLimit") }}</label>
+                <input v-model.number="editForm.monthly_limit_usd" type="number" step="0.01" min="0" class="input" :placeholder="t('admin.groups.subscription.noLimit')" />
+              </div>
+            </template>
           </div>
         </div>
 
@@ -3595,7 +3588,7 @@ import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/stores/app";
 import { useOnboardingStore } from "@/stores/onboarding";
 import { adminAPI } from "@/api/admin";
-import type { AdminGroup, GroupPlatform, SubscriptionType } from "@/types";
+import type { AdminGroup, GroupPlatform, SubscriptionBillingMode, SubscriptionType } from "@/types";
 import type { Column } from "@/components/common/types";
 import AppLayout from "@/components/layout/AppLayout.vue";
 import TablePageLayout from "@/components/layout/TablePageLayout.vue";
@@ -3850,6 +3843,11 @@ const subscriptionTypeOptions = computed(() => [
   { value: "subscription", label: t("admin.groups.subscription.subscription") },
 ]);
 
+const subscriptionBillingModeOptions = computed(() => [
+  { value: "usd", label: t("admin.groups.subscription.billingModeUsd") },
+  { value: "request_count", label: t("admin.groups.subscription.billingModeRequestCount") },
+]);
+
 const videoBillingModeOptions = computed(() => [
   { value: "per_second", label: t("admin.groups.videoPricing.perSecond") },
   { value: "per_request", label: t("admin.groups.videoPricing.perRequest") },
@@ -4033,8 +4031,11 @@ const createForm = reactive({
   platform: "anthropic" as GroupPlatform,
   rate_multiplier: 1.0,
   is_exclusive: false,
-  subscription_type: "standard" as SubscriptionType,
-  daily_limit_usd: null as number | null,
+	subscription_type: "standard" as SubscriptionType,
+	subscription_billing_mode: "usd" as SubscriptionBillingMode,
+	request_limit_5h: 0,
+	request_limit_1d: 0,
+	daily_limit_usd: null as number | null,
   weekly_limit_usd: null as number | null,
   monthly_limit_usd: null as number | null,
   // 图片生成计费配置
@@ -4381,8 +4382,11 @@ const editForm = reactive({
   rate_multiplier: 1.0,
   is_exclusive: false,
   status: "active" as "active" | "inactive",
-  subscription_type: "standard" as SubscriptionType,
-  daily_limit_usd: null as number | null,
+	subscription_type: "standard" as SubscriptionType,
+	subscription_billing_mode: "usd" as SubscriptionBillingMode,
+	request_limit_5h: 0,
+	request_limit_1d: 0,
+	daily_limit_usd: null as number | null,
   weekly_limit_usd: null as number | null,
   monthly_limit_usd: null as number | null,
   // 图片生成计费配置
@@ -4789,7 +4793,10 @@ const closeCreateModal = () => {
   createForm.platform = "anthropic";
   createForm.rate_multiplier = 1.0;
   createForm.is_exclusive = false;
-  createForm.subscription_type = "standard";
+	createForm.subscription_type = "standard";
+	createForm.subscription_billing_mode = "usd";
+	createForm.request_limit_5h = 0;
+	createForm.request_limit_1d = 0;
   createForm.daily_limit_usd = null;
   createForm.weekly_limit_usd = null;
   createForm.monthly_limit_usd = null;
@@ -4846,6 +4853,11 @@ const normalizeOptionalLimit = (
   return Number.isFinite(value) && value > 0 ? value : null;
 };
 
+const normalizeRequestLimit = (value: number | string | null | undefined): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : 0;
+};
+
 const normalizeRateMultiplier = (
   value: number | string | null | undefined,
 ): number => {
@@ -4857,15 +4869,26 @@ const normalizeRateMultiplier = (
 };
 
 const handleCreateGroup = async () => {
-  if (!createForm.name.trim()) {
+	if (!createForm.name.trim()) {
     appStore.showError(t("admin.groups.nameRequired"));
-    return;
-  }
+		return;
+	}
+	if (
+		createForm.subscription_type === "subscription" &&
+		createForm.subscription_billing_mode === "request_count" &&
+		normalizeRequestLimit(createForm.request_limit_5h) === 0 &&
+		normalizeRequestLimit(createForm.request_limit_1d) === 0
+	) {
+		appStore.showError(t("admin.groups.subscription.requestLimitRequired"));
+		return;
+	}
   submitting.value = true;
   try {
     // 构建请求数据，包含模型路由配置
     const requestData = {
-      ...createForm,
+			...createForm,
+			request_limit_5h: normalizeRequestLimit(createForm.request_limit_5h),
+			request_limit_1d: normalizeRequestLimit(createForm.request_limit_1d),
       daily_limit_usd: normalizeOptionalLimit(
         createForm.daily_limit_usd as number | string | null,
       ),
@@ -4956,7 +4979,10 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.rate_multiplier = group.rate_multiplier;
   editForm.is_exclusive = group.is_exclusive;
   editForm.status = group.status;
-  editForm.subscription_type = group.subscription_type || "standard";
+	editForm.subscription_type = group.subscription_type || "standard";
+	editForm.subscription_billing_mode = group.subscription_billing_mode || "usd";
+	editForm.request_limit_5h = group.request_limit_5h || 0;
+	editForm.request_limit_1d = group.request_limit_1d || 0;
   editForm.daily_limit_usd = group.daily_limit_usd;
   editForm.weekly_limit_usd = group.weekly_limit_usd;
   editForm.monthly_limit_usd = group.monthly_limit_usd;
@@ -5043,16 +5069,26 @@ const closeEditModal = () => {
 
 const handleUpdateGroup = async () => {
   if (!editingGroup.value) return;
-  if (!editForm.name.trim()) {
+	if (!editForm.name.trim()) {
     appStore.showError(t("admin.groups.nameRequired"));
-    return;
-  }
+		return;
+	}
+	if (
+		editForm.subscription_billing_mode === "request_count" &&
+		normalizeRequestLimit(editForm.request_limit_5h) === 0 &&
+		normalizeRequestLimit(editForm.request_limit_1d) === 0
+	) {
+		appStore.showError(t("admin.groups.subscription.requestLimitRequired"));
+		return;
+	}
 
   submitting.value = true;
   try {
     // 转换 fallback_group_id: null -> 0 (后端使用 0 表示清除)
     const payload = {
-      ...editForm,
+			...editForm,
+			request_limit_5h: normalizeRequestLimit(editForm.request_limit_5h),
+			request_limit_1d: normalizeRequestLimit(editForm.request_limit_1d),
       daily_limit_usd: normalizeOptionalLimit(
         editForm.daily_limit_usd as number | string | null,
       ),
@@ -5221,6 +5257,9 @@ watch(
       createForm.is_exclusive = true;
       createForm.fallback_group_id_on_invalid_request = null;
     } else {
+		createForm.subscription_billing_mode = "usd";
+		createForm.request_limit_5h = 0;
+		createForm.request_limit_1d = 0;
       createForm.peak_rate_enabled = false;
       createForm.peak_start = "";
       createForm.peak_end = "";
@@ -5234,10 +5273,41 @@ watch(
   () => editForm.subscription_type,
   (newVal) => {
     if (newVal !== "subscription") {
+		editForm.subscription_billing_mode = "usd";
+		editForm.request_limit_5h = 0;
+		editForm.request_limit_1d = 0;
       editForm.peak_rate_enabled = false;
       editForm.peak_start = "";
       editForm.peak_end = "";
       editForm.peak_rate_multiplier = 1.0;
+    }
+  },
+);
+
+watch(
+  () => createForm.subscription_billing_mode,
+  (newVal) => {
+    if (newVal === "request_count") {
+      createForm.daily_limit_usd = null;
+      createForm.weekly_limit_usd = null;
+      createForm.monthly_limit_usd = null;
+    } else {
+      createForm.request_limit_5h = 0;
+      createForm.request_limit_1d = 0;
+    }
+  },
+);
+
+watch(
+  () => editForm.subscription_billing_mode,
+  (newVal) => {
+    if (newVal === "request_count") {
+      editForm.daily_limit_usd = null;
+      editForm.weekly_limit_usd = null;
+      editForm.monthly_limit_usd = null;
+    } else {
+      editForm.request_limit_5h = 0;
+      editForm.request_limit_1d = 0;
     }
   },
 );

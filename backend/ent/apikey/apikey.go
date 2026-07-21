@@ -61,6 +61,8 @@ const (
 	FieldWindow1dStart = "window_1d_start"
 	// FieldWindow7dStart holds the string denoting the window_7d_start field in the database.
 	FieldWindow7dStart = "window_7d_start"
+	// EdgeSubscriptionRequestReservations holds the string denoting the subscription_request_reservations edge name in mutations.
+	EdgeSubscriptionRequestReservations = "subscription_request_reservations"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeGroup holds the string denoting the group edge name in mutations.
@@ -71,6 +73,13 @@ const (
 	EdgeUsageLogs = "usage_logs"
 	// Table holds the table name of the apikey in the database.
 	Table = "api_keys"
+	// SubscriptionRequestReservationsTable is the table that holds the subscription_request_reservations relation/edge.
+	SubscriptionRequestReservationsTable = "subscription_request_reservations"
+	// SubscriptionRequestReservationsInverseTable is the table name for the SubscriptionRequestReservation entity.
+	// It exists in this package in order to avoid circular dependency with the "subscriptionrequestreservation" package.
+	SubscriptionRequestReservationsInverseTable = "subscription_request_reservations"
+	// SubscriptionRequestReservationsColumn is the table column denoting the subscription_request_reservations relation/edge.
+	SubscriptionRequestReservationsColumn = "api_key_id"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "api_keys"
 	// UserInverseTable is the table name for the User entity.
@@ -292,6 +301,20 @@ func ByWindow7dStart(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWindow7dStart, opts...).ToFunc()
 }
 
+// BySubscriptionRequestReservationsCount orders the results by subscription_request_reservations count.
+func BySubscriptionRequestReservationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSubscriptionRequestReservationsStep(), opts...)
+	}
+}
+
+// BySubscriptionRequestReservations orders the results by subscription_request_reservations terms.
+func BySubscriptionRequestReservations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSubscriptionRequestReservationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -332,6 +355,13 @@ func ByUsageLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newUsageLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
+}
+func newSubscriptionRequestReservationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SubscriptionRequestReservationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SubscriptionRequestReservationsTable, SubscriptionRequestReservationsColumn),
+	)
 }
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

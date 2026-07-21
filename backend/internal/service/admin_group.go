@@ -148,11 +148,23 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 	if platform == PlatformVideo && subscriptionType != SubscriptionTypeStandard {
 		return nil, errors.New("video groups only support standard balance billing")
 	}
+	billingMode, requestLimit5h, requestLimit1d, err := NormalizeSubscriptionBillingConfig(
+		subscriptionType,
+		input.SubscriptionBillingMode,
+		input.RequestLimit5h,
+		input.RequestLimit1d,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// 限额字段：nil/负数 表示"无限制"，0 表示"不允许用量"，正数表示具体限额
 	dailyLimit := normalizeLimit(input.DailyLimitUSD)
 	weeklyLimit := normalizeLimit(input.WeeklyLimitUSD)
 	monthlyLimit := normalizeLimit(input.MonthlyLimitUSD)
+	if billingMode == SubscriptionBillingModeRequestCount {
+		dailyLimit, weeklyLimit, monthlyLimit = nil, nil, nil
+	}
 
 	// 图片价格：负数表示清除（使用默认价格），0 保留（表示免费）
 	imagePrice1K := normalizePrice(input.ImagePrice1K)
@@ -273,6 +285,9 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		IsExclusive:                     input.IsExclusive,
 		Status:                          StatusActive,
 		SubscriptionType:                subscriptionType,
+		SubscriptionBillingMode:         billingMode,
+		RequestLimit5h:                  requestLimit5h,
+		RequestLimit1d:                  requestLimit1d,
 		DailyLimitUSD:                   dailyLimit,
 		WeeklyLimitUSD:                  weeklyLimit,
 		MonthlyLimitUSD:                 monthlyLimit,
@@ -284,7 +299,7 @@ func (s *adminServiceImpl) CreateGroup(ctx context.Context, input *CreateGroupIn
 		BatchImageHoldMultiplier:        batchImageHoldMultiplier,
 		VideoRateIndependent:            input.VideoRateIndependent,
 		VideoRateMultiplier:             videoRateMultiplier,
-		VideoBillingMode:                 videoBillingMode,
+		VideoBillingMode:                videoBillingMode,
 		PeakRateEnabled:                 peakRateEnabled,
 		PeakStart:                       peakStart,
 		PeakEnd:                         peakEnd,
@@ -467,11 +482,38 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	if group.Platform == PlatformVideo && group.SubscriptionType != SubscriptionTypeStandard {
 		return nil, errors.New("video groups only support standard balance billing")
 	}
+	requestLimit5h := group.RequestLimit5h
+	if input.RequestLimit5h != nil {
+		requestLimit5h = *input.RequestLimit5h
+	}
+	requestLimit1d := group.RequestLimit1d
+	if input.RequestLimit1d != nil {
+		requestLimit1d = *input.RequestLimit1d
+	}
+	billingModeInput := group.SubscriptionBillingMode
+	if input.SubscriptionBillingMode != "" {
+		billingModeInput = input.SubscriptionBillingMode
+	}
+	billingMode, requestLimit5h, requestLimit1d, err := NormalizeSubscriptionBillingConfig(
+		group.SubscriptionType,
+		billingModeInput,
+		requestLimit5h,
+		requestLimit1d,
+	)
+	if err != nil {
+		return nil, err
+	}
+	group.SubscriptionBillingMode = billingMode
+	group.RequestLimit5h = requestLimit5h
+	group.RequestLimit1d = requestLimit1d
 	// 限额字段：nil/负数 表示"无限制"，0 表示"不允许用量"，正数表示具体限额
 	// 前端始终发送这三个字段，无需 nil 守卫
 	group.DailyLimitUSD = normalizeLimit(input.DailyLimitUSD)
 	group.WeeklyLimitUSD = normalizeLimit(input.WeeklyLimitUSD)
 	group.MonthlyLimitUSD = normalizeLimit(input.MonthlyLimitUSD)
+	if group.IsRequestCountSubscription() {
+		group.DailyLimitUSD, group.WeeklyLimitUSD, group.MonthlyLimitUSD = nil, nil, nil
+	}
 	// 图片生成计费配置：负数表示清除（使用默认价格）
 	if input.AllowImageGeneration != nil {
 		group.AllowImageGeneration = *input.AllowImageGeneration

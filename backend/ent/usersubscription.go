@@ -47,6 +47,14 @@ type UserSubscription struct {
 	WeeklyUsageUsd float64 `json:"weekly_usage_usd,omitempty"`
 	// MonthlyUsageUsd holds the value of the "monthly_usage_usd" field.
 	MonthlyUsageUsd float64 `json:"monthly_usage_usd,omitempty"`
+	// RequestUsage5h holds the value of the "request_usage_5h" field.
+	RequestUsage5h int `json:"request_usage_5h,omitempty"`
+	// RequestUsage1d holds the value of the "request_usage_1d" field.
+	RequestUsage1d int `json:"request_usage_1d,omitempty"`
+	// RequestWindow5hStart holds the value of the "request_window_5h_start" field.
+	RequestWindow5hStart *time.Time `json:"request_window_5h_start,omitempty"`
+	// RequestWindow1dStart holds the value of the "request_window_1d_start" field.
+	RequestWindow1dStart *time.Time `json:"request_window_1d_start,omitempty"`
 	// AssignedBy holds the value of the "assigned_by" field.
 	AssignedBy *int64 `json:"assigned_by,omitempty"`
 	// AssignedAt holds the value of the "assigned_at" field.
@@ -69,9 +77,11 @@ type UserSubscriptionEdges struct {
 	AssignedByUser *User `json:"assigned_by_user,omitempty"`
 	// UsageLogs holds the value of the usage_logs edge.
 	UsageLogs []*UsageLog `json:"usage_logs,omitempty"`
+	// RequestReservations holds the value of the request_reservations edge.
+	RequestReservations []*SubscriptionRequestReservation `json:"request_reservations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -116,6 +126,15 @@ func (e UserSubscriptionEdges) UsageLogsOrErr() ([]*UsageLog, error) {
 	return nil, &NotLoadedError{edge: "usage_logs"}
 }
 
+// RequestReservationsOrErr returns the RequestReservations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserSubscriptionEdges) RequestReservationsOrErr() ([]*SubscriptionRequestReservation, error) {
+	if e.loadedTypes[4] {
+		return e.RequestReservations, nil
+	}
+	return nil, &NotLoadedError{edge: "request_reservations"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*UserSubscription) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -123,11 +142,11 @@ func (*UserSubscription) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case usersubscription.FieldDailyUsageUsd, usersubscription.FieldWeeklyUsageUsd, usersubscription.FieldMonthlyUsageUsd:
 			values[i] = new(sql.NullFloat64)
-		case usersubscription.FieldID, usersubscription.FieldUserID, usersubscription.FieldGroupID, usersubscription.FieldAssignedBy:
+		case usersubscription.FieldID, usersubscription.FieldUserID, usersubscription.FieldGroupID, usersubscription.FieldRequestUsage5h, usersubscription.FieldRequestUsage1d, usersubscription.FieldAssignedBy:
 			values[i] = new(sql.NullInt64)
 		case usersubscription.FieldStatus, usersubscription.FieldNotes:
 			values[i] = new(sql.NullString)
-		case usersubscription.FieldCreatedAt, usersubscription.FieldUpdatedAt, usersubscription.FieldDeletedAt, usersubscription.FieldStartsAt, usersubscription.FieldExpiresAt, usersubscription.FieldDailyWindowStart, usersubscription.FieldWeeklyWindowStart, usersubscription.FieldMonthlyWindowStart, usersubscription.FieldAssignedAt:
+		case usersubscription.FieldCreatedAt, usersubscription.FieldUpdatedAt, usersubscription.FieldDeletedAt, usersubscription.FieldStartsAt, usersubscription.FieldExpiresAt, usersubscription.FieldDailyWindowStart, usersubscription.FieldWeeklyWindowStart, usersubscription.FieldMonthlyWindowStart, usersubscription.FieldRequestWindow5hStart, usersubscription.FieldRequestWindow1dStart, usersubscription.FieldAssignedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -238,6 +257,32 @@ func (_m *UserSubscription) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.MonthlyUsageUsd = value.Float64
 			}
+		case usersubscription.FieldRequestUsage5h:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field request_usage_5h", values[i])
+			} else if value.Valid {
+				_m.RequestUsage5h = int(value.Int64)
+			}
+		case usersubscription.FieldRequestUsage1d:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field request_usage_1d", values[i])
+			} else if value.Valid {
+				_m.RequestUsage1d = int(value.Int64)
+			}
+		case usersubscription.FieldRequestWindow5hStart:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field request_window_5h_start", values[i])
+			} else if value.Valid {
+				_m.RequestWindow5hStart = new(time.Time)
+				*_m.RequestWindow5hStart = value.Time
+			}
+		case usersubscription.FieldRequestWindow1dStart:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field request_window_1d_start", values[i])
+			} else if value.Valid {
+				_m.RequestWindow1dStart = new(time.Time)
+				*_m.RequestWindow1dStart = value.Time
+			}
 		case usersubscription.FieldAssignedBy:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field assigned_by", values[i])
@@ -289,6 +334,11 @@ func (_m *UserSubscription) QueryAssignedByUser() *UserQuery {
 // QueryUsageLogs queries the "usage_logs" edge of the UserSubscription entity.
 func (_m *UserSubscription) QueryUsageLogs() *UsageLogQuery {
 	return NewUserSubscriptionClient(_m.config).QueryUsageLogs(_m)
+}
+
+// QueryRequestReservations queries the "request_reservations" edge of the UserSubscription entity.
+func (_m *UserSubscription) QueryRequestReservations() *SubscriptionRequestReservationQuery {
+	return NewUserSubscriptionClient(_m.config).QueryRequestReservations(_m)
 }
 
 // Update returns a builder for updating this UserSubscription.
@@ -363,6 +413,22 @@ func (_m *UserSubscription) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("monthly_usage_usd=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MonthlyUsageUsd))
+	builder.WriteString(", ")
+	builder.WriteString("request_usage_5h=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RequestUsage5h))
+	builder.WriteString(", ")
+	builder.WriteString("request_usage_1d=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RequestUsage1d))
+	builder.WriteString(", ")
+	if v := _m.RequestWindow5hStart; v != nil {
+		builder.WriteString("request_window_5h_start=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RequestWindow1dStart; v != nil {
+		builder.WriteString("request_window_1d_start=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	if v := _m.AssignedBy; v != nil {
 		builder.WriteString("assigned_by=")

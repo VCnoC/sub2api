@@ -893,6 +893,9 @@ var (
 		{Name: "duplicate_operation_id", Type: field.TypeString, Nullable: true, Size: 64},
 		{Name: "platform", Type: field.TypeString, Size: 50, Default: "anthropic"},
 		{Name: "subscription_type", Type: field.TypeString, Size: 20, Default: "standard"},
+		{Name: "subscription_billing_mode", Type: field.TypeString, Size: 20, Default: "usd"},
+		{Name: "request_limit_5h", Type: field.TypeInt, Default: 0},
+		{Name: "request_limit_1d", Type: field.TypeInt, Default: 0},
 		{Name: "daily_limit_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "weekly_limit_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
 		{Name: "monthly_limit_usd", Type: field.TypeFloat64, Nullable: true, SchemaType: map[string]string{"postgres": "decimal(20,8)"}},
@@ -963,7 +966,7 @@ var (
 			{
 				Name:    "group_sort_order",
 				Unique:  false,
-				Columns: []*schema.Column{GroupsColumns[43]},
+				Columns: []*schema.Column{GroupsColumns[46]},
 			},
 			{
 				Name:    "idx_groups_duplicate_operation_id_active",
@@ -1558,6 +1561,68 @@ var (
 				Name:    "subscriptionplan_for_sale",
 				Unique:  false,
 				Columns: []*schema.Column{SubscriptionPlansColumns[11]},
+			},
+		},
+	}
+	// SubscriptionRequestReservationsColumns holds the columns for the "subscription_request_reservations" table.
+	SubscriptionRequestReservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "request_id", Type: field.TypeString, Size: 128},
+		{Name: "status", Type: field.TypeString, Size: 20, Default: "pending"},
+		{Name: "window_5h_start", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "window_1d_start", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "expires_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "api_key_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+		{Name: "subscription_id", Type: field.TypeInt64},
+	}
+	// SubscriptionRequestReservationsTable holds the schema information for the "subscription_request_reservations" table.
+	SubscriptionRequestReservationsTable = &schema.Table{
+		Name:       "subscription_request_reservations",
+		Columns:    SubscriptionRequestReservationsColumns,
+		PrimaryKey: []*schema.Column{SubscriptionRequestReservationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "subscription_request_reservations_api_keys_subscription_request_reservations",
+				Columns:    []*schema.Column{SubscriptionRequestReservationsColumns[8]},
+				RefColumns: []*schema.Column{APIKeysColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "subscription_request_reservations_users_subscription_request_reservations",
+				Columns:    []*schema.Column{SubscriptionRequestReservationsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "subscription_request_reservations_user_subscriptions_request_reservations",
+				Columns:    []*schema.Column{SubscriptionRequestReservationsColumns[10]},
+				RefColumns: []*schema.Column{UserSubscriptionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "subscriptionrequestreservation_request_id_subscription_id",
+				Unique:  true,
+				Columns: []*schema.Column{SubscriptionRequestReservationsColumns[1], SubscriptionRequestReservationsColumns[10]},
+			},
+			{
+				Name:    "subscriptionrequestreservation_subscription_id_status_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{SubscriptionRequestReservationsColumns[10], SubscriptionRequestReservationsColumns[2], SubscriptionRequestReservationsColumns[5]},
+			},
+			{
+				Name:    "subscriptionrequestreservation_api_key_id",
+				Unique:  false,
+				Columns: []*schema.Column{SubscriptionRequestReservationsColumns[8]},
+			},
+			{
+				Name:    "subscriptionrequestreservation_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{SubscriptionRequestReservationsColumns[9]},
 			},
 		},
 	}
@@ -2270,6 +2335,10 @@ var (
 		{Name: "daily_usage_usd", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,10)"}},
 		{Name: "weekly_usage_usd", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,10)"}},
 		{Name: "monthly_usage_usd", Type: field.TypeFloat64, Default: 0, SchemaType: map[string]string{"postgres": "decimal(20,10)"}},
+		{Name: "request_usage_5h", Type: field.TypeInt, Default: 0},
+		{Name: "request_usage_1d", Type: field.TypeInt, Default: 0},
+		{Name: "request_window_5h_start", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "request_window_1d_start", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "assigned_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
 		{Name: "notes", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "text"}},
 		{Name: "group_id", Type: field.TypeInt64},
@@ -2284,19 +2353,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "user_subscriptions_groups_subscriptions",
-				Columns:    []*schema.Column{UserSubscriptionsColumns[15]},
+				Columns:    []*schema.Column{UserSubscriptionsColumns[19]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "user_subscriptions_users_subscriptions",
-				Columns:    []*schema.Column{UserSubscriptionsColumns[16]},
+				Columns:    []*schema.Column{UserSubscriptionsColumns[20]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "user_subscriptions_users_assigned_subscriptions",
-				Columns:    []*schema.Column{UserSubscriptionsColumns[17]},
+				Columns:    []*schema.Column{UserSubscriptionsColumns[21]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -2305,12 +2374,12 @@ var (
 			{
 				Name:    "usersubscription_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{UserSubscriptionsColumns[16]},
+				Columns: []*schema.Column{UserSubscriptionsColumns[20]},
 			},
 			{
 				Name:    "usersubscription_group_id",
 				Unique:  false,
-				Columns: []*schema.Column{UserSubscriptionsColumns[15]},
+				Columns: []*schema.Column{UserSubscriptionsColumns[19]},
 			},
 			{
 				Name:    "usersubscription_status",
@@ -2325,17 +2394,17 @@ var (
 			{
 				Name:    "usersubscription_user_id_status_expires_at",
 				Unique:  false,
-				Columns: []*schema.Column{UserSubscriptionsColumns[16], UserSubscriptionsColumns[6], UserSubscriptionsColumns[5]},
+				Columns: []*schema.Column{UserSubscriptionsColumns[20], UserSubscriptionsColumns[6], UserSubscriptionsColumns[5]},
 			},
 			{
 				Name:    "usersubscription_assigned_by",
 				Unique:  false,
-				Columns: []*schema.Column{UserSubscriptionsColumns[17]},
+				Columns: []*schema.Column{UserSubscriptionsColumns[21]},
 			},
 			{
 				Name:    "usersubscription_user_id_group_id",
 				Unique:  false,
-				Columns: []*schema.Column{UserSubscriptionsColumns[16], UserSubscriptionsColumns[15]},
+				Columns: []*schema.Column{UserSubscriptionsColumns[20], UserSubscriptionsColumns[19]},
 			},
 			{
 				Name:    "usersubscription_deleted_at",
@@ -2430,6 +2499,7 @@ var (
 		SecuritySecretsTable,
 		SettingsTable,
 		SubscriptionPlansTable,
+		SubscriptionRequestReservationsTable,
 		SupportTicketsTable,
 		SupportTicketAttachmentsTable,
 		SupportTicketMessagesTable,
@@ -2565,6 +2635,12 @@ func init() {
 	}
 	SubscriptionPlansTable.Annotation = &entsql.Annotation{
 		Table: "subscription_plans",
+	}
+	SubscriptionRequestReservationsTable.ForeignKeys[0].RefTable = APIKeysTable
+	SubscriptionRequestReservationsTable.ForeignKeys[1].RefTable = UsersTable
+	SubscriptionRequestReservationsTable.ForeignKeys[2].RefTable = UserSubscriptionsTable
+	SubscriptionRequestReservationsTable.Annotation = &entsql.Annotation{
+		Table: "subscription_request_reservations",
 	}
 	SupportTicketsTable.ForeignKeys[0].RefTable = UsersTable
 	SupportTicketsTable.ForeignKeys[1].RefTable = UsersTable

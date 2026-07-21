@@ -33,6 +33,9 @@ func RegisterAdminRoutes(
 		// 用户管理
 		registerUserManagementRoutes(admin, h)
 
+		// 团队管理
+		registerTeamManagementRoutes(admin, h)
+
 		// 分组管理
 		registerGroupRoutes(admin, h)
 
@@ -122,6 +125,23 @@ func RegisterAdminRoutes(
 
 		// 操作审计日志
 		registerAuditLogRoutes(admin, h, stepUpAuth)
+	}
+}
+
+func registerTeamManagementRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	teams := admin.Group("/teams")
+	{
+		teams.GET("/stats", h.Admin.Team.Stats)
+		teams.GET("/settings", h.Admin.Team.GetSettings)
+		teams.PUT("/settings", h.Admin.Team.UpdateSettings)
+		teams.GET("/applications", h.Admin.Team.ListApplications)
+		teams.POST("/applications/:id/review", h.Admin.Team.ReviewApplication)
+		teams.GET("", h.Admin.Team.List)
+		teams.GET("/:id", h.Admin.Team.Get)
+		teams.PUT("/:id/status", h.Admin.Team.SetStatus)
+		teams.PUT("/:id/member-limit", h.Admin.Team.SetLimit)
+		teams.POST("/:id/review-complete", h.Admin.Team.MarkReviewed)
+		teams.DELETE("/:id/members/:member_id", h.Admin.Team.RemoveMember)
 	}
 }
 

@@ -90,6 +90,10 @@ func mustCreateGroup(t *testing.T, client *dbent.Client, g *service.Group) *serv
 		SetSubscriptionType(g.SubscriptionType).
 		SetRateMultiplier(g.RateMultiplier).
 		SetIsExclusive(g.IsExclusive)
+	if g.SubscriptionBillingMode != "" {
+		create.SetSubscriptionBillingMode(g.SubscriptionBillingMode)
+	}
+	create.SetRequestLimit5h(g.RequestLimit5h).SetRequestLimit1d(g.RequestLimit1d)
 	if g.Description != "" {
 		create.SetDescription(g.Description)
 	}
@@ -400,7 +404,15 @@ func mustCreateSubscription(t *testing.T, client *dbent.Client, s *service.UserS
 		SetNotes(s.Notes).
 		SetDailyUsageUsd(s.DailyUsageUSD).
 		SetWeeklyUsageUsd(s.WeeklyUsageUSD).
-		SetMonthlyUsageUsd(s.MonthlyUsageUSD)
+		SetMonthlyUsageUsd(s.MonthlyUsageUSD).
+		SetRequestUsage5h(s.RequestUsage5h).
+		SetRequestUsage1d(s.RequestUsage1d)
+	if s.RequestWindow5hStart != nil {
+		create.SetRequestWindow5hStart(*s.RequestWindow5hStart)
+	}
+	if s.RequestWindow1dStart != nil {
+		create.SetRequestWindow1dStart(*s.RequestWindow1dStart)
+	}
 
 	if s.AssignedBy != nil {
 		create.SetAssignedBy(*s.AssignedBy)

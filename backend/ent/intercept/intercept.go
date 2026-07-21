@@ -40,6 +40,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
 	"github.com/Wei-Shaw/sub2api/ent/setting"
 	"github.com/Wei-Shaw/sub2api/ent/subscriptionplan"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/supportticket"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketattachment"
 	"github.com/Wei-Shaw/sub2api/ent/supportticketmessage"
@@ -950,6 +951,33 @@ func (f TraverseSubscriptionPlan) Traverse(ctx context.Context, q ent.Query) err
 	return fmt.Errorf("unexpected query type %T. expect *ent.SubscriptionPlanQuery", q)
 }
 
+// The SubscriptionRequestReservationFunc type is an adapter to allow the use of ordinary function as a Querier.
+type SubscriptionRequestReservationFunc func(context.Context, *ent.SubscriptionRequestReservationQuery) (ent.Value, error)
+
+// Query calls f(ctx, q).
+func (f SubscriptionRequestReservationFunc) Query(ctx context.Context, q ent.Query) (ent.Value, error) {
+	if q, ok := q.(*ent.SubscriptionRequestReservationQuery); ok {
+		return f(ctx, q)
+	}
+	return nil, fmt.Errorf("unexpected query type %T. expect *ent.SubscriptionRequestReservationQuery", q)
+}
+
+// The TraverseSubscriptionRequestReservation type is an adapter to allow the use of ordinary function as Traverser.
+type TraverseSubscriptionRequestReservation func(context.Context, *ent.SubscriptionRequestReservationQuery) error
+
+// Intercept is a dummy implementation of Intercept that returns the next Querier in the pipeline.
+func (f TraverseSubscriptionRequestReservation) Intercept(next ent.Querier) ent.Querier {
+	return next
+}
+
+// Traverse calls f(ctx, q).
+func (f TraverseSubscriptionRequestReservation) Traverse(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.SubscriptionRequestReservationQuery); ok {
+		return f(ctx, q)
+	}
+	return fmt.Errorf("unexpected query type %T. expect *ent.SubscriptionRequestReservationQuery", q)
+}
+
 // The SupportTicketFunc type is an adapter to allow the use of ordinary function as a Querier.
 type SupportTicketFunc func(context.Context, *ent.SupportTicketQuery) (ent.Value, error)
 
@@ -1420,6 +1448,8 @@ func NewQuery(q ent.Query) (Query, error) {
 		return &query[*ent.SettingQuery, predicate.Setting, setting.OrderOption]{typ: ent.TypeSetting, tq: q}, nil
 	case *ent.SubscriptionPlanQuery:
 		return &query[*ent.SubscriptionPlanQuery, predicate.SubscriptionPlan, subscriptionplan.OrderOption]{typ: ent.TypeSubscriptionPlan, tq: q}, nil
+	case *ent.SubscriptionRequestReservationQuery:
+		return &query[*ent.SubscriptionRequestReservationQuery, predicate.SubscriptionRequestReservation, subscriptionrequestreservation.OrderOption]{typ: ent.TypeSubscriptionRequestReservation, tq: q}, nil
 	case *ent.SupportTicketQuery:
 		return &query[*ent.SupportTicketQuery, predicate.SupportTicket, supportticket.OrderOption]{typ: ent.TypeSupportTicket, tq: q}, nil
 	case *ent.SupportTicketAttachmentQuery:

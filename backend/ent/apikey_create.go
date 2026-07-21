@@ -14,6 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/apikeygroup"
 	"github.com/Wei-Shaw/sub2api/ent/group"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 )
@@ -306,6 +307,21 @@ func (_c *APIKeyCreate) SetNillableWindow7dStart(v *time.Time) *APIKeyCreate {
 		_c.SetWindow7dStart(*v)
 	}
 	return _c
+}
+
+// AddSubscriptionRequestReservationIDs adds the "subscription_request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_c *APIKeyCreate) AddSubscriptionRequestReservationIDs(ids ...int64) *APIKeyCreate {
+	_c.mutation.AddSubscriptionRequestReservationIDs(ids...)
+	return _c
+}
+
+// AddSubscriptionRequestReservations adds the "subscription_request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_c *APIKeyCreate) AddSubscriptionRequestReservations(v ...*SubscriptionRequestReservation) *APIKeyCreate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSubscriptionRequestReservationIDs(ids...)
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -610,6 +626,22 @@ func (_c *APIKeyCreate) createSpec() (*APIKey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Window7dStart(); ok {
 		_spec.SetField(apikey.FieldWindow7dStart, field.TypeTime, value)
 		_node.Window7dStart = &value
+	}
+	if nodes := _c.mutation.SubscriptionRequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   apikey.SubscriptionRequestReservationsTable,
+			Columns: []string{apikey.SubscriptionRequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

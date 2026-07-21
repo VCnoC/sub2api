@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/stretchr/testify/require"
 )
@@ -188,4 +189,19 @@ func TestOpenAIGatewayHandlerSubmitOpenAIUsageRecordTask_ImageResultUsesMandator
 	close(release)
 
 	require.True(t, called.Load(), "image usage task must be mandatory when async submit is dropped")
+}
+
+func TestGatewayHandlerSubmitUsageRecordTask_RequestReservationSurvivesClientCancel(t *testing.T) {
+	parent, cancel := context.WithCancel(context.WithValue(context.Background(), ctxkey.SubscriptionRequestReservationID, int64(42)))
+	cancel()
+	h := &GatewayHandler{}
+	var called atomic.Bool
+
+	h.submitUsageRecordTask(parent, func(ctx context.Context) {
+		require.NoError(t, ctx.Err())
+		require.Equal(t, int64(42), subscriptionRequestReservationID(ctx))
+		called.Store(true)
+	})
+
+	require.True(t, called.Load(), "successful upstream usage must still confirm the reservation after client cancellation")
 }

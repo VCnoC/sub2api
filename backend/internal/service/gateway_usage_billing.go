@@ -76,6 +76,7 @@ type postUsageBillingParams struct {
 	Account               *Account
 	Subscription          *UserSubscription
 	RequestPayloadHash    string
+	RequestReservationID  int64
 	IsSubscriptionBill    bool
 	AccountRateMultiplier float64
 	APIKeyService         APIKeyQuotaUpdater
@@ -131,7 +132,7 @@ func postUsageBilling(ctx context.Context, p *postUsageBillingParams, deps *bill
 	if p.IsSubscriptionBill {
 		// Subscription usage tracked by ActualCost so group rate multiplier
 		// consumes the quota at the expected speed.
-		if cost.ActualCost > 0 {
+		if p.RequestReservationID == 0 && cost.ActualCost > 0 {
 			if err := deps.userSubRepo.IncrementUsage(billingCtx, p.Subscription.ID, cost.ActualCost); err != nil {
 				slog.Error("increment subscription usage failed", "subscription_id", p.Subscription.ID, "error", err)
 			}
@@ -229,13 +230,14 @@ func buildUsageBillingCommand(requestID string, usageLog *UsageLog, p *postUsage
 	}
 
 	cmd := &UsageBillingCommand{
-		RequestID:          requestID,
-		APIKeyID:           p.APIKey.ID,
-		UserID:             p.User.ID,
-		AccountID:          p.Account.ID,
-		AccountType:        p.Account.Type,
-		RequestPayloadHash: strings.TrimSpace(p.RequestPayloadHash),
-		VideoTask:          p.VideoTask,
+		RequestID:            requestID,
+		APIKeyID:             p.APIKey.ID,
+		UserID:               p.User.ID,
+		AccountID:            p.Account.ID,
+		AccountType:          p.Account.Type,
+		RequestPayloadHash:   strings.TrimSpace(p.RequestPayloadHash),
+		RequestReservationID: p.RequestReservationID,
+		VideoTask:            p.VideoTask,
 	}
 	if usageLog != nil {
 		cmd.Model = usageLog.Model
@@ -260,7 +262,10 @@ func buildUsageBillingCommand(requestID string, usageLog *UsageLog, p *postUsage
 	// user-specific) rate multiplier consumes subscription quota at the expected
 	// speed. TotalCost remains the raw (pre-multiplier) value; downstream guards
 	// on "> 0" still correctly skip free subscriptions (RateMultiplier == 0).
-	if p.IsSubscriptionBill && p.Subscription != nil && p.Cost.TotalCost > 0 {
+	if p.IsSubscriptionBill && p.Subscription != nil && p.RequestReservationID > 0 {
+		cmd.SubscriptionID = &p.Subscription.ID
+		cmd.SubscriptionCost = 0
+	} else if p.IsSubscriptionBill && p.Subscription != nil && p.Cost.TotalCost > 0 {
 		cmd.SubscriptionID = &p.Subscription.ID
 		cmd.SubscriptionCost = p.Cost.ActualCost
 	} else if p.Cost.ActualCost > 0 {
@@ -286,6 +291,9 @@ func applyUsageBilling(ctx context.Context, requestID string, usageLog *UsageLog
 		return false, nil
 	}
 
+	if reservationID, ok := ctx.Value(ctxkey.SubscriptionRequestReservationID).(int64); ok && reservationID > 0 {
+		p.RequestReservationID = reservationID
+	}
 	cmd := buildUsageBillingCommand(requestID, usageLog, p)
 	if cmd == nil || cmd.RequestID == "" || repo == nil {
 		postUsageBilling(ctx, p, deps)

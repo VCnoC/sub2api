@@ -46,6 +46,12 @@ const (
 	FieldPlatform = "platform"
 	// FieldSubscriptionType holds the string denoting the subscription_type field in the database.
 	FieldSubscriptionType = "subscription_type"
+	// FieldSubscriptionBillingMode holds the string denoting the subscription_billing_mode field in the database.
+	FieldSubscriptionBillingMode = "subscription_billing_mode"
+	// FieldRequestLimit5h holds the string denoting the request_limit_5h field in the database.
+	FieldRequestLimit5h = "request_limit_5h"
+	// FieldRequestLimit1d holds the string denoting the request_limit_1d field in the database.
+	FieldRequestLimit1d = "request_limit_1d"
 	// FieldDailyLimitUsd holds the string denoting the daily_limit_usd field in the database.
 	FieldDailyLimitUsd = "daily_limit_usd"
 	// FieldWeeklyLimitUsd holds the string denoting the weekly_limit_usd field in the database.
@@ -215,6 +221,9 @@ var Columns = []string{
 	FieldDuplicateOperationID,
 	FieldPlatform,
 	FieldSubscriptionType,
+	FieldSubscriptionBillingMode,
+	FieldRequestLimit5h,
+	FieldRequestLimit1d,
 	FieldDailyLimitUsd,
 	FieldWeeklyLimitUsd,
 	FieldMonthlyLimitUsd,
@@ -317,6 +326,18 @@ var (
 	DefaultSubscriptionType string
 	// SubscriptionTypeValidator is a validator for the "subscription_type" field. It is called by the builders before save.
 	SubscriptionTypeValidator func(string) error
+	// DefaultSubscriptionBillingMode holds the default value on creation for the "subscription_billing_mode" field.
+	DefaultSubscriptionBillingMode string
+	// SubscriptionBillingModeValidator is a validator for the "subscription_billing_mode" field. It is called by the builders before save.
+	SubscriptionBillingModeValidator func(string) error
+	// DefaultRequestLimit5h holds the default value on creation for the "request_limit_5h" field.
+	DefaultRequestLimit5h int
+	// RequestLimit5hValidator is a validator for the "request_limit_5h" field. It is called by the builders before save.
+	RequestLimit5hValidator func(int) error
+	// DefaultRequestLimit1d holds the default value on creation for the "request_limit_1d" field.
+	DefaultRequestLimit1d int
+	// RequestLimit1dValidator is a validator for the "request_limit_1d" field. It is called by the builders before save.
+	RequestLimit1dValidator func(int) error
 	// DefaultDefaultValidityDays holds the default value on creation for the "default_validity_days" field.
 	DefaultDefaultValidityDays int
 	// DefaultAllowImageGeneration holds the default value on creation for the "allow_image_generation" field.
@@ -448,6 +469,21 @@ func ByPlatform(opts ...sql.OrderTermOption) OrderOption {
 // BySubscriptionType orders the results by the subscription_type field.
 func BySubscriptionType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubscriptionType, opts...).ToFunc()
+}
+
+// BySubscriptionBillingMode orders the results by the subscription_billing_mode field.
+func BySubscriptionBillingMode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubscriptionBillingMode, opts...).ToFunc()
+}
+
+// ByRequestLimit5h orders the results by the request_limit_5h field.
+func ByRequestLimit5h(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestLimit5h, opts...).ToFunc()
+}
+
+// ByRequestLimit1d orders the results by the request_limit_1d field.
+func ByRequestLimit1d(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRequestLimit1d, opts...).ToFunc()
 }
 
 // ByDailyLimitUsd orders the results by the daily_limit_usd field.

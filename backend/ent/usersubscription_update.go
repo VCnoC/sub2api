@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/Wei-Shaw/sub2api/ent/subscriptionrequestreservation"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
 	"github.com/Wei-Shaw/sub2api/ent/user"
 	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
@@ -250,6 +251,88 @@ func (_u *UserSubscriptionUpdate) AddMonthlyUsageUsd(v float64) *UserSubscriptio
 	return _u
 }
 
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (_u *UserSubscriptionUpdate) SetRequestUsage5h(v int) *UserSubscriptionUpdate {
+	_u.mutation.ResetRequestUsage5h()
+	_u.mutation.SetRequestUsage5h(v)
+	return _u
+}
+
+// SetNillableRequestUsage5h sets the "request_usage_5h" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableRequestUsage5h(v *int) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetRequestUsage5h(*v)
+	}
+	return _u
+}
+
+// AddRequestUsage5h adds value to the "request_usage_5h" field.
+func (_u *UserSubscriptionUpdate) AddRequestUsage5h(v int) *UserSubscriptionUpdate {
+	_u.mutation.AddRequestUsage5h(v)
+	return _u
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (_u *UserSubscriptionUpdate) SetRequestUsage1d(v int) *UserSubscriptionUpdate {
+	_u.mutation.ResetRequestUsage1d()
+	_u.mutation.SetRequestUsage1d(v)
+	return _u
+}
+
+// SetNillableRequestUsage1d sets the "request_usage_1d" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableRequestUsage1d(v *int) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetRequestUsage1d(*v)
+	}
+	return _u
+}
+
+// AddRequestUsage1d adds value to the "request_usage_1d" field.
+func (_u *UserSubscriptionUpdate) AddRequestUsage1d(v int) *UserSubscriptionUpdate {
+	_u.mutation.AddRequestUsage1d(v)
+	return _u
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (_u *UserSubscriptionUpdate) SetRequestWindow5hStart(v time.Time) *UserSubscriptionUpdate {
+	_u.mutation.SetRequestWindow5hStart(v)
+	return _u
+}
+
+// SetNillableRequestWindow5hStart sets the "request_window_5h_start" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableRequestWindow5hStart(v *time.Time) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetRequestWindow5hStart(*v)
+	}
+	return _u
+}
+
+// ClearRequestWindow5hStart clears the value of the "request_window_5h_start" field.
+func (_u *UserSubscriptionUpdate) ClearRequestWindow5hStart() *UserSubscriptionUpdate {
+	_u.mutation.ClearRequestWindow5hStart()
+	return _u
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (_u *UserSubscriptionUpdate) SetRequestWindow1dStart(v time.Time) *UserSubscriptionUpdate {
+	_u.mutation.SetRequestWindow1dStart(v)
+	return _u
+}
+
+// SetNillableRequestWindow1dStart sets the "request_window_1d_start" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableRequestWindow1dStart(v *time.Time) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetRequestWindow1dStart(*v)
+	}
+	return _u
+}
+
+// ClearRequestWindow1dStart clears the value of the "request_window_1d_start" field.
+func (_u *UserSubscriptionUpdate) ClearRequestWindow1dStart() *UserSubscriptionUpdate {
+	_u.mutation.ClearRequestWindow1dStart()
+	return _u
+}
+
 // SetAssignedBy sets the "assigned_by" field.
 func (_u *UserSubscriptionUpdate) SetAssignedBy(v int64) *UserSubscriptionUpdate {
 	_u.mutation.SetAssignedBy(v)
@@ -348,6 +431,21 @@ func (_u *UserSubscriptionUpdate) AddUsageLogs(v ...*UsageLog) *UserSubscription
 	return _u.AddUsageLogIDs(ids...)
 }
 
+// AddRequestReservationIDs adds the "request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_u *UserSubscriptionUpdate) AddRequestReservationIDs(ids ...int64) *UserSubscriptionUpdate {
+	_u.mutation.AddRequestReservationIDs(ids...)
+	return _u
+}
+
+// AddRequestReservations adds the "request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *UserSubscriptionUpdate) AddRequestReservations(v ...*SubscriptionRequestReservation) *UserSubscriptionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRequestReservationIDs(ids...)
+}
+
 // Mutation returns the UserSubscriptionMutation object of the builder.
 func (_u *UserSubscriptionUpdate) Mutation() *UserSubscriptionMutation {
 	return _u.mutation
@@ -390,6 +488,27 @@ func (_u *UserSubscriptionUpdate) RemoveUsageLogs(v ...*UsageLog) *UserSubscript
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUsageLogIDs(ids...)
+}
+
+// ClearRequestReservations clears all "request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *UserSubscriptionUpdate) ClearRequestReservations() *UserSubscriptionUpdate {
+	_u.mutation.ClearRequestReservations()
+	return _u
+}
+
+// RemoveRequestReservationIDs removes the "request_reservations" edge to SubscriptionRequestReservation entities by IDs.
+func (_u *UserSubscriptionUpdate) RemoveRequestReservationIDs(ids ...int64) *UserSubscriptionUpdate {
+	_u.mutation.RemoveRequestReservationIDs(ids...)
+	return _u
+}
+
+// RemoveRequestReservations removes "request_reservations" edges to SubscriptionRequestReservation entities.
+func (_u *UserSubscriptionUpdate) RemoveRequestReservations(v ...*SubscriptionRequestReservation) *UserSubscriptionUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRequestReservationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -439,6 +558,16 @@ func (_u *UserSubscriptionUpdate) check() error {
 	if v, ok := _u.mutation.Status(); ok {
 		if err := usersubscription.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestUsage5h(); ok {
+		if err := usersubscription.RequestUsage5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_5h", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_5h": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestUsage1d(); ok {
+		if err := usersubscription.RequestUsage1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_1d", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_1d": %w`, err)}
 		}
 	}
 	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
@@ -515,6 +644,30 @@ func (_u *UserSubscriptionUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.RequestUsage5h(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestUsage5h(); ok {
+		_spec.AddField(usersubscription.FieldRequestUsage5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestUsage1d(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestUsage1d(); ok {
+		_spec.AddField(usersubscription.FieldRequestUsage1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestWindow5hStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow5hStart, field.TypeTime, value)
+	}
+	if _u.mutation.RequestWindow5hStartCleared() {
+		_spec.ClearField(usersubscription.FieldRequestWindow5hStart, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RequestWindow1dStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow1dStart, field.TypeTime, value)
+	}
+	if _u.mutation.RequestWindow1dStartCleared() {
+		_spec.ClearField(usersubscription.FieldRequestWindow1dStart, field.TypeTime)
 	}
 	if value, ok := _u.mutation.AssignedAt(); ok {
 		_spec.SetField(usersubscription.FieldAssignedAt, field.TypeTime, value)
@@ -650,6 +803,51 @@ func (_u *UserSubscriptionUpdate) sqlSave(ctx context.Context) (_node int, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRequestReservationsIDs(); len(nodes) > 0 && !_u.mutation.RequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -896,6 +1094,88 @@ func (_u *UserSubscriptionUpdateOne) AddMonthlyUsageUsd(v float64) *UserSubscrip
 	return _u
 }
 
+// SetRequestUsage5h sets the "request_usage_5h" field.
+func (_u *UserSubscriptionUpdateOne) SetRequestUsage5h(v int) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetRequestUsage5h()
+	_u.mutation.SetRequestUsage5h(v)
+	return _u
+}
+
+// SetNillableRequestUsage5h sets the "request_usage_5h" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableRequestUsage5h(v *int) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetRequestUsage5h(*v)
+	}
+	return _u
+}
+
+// AddRequestUsage5h adds value to the "request_usage_5h" field.
+func (_u *UserSubscriptionUpdateOne) AddRequestUsage5h(v int) *UserSubscriptionUpdateOne {
+	_u.mutation.AddRequestUsage5h(v)
+	return _u
+}
+
+// SetRequestUsage1d sets the "request_usage_1d" field.
+func (_u *UserSubscriptionUpdateOne) SetRequestUsage1d(v int) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetRequestUsage1d()
+	_u.mutation.SetRequestUsage1d(v)
+	return _u
+}
+
+// SetNillableRequestUsage1d sets the "request_usage_1d" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableRequestUsage1d(v *int) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetRequestUsage1d(*v)
+	}
+	return _u
+}
+
+// AddRequestUsage1d adds value to the "request_usage_1d" field.
+func (_u *UserSubscriptionUpdateOne) AddRequestUsage1d(v int) *UserSubscriptionUpdateOne {
+	_u.mutation.AddRequestUsage1d(v)
+	return _u
+}
+
+// SetRequestWindow5hStart sets the "request_window_5h_start" field.
+func (_u *UserSubscriptionUpdateOne) SetRequestWindow5hStart(v time.Time) *UserSubscriptionUpdateOne {
+	_u.mutation.SetRequestWindow5hStart(v)
+	return _u
+}
+
+// SetNillableRequestWindow5hStart sets the "request_window_5h_start" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableRequestWindow5hStart(v *time.Time) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetRequestWindow5hStart(*v)
+	}
+	return _u
+}
+
+// ClearRequestWindow5hStart clears the value of the "request_window_5h_start" field.
+func (_u *UserSubscriptionUpdateOne) ClearRequestWindow5hStart() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearRequestWindow5hStart()
+	return _u
+}
+
+// SetRequestWindow1dStart sets the "request_window_1d_start" field.
+func (_u *UserSubscriptionUpdateOne) SetRequestWindow1dStart(v time.Time) *UserSubscriptionUpdateOne {
+	_u.mutation.SetRequestWindow1dStart(v)
+	return _u
+}
+
+// SetNillableRequestWindow1dStart sets the "request_window_1d_start" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableRequestWindow1dStart(v *time.Time) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetRequestWindow1dStart(*v)
+	}
+	return _u
+}
+
+// ClearRequestWindow1dStart clears the value of the "request_window_1d_start" field.
+func (_u *UserSubscriptionUpdateOne) ClearRequestWindow1dStart() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearRequestWindow1dStart()
+	return _u
+}
+
 // SetAssignedBy sets the "assigned_by" field.
 func (_u *UserSubscriptionUpdateOne) SetAssignedBy(v int64) *UserSubscriptionUpdateOne {
 	_u.mutation.SetAssignedBy(v)
@@ -994,6 +1274,21 @@ func (_u *UserSubscriptionUpdateOne) AddUsageLogs(v ...*UsageLog) *UserSubscript
 	return _u.AddUsageLogIDs(ids...)
 }
 
+// AddRequestReservationIDs adds the "request_reservations" edge to the SubscriptionRequestReservation entity by IDs.
+func (_u *UserSubscriptionUpdateOne) AddRequestReservationIDs(ids ...int64) *UserSubscriptionUpdateOne {
+	_u.mutation.AddRequestReservationIDs(ids...)
+	return _u
+}
+
+// AddRequestReservations adds the "request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *UserSubscriptionUpdateOne) AddRequestReservations(v ...*SubscriptionRequestReservation) *UserSubscriptionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRequestReservationIDs(ids...)
+}
+
 // Mutation returns the UserSubscriptionMutation object of the builder.
 func (_u *UserSubscriptionUpdateOne) Mutation() *UserSubscriptionMutation {
 	return _u.mutation
@@ -1036,6 +1331,27 @@ func (_u *UserSubscriptionUpdateOne) RemoveUsageLogs(v ...*UsageLog) *UserSubscr
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUsageLogIDs(ids...)
+}
+
+// ClearRequestReservations clears all "request_reservations" edges to the SubscriptionRequestReservation entity.
+func (_u *UserSubscriptionUpdateOne) ClearRequestReservations() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearRequestReservations()
+	return _u
+}
+
+// RemoveRequestReservationIDs removes the "request_reservations" edge to SubscriptionRequestReservation entities by IDs.
+func (_u *UserSubscriptionUpdateOne) RemoveRequestReservationIDs(ids ...int64) *UserSubscriptionUpdateOne {
+	_u.mutation.RemoveRequestReservationIDs(ids...)
+	return _u
+}
+
+// RemoveRequestReservations removes "request_reservations" edges to SubscriptionRequestReservation entities.
+func (_u *UserSubscriptionUpdateOne) RemoveRequestReservations(v ...*SubscriptionRequestReservation) *UserSubscriptionUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRequestReservationIDs(ids...)
 }
 
 // Where appends a list predicates to the UserSubscriptionUpdate builder.
@@ -1098,6 +1414,16 @@ func (_u *UserSubscriptionUpdateOne) check() error {
 	if v, ok := _u.mutation.Status(); ok {
 		if err := usersubscription.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.status": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestUsage5h(); ok {
+		if err := usersubscription.RequestUsage5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_5h", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_5h": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestUsage1d(); ok {
+		if err := usersubscription.RequestUsage1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_usage_1d", err: fmt.Errorf(`ent: validator failed for field "UserSubscription.request_usage_1d": %w`, err)}
 		}
 	}
 	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
@@ -1191,6 +1517,30 @@ func (_u *UserSubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *UserSu
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.RequestUsage5h(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestUsage5h(); ok {
+		_spec.AddField(usersubscription.FieldRequestUsage5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestUsage1d(); ok {
+		_spec.SetField(usersubscription.FieldRequestUsage1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestUsage1d(); ok {
+		_spec.AddField(usersubscription.FieldRequestUsage1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestWindow5hStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow5hStart, field.TypeTime, value)
+	}
+	if _u.mutation.RequestWindow5hStartCleared() {
+		_spec.ClearField(usersubscription.FieldRequestWindow5hStart, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RequestWindow1dStart(); ok {
+		_spec.SetField(usersubscription.FieldRequestWindow1dStart, field.TypeTime, value)
+	}
+	if _u.mutation.RequestWindow1dStartCleared() {
+		_spec.ClearField(usersubscription.FieldRequestWindow1dStart, field.TypeTime)
 	}
 	if value, ok := _u.mutation.AssignedAt(); ok {
 		_spec.SetField(usersubscription.FieldAssignedAt, field.TypeTime, value)
@@ -1326,6 +1676,51 @@ func (_u *UserSubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *UserSu
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(usagelog.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRequestReservationsIDs(); len(nodes) > 0 && !_u.mutation.RequestReservationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RequestReservationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   usersubscription.RequestReservationsTable,
+			Columns: []string{usersubscription.RequestReservationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(subscriptionrequestreservation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

@@ -253,3 +253,50 @@ func TestCalculateProgress_ResetsInSeconds_NotNegative(t *testing.T) {
 	assert.GreaterOrEqual(t, progress.Daily.ResetsInSeconds, int64(0),
 		"ResetsInSeconds 不应为负数")
 }
+
+func TestCalculateProgress_RequestCountWindows(t *testing.T) {
+	svc := newTestSubscriptionService()
+	start5h := time.Now().Add(-time.Hour)
+	start1d := time.Now().Add(-2 * time.Hour)
+	sub := &UserSubscription{
+		ID:                   1,
+		ExpiresAt:            time.Now().Add(10 * 24 * time.Hour),
+		RequestUsage5h:       3,
+		RequestUsage1d:       7,
+		RequestWindow5hStart: &start5h,
+		RequestWindow1dStart: &start1d,
+	}
+	group := &Group{
+		Name:                    "Request count",
+		SubscriptionBillingMode: SubscriptionBillingModeRequestCount,
+		RequestLimit5h:          5,
+		RequestLimit1d:          10,
+	}
+
+	progress := svc.calculateProgress(sub, group)
+
+	require.NotNil(t, progress.Request5h)
+	require.NotNil(t, progress.Request1d)
+	assert.Equal(t, 2, progress.Request5h.Remaining)
+	assert.Equal(t, 60.0, progress.Request5h.Percentage)
+	assert.Equal(t, 3, progress.Request1d.Remaining)
+	assert.Equal(t, 70.0, progress.Request1d.Percentage)
+	assert.NotNil(t, progress.Request5h.ResetsAt)
+	assert.NotNil(t, progress.Request1d.ResetsAt)
+}
+
+func TestCalculateProgress_RequestCountWaitsForFirstSuccess(t *testing.T) {
+	progress := newTestSubscriptionService().calculateProgress(&UserSubscription{
+		ID:        1,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	}, &Group{
+		SubscriptionBillingMode: SubscriptionBillingModeRequestCount,
+		RequestLimit5h:          5,
+	})
+
+	require.NotNil(t, progress.Request5h)
+	assert.Equal(t, 5, progress.Request5h.Remaining)
+	assert.Nil(t, progress.Request5h.WindowStart)
+	assert.Nil(t, progress.Request5h.ResetsAt)
+	assert.Nil(t, progress.Request1d)
+}

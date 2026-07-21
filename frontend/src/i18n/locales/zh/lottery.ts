@@ -6,6 +6,8 @@ export default {
     luxury: '豪华',
     daily: '每日',
     weekly: '每周',
+    startsAt: '开始时间',
+    endsAt: '结束时间',
     baseChances: '周期次数',
     extraChances: '额外次数',
     start: '开始抽奖',

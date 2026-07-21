@@ -472,8 +472,141 @@ export interface Team {
   role?: 'owner' | 'member' | ''
   /** 团队资金池余额 */
   balance: number
+  member_limit: number
+  level: number
+  review_required: boolean
+  member_count: number
+  effective_recharge: number
+  spend_7d: number
+  transferable_balance: number
   created_at: string
   updated_at: string
+}
+
+export type TeamRequestStatus = 'pending' | 'approved' | 'rejected'
+
+export interface TeamApplication {
+  id: number
+  application_type: 'create' | 'expand'
+  applicant_id: number
+  applicant_email?: string
+  registration_days: number
+  effective_recharge: number
+  team_id?: number
+  team_name: string
+  target_limit?: number
+  reason: string
+  additional_info: string
+  status: TeamRequestStatus
+  review_reason: string
+  waived: boolean
+  reviewer_id?: number
+  reviewed_at?: string
+  created_team_id?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface TeamJoinRequest {
+  id: number
+  team_id: number
+  team_name: string
+  applicant_id: number
+  applicant_email: string
+  message: string
+  status: TeamRequestStatus
+  review_reason: string
+  reviewed_by?: number
+  reviewed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface TeamLevelRequirement {
+  limit: 5 | 15 | 40
+  recharge: number
+  spend_7d: number
+  mode: 'and' | 'or'
+}
+
+export interface TeamGovernanceSettings {
+  configured: boolean
+  min_registration_days: number
+  min_total_recharge: number
+  levels: TeamLevelRequirement[]
+  updated_by?: number
+  updated_at: string
+}
+
+export interface TeamGovernanceState {
+  team_id: number
+  member_limit: number
+  level: number
+  review_required: boolean
+  member_count: number
+  effective_recharge: number
+  spend_7d: number
+  transferable_balance: number
+  settings: TeamGovernanceSettings
+}
+
+export interface TeamCreationEligibility {
+  registration_days: number
+  effective_recharge: number
+  eligible: boolean
+  settings: TeamGovernanceSettings
+}
+
+export interface AdminTeamSummary {
+  id: number
+  name: string
+  owner_id: number
+  owner_email: string
+  status: string
+  level: number
+  member_count: number
+  member_limit: number
+  review_required: boolean
+  balance: number
+  effective_recharge: number
+  spend_7d: number
+  created_at: string
+}
+
+export interface TeamAdminMember {
+  id: number
+  email: string
+  username: string
+  role: string
+  balance: number
+  transferable_balance: number
+  effective_recharge: number
+  spend_7d: number
+}
+
+export interface TeamFundLedgerEntry {
+  id: number
+  team_id: number
+  user_id?: number
+  counterparty_user_id?: number
+  action: 'deposit' | 'allocate' | 'transfer'
+  amount: number
+  transferable: boolean
+  operator_id?: number
+  note: string
+  created_at: string
+}
+
+export interface AdminTeamDetail {
+  team: AdminTeamSummary
+  members: TeamAdminMember[]
+  applications: TeamApplication[]
+  fund_ledger: TeamFundLedgerEntry[]
+}
+
+export interface TeamAdminStats {
+  total_teams: number
+  pending_applications: number
 }
 
 export interface TeamMember {
@@ -535,6 +668,7 @@ export interface PaginationConfig {
 export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'video'
 
 export type SubscriptionType = 'standard' | 'subscription'
+export type SubscriptionBillingMode = 'usd' | 'request_count'
 
 export interface OpenAIMessagesDispatchModelConfig {
   opus_mapped_model?: string
@@ -553,6 +687,9 @@ export interface Group {
   is_exclusive: boolean
   status: 'active' | 'inactive'
   subscription_type: SubscriptionType
+  subscription_billing_mode: SubscriptionBillingMode
+  request_limit_5h: number
+  request_limit_1d: number
   daily_limit_usd: number | null
   weekly_limit_usd: number | null
   monthly_limit_usd: number | null
@@ -1816,9 +1953,13 @@ export interface UserSubscription {
   daily_usage_usd: number
   weekly_usage_usd: number
   monthly_usage_usd: number
+  request_usage_5h: number
+  request_usage_1d: number
   daily_window_start: string | null
   weekly_window_start: string | null
   monthly_window_start: string | null
+  request_window_5h_start: string | null
+  request_window_1d_start: string | null
   created_at: string
   updated_at: string
   revoked_at?: string | null
@@ -1847,8 +1988,20 @@ export interface SubscriptionProgress {
     percentage: number
     reset_in_seconds: number | null
   } | null
+  request_5h: RequestCountProgress | null
+  request_1d: RequestCountProgress | null
   expires_at: string | null
   days_remaining: number | null
+}
+
+export interface RequestCountProgress {
+  limit: number
+  used: number
+  remaining: number
+  percentage: number
+  window_start?: string
+  resets_at?: string
+  resets_in_seconds?: number
 }
 
 export interface AssignSubscriptionRequest {

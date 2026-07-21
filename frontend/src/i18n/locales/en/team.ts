@@ -14,7 +14,10 @@ export default {
       button: 'Create Team',
       creating: 'Creating...',
       nameRequired: 'Please enter a team name',
-      success: 'Team created successfully',
+      reasonPlaceholder: 'Purpose or reason for creating the team',
+      additionalInfoPlaceholder: 'Additional information (optional)',
+	  eligibility: 'Registered {days}/{requiredDays} days, recharge {recharge}/{requiredRecharge}',
+      success: 'Team application submitted',
       error: 'Failed to create team'
     },
     join: {
@@ -24,7 +27,8 @@ export default {
       button: 'Join Team',
       joining: 'Joining...',
       codeRequired: 'Please enter an invite code',
-      success: 'Joined team successfully',
+      messagePlaceholder: 'Message to the team owner (optional)',
+      success: 'Join request submitted',
       error: 'Failed to join team'
     },
     inviteCode: {
@@ -78,6 +82,7 @@ export default {
       depositButton: 'Deposit',
       depositTitle: 'Deposit to Team Fund',
       depositHint: 'Move funds from your personal balance into the team fund',
+	  transferable: 'Currently transferable: {amount}',
       allocateButton: 'Allocate',
       allocateTitle: 'Allocate Team Fund',
       allocateTo: 'Allocate team fund to {email}',
@@ -107,6 +112,31 @@ export default {
       passwordRequired: 'Please enter your password',
       success: 'Balance transferred successfully',
       error: 'Failed to transfer balance'
+    },
+    application: {
+      pending: 'Team application pending administrator review',
+      approved: 'Team application approved',
+      rejected: 'Team application rejected; you may submit additional details'
+    },
+    governance: {
+      title: 'Team level and expansion',
+      level: 'Team level',
+      memberLimit: 'Members / limit',
+      recharge: 'Eligible recharge',
+      spend7d: '7-day spend',
+      reviewRequired: 'This existing team requires administrator review before self-service expansion',
+      upgrade: 'Check upgrade',
+      upgradeSuccess: 'Team level updated',
+      upgradeError: 'No higher level requirements are currently met',
+      targetLimit: 'Target size',
+      expandReason: 'Expansion reason',
+      requestExpansion: 'Request expansion',
+      expandSuccess: 'Expansion request submitted',
+      expandError: 'Failed to submit expansion request'
+    },
+    joinRequests: {
+      title: 'Pending join requests',
+      reviewError: 'Failed to review join request'
     }
   },
 }

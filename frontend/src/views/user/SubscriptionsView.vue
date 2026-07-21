@@ -101,8 +101,38 @@
               }}</span>
             </div>
 
+            <div v-if="subscription.group?.subscription_billing_mode === 'request_count' && subscription.group.request_limit_5h > 0" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('userSubscriptions.request5h') }}</span>
+                <span class="text-sm tabular-nums text-gray-500 dark:text-dark-400">
+                  {{ t('userSubscriptions.usageOf', { used: subscription.request_usage_5h || 0, limit: subscription.group.request_limit_5h }) }}
+                </span>
+              </div>
+              <div class="relative h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
+                <div class="absolute inset-y-0 left-0 rounded-full transition-all duration-300" :class="getProgressBarClass(subscription.request_usage_5h, subscription.group.request_limit_5h)" :style="{ width: getProgressWidth(subscription.request_usage_5h, subscription.group.request_limit_5h) }"></div>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-dark-400">
+                {{ subscription.request_window_5h_start ? t('userSubscriptions.resetIn', { time: formatResetTime(subscription.request_window_5h_start, 5) }) : t('userSubscriptions.windowNotActive') }}
+              </p>
+            </div>
+
+            <div v-if="subscription.group?.subscription_billing_mode === 'request_count' && subscription.group.request_limit_1d > 0" class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('userSubscriptions.request1d') }}</span>
+                <span class="text-sm tabular-nums text-gray-500 dark:text-dark-400">
+                  {{ t('userSubscriptions.usageOf', { used: subscription.request_usage_1d || 0, limit: subscription.group.request_limit_1d }) }}
+                </span>
+              </div>
+              <div class="relative h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
+                <div class="absolute inset-y-0 left-0 rounded-full transition-all duration-300" :class="getProgressBarClass(subscription.request_usage_1d, subscription.group.request_limit_1d)" :style="{ width: getProgressWidth(subscription.request_usage_1d, subscription.group.request_limit_1d) }"></div>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-dark-400">
+                {{ subscription.request_window_1d_start ? t('userSubscriptions.resetIn', { time: formatResetTime(subscription.request_window_1d_start, 24) }) : t('userSubscriptions.windowNotActive') }}
+              </p>
+            </div>
+
             <!-- Daily Usage -->
-            <div v-if="subscription.group?.daily_limit_usd" class="space-y-2">
+            <div v-if="subscription.group?.subscription_billing_mode !== 'request_count' && subscription.group?.daily_limit_usd" class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.daily') }}
@@ -139,7 +169,7 @@
             </div>
 
             <!-- Weekly Usage -->
-            <div v-if="subscription.group?.weekly_limit_usd" class="space-y-2">
+            <div v-if="subscription.group?.subscription_billing_mode !== 'request_count' && subscription.group?.weekly_limit_usd" class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.weekly') }}
@@ -180,7 +210,7 @@
             </div>
 
             <!-- Monthly Usage -->
-            <div v-if="subscription.group?.monthly_limit_usd" class="space-y-2">
+            <div v-if="subscription.group?.subscription_billing_mode !== 'request_count' && subscription.group?.monthly_limit_usd" class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {{ t('userSubscriptions.monthly') }}
@@ -223,6 +253,7 @@
             <!-- No limits configured - Unlimited badge -->
             <div
               v-if="
+                subscription.group?.subscription_billing_mode !== 'request_count' &&
                 !subscription.group?.daily_limit_usd &&
                 !subscription.group?.weekly_limit_usd &&
                 !subscription.group?.monthly_limit_usd

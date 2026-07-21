@@ -120,6 +120,7 @@ func (APIKey) Fields() []ent.Field {
 
 func (APIKey) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("subscription_request_reservations", SubscriptionRequestReservation.Type),
 		edge.From("user", User.Type).
 			Ref("api_keys").
 			Field("user_id").

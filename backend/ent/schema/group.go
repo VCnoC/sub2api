@@ -80,6 +80,18 @@ func (Group) Fields() []ent.Field {
 		field.String("subscription_type").
 			MaxLen(20).
 			Default(domain.SubscriptionTypeStandard),
+		field.String("subscription_billing_mode").
+			MaxLen(20).
+			Default(domain.SubscriptionBillingModeUSD).
+			Comment("订阅计费模式：usd 或 request_count"),
+		field.Int("request_limit_5h").
+			Default(0).
+			NonNegative().
+			Comment("5 小时文本请求次数上限，0 表示不限制"),
+		field.Int("request_limit_1d").
+			Default(0).
+			NonNegative().
+			Comment("24 小时文本请求次数上限，0 表示不限制"),
 		field.Float("daily_limit_usd").
 			Optional().
 			Nillable().

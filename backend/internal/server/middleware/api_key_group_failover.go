@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +33,10 @@ type APIKeyGroupFailoverState struct {
 	cfg                 *config.Config
 	skipBilling         bool
 	loadSubscription    bool
+	requestCountEnabled bool
+	requestID           string
+	requestReservation  *service.SubscriptionRequestReservation
+	requestHandedOff    bool
 }
 
 func newAPIKeyGroupFailoverState(apiKey *service.APIKey, subscriptionService *service.SubscriptionService, cfg *config.Config, skipBilling, loadSubscription bool) *APIKeyGroupFailoverState {
@@ -90,6 +97,17 @@ func (s *APIKeyGroupFailoverState) checkCandidate(c *gin.Context, group *service
 		}
 		subscription = sub
 	}
+	if group != nil && group.IsRequestCountSubscription() && s.requestCountEnabled {
+		reservation, reservedSubscription, err := s.reserveRequestCount(c, group)
+		if err != nil {
+			if service.IsSubscriptionLimitError(err) {
+				return nil, &apiKeyGroupActivationError{Status: http.StatusTooManyRequests, Code: "USAGE_LIMIT_EXCEEDED", Message: err.Error()}
+			}
+			return nil, err
+		}
+		s.requestReservation = reservation
+		subscription = reservedSubscription
+	}
 
 	if !s.skipBilling && subscription == nil && apiKeyBalanceBelowAuthThreshold(s.apiKey.User.Balance, s.cfg) {
 		return nil, &apiKeyGroupActivationError{Status: http.StatusForbidden, Code: "INSUFFICIENT_BALANCE", Message: "Insufficient account balance"}
@@ -121,6 +139,97 @@ func (s *APIKeyGroupFailoverState) activate(c *gin.Context, index int, subscript
 
 func (s *APIKeyGroupFailoverState) Subscription() *service.UserSubscription { return s.subscription }
 
+func (s *APIKeyGroupFailoverState) reserveRequestCount(c *gin.Context, group *service.Group) (*service.SubscriptionRequestReservation, *service.UserSubscription, error) {
+	if s.subscriptionService == nil || s.apiKey == nil || s.apiKey.User == nil || group == nil {
+		return nil, nil, errors.New("subscription request count dependencies are unavailable")
+	}
+	reservation, subscription, err := s.subscriptionService.ReserveRequestCount(
+		c.Request.Context(),
+		s.requestID,
+		s.apiKey.ID,
+		s.apiKey.User.ID,
+		group.ID,
+		time.Now().Add(15*time.Minute),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	ctx := context.WithValue(c.Request.Context(), ctxkey.SubscriptionRequestReservationID, reservation.ID)
+	c.Request = c.Request.WithContext(ctx)
+	return reservation, subscription, nil
+}
+
+func (s *APIKeyGroupFailoverState) releaseRequestCount(ctx context.Context) error {
+	if s == nil || s.requestReservation == nil || s.requestHandedOff || s.subscriptionService == nil {
+		return nil
+	}
+	reservationID := s.requestReservation.ID
+	s.requestReservation = nil
+	return s.subscriptionService.ReleaseRequestCount(ctx, reservationID)
+}
+
+func EnableSubscriptionRequestCount(c *gin.Context) error {
+	if c == nil || c.Request == nil {
+		return nil
+	}
+	value, ok := c.Get(apiKeyGroupFailoverContextKey)
+	if !ok {
+		return nil
+	}
+	state, ok := value.(*APIKeyGroupFailoverState)
+	if !ok || state == nil || state.current < 0 || state.apiKey == nil || state.apiKey.Group == nil || !state.apiKey.Group.IsRequestCountSubscription() {
+		return nil
+	}
+	if state.requestReservation != nil {
+		return nil
+	}
+	requestID, _ := c.Request.Context().Value(ctxkey.RequestID).(string)
+	requestID = strings.TrimSpace(requestID)
+	if requestID == "" {
+		requestID = "request-count:" + time.Now().UTC().Format("20060102T150405.000000000")
+	}
+	state.requestCountEnabled = true
+	state.requestID = requestID
+	reservation, subscription, err := state.reserveRequestCount(c, state.apiKey.Group)
+	if err != nil {
+		return err
+	}
+	state.requestReservation = reservation
+	state.subscription = subscription
+	c.Set(string(ContextKeySubscription), subscription)
+	return nil
+}
+
+func ReleaseSubscriptionRequestCount(c *gin.Context) {
+	if c == nil {
+		return
+	}
+	value, ok := c.Get(apiKeyGroupFailoverContextKey)
+	if !ok {
+		return
+	}
+	state, ok := value.(*APIKeyGroupFailoverState)
+	if !ok || state == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 5*time.Second)
+	defer cancel()
+	_ = state.releaseRequestCount(ctx)
+}
+
+func HandoffSubscriptionRequestCount(c *gin.Context) {
+	if c == nil {
+		return
+	}
+	value, ok := c.Get(apiKeyGroupFailoverContextKey)
+	if !ok {
+		return
+	}
+	if state, ok := value.(*APIKeyGroupFailoverState); ok && state != nil && state.requestReservation != nil {
+		state.requestHandedOff = true
+	}
+}
+
 // AdvanceAPIKeyGroup 激活下一个具备基础计费资格的候选组。
 func AdvanceAPIKeyGroup(c *gin.Context) bool {
 	if c == nil || c.Request == nil || c.Request.Context().Err() != nil || c.Writer.Written() {
@@ -134,6 +243,10 @@ func AdvanceAPIKeyGroup(c *gin.Context) bool {
 	if !ok || state == nil || state.current < 0 {
 		return false
 	}
+	if err := state.releaseRequestCount(context.WithoutCancel(c.Request.Context())); err != nil {
+		return false
+	}
+	state.requestHandedOff = false
 	return state.activateFrom(c, state.current+1) == nil
 }
 

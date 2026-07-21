@@ -120,6 +120,9 @@ export interface SubscriptionPlan {
   daily_limit_usd?: number | null
   weekly_limit_usd?: number | null
   monthly_limit_usd?: number | null
+  subscription_billing_mode?: 'usd' | 'request_count'
+  request_limit_5h?: number
+  request_limit_1d?: number
   supported_model_scopes?: string[]
   name: string
   description: string

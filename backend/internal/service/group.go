@@ -32,11 +32,14 @@ type Group struct {
 	// an already committed one-click copy. It must never be mapped to API DTOs.
 	DuplicateOperationID string
 
-	SubscriptionType    string
-	DailyLimitUSD       *float64
-	WeeklyLimitUSD      *float64
-	MonthlyLimitUSD     *float64
-	DefaultValidityDays int
+	SubscriptionType        string
+	SubscriptionBillingMode string
+	RequestLimit5h          int
+	RequestLimit1d          int
+	DailyLimitUSD           *float64
+	WeeklyLimitUSD          *float64
+	MonthlyLimitUSD         *float64
+	DefaultValidityDays     int
 
 	// 图片生成计费配置（antigravity 和 gemini 平台使用）
 	AllowImageGeneration         bool
@@ -107,6 +110,39 @@ func (g *Group) IsActive() bool {
 
 func (g *Group) IsSubscriptionType() bool {
 	return g.SubscriptionType == SubscriptionTypeSubscription
+}
+
+func (g *Group) IsRequestCountSubscription() bool {
+	return g.IsSubscriptionType() && g.SubscriptionBillingMode == SubscriptionBillingModeRequestCount
+}
+
+func NormalizeSubscriptionBillingConfig(subscriptionType, mode string, limit5h, limit1d int) (string, int, int, error) {
+	if limit5h < 0 || limit1d < 0 {
+		return "", 0, 0, errors.New("request limits must be >= 0")
+	}
+
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = SubscriptionBillingModeUSD
+	}
+	if subscriptionType != SubscriptionTypeSubscription {
+		if mode == SubscriptionBillingModeRequestCount {
+			return "", 0, 0, errors.New("request_count billing is only supported for subscription groups")
+		}
+		return SubscriptionBillingModeUSD, 0, 0, nil
+	}
+
+	switch mode {
+	case SubscriptionBillingModeUSD:
+		return mode, 0, 0, nil
+	case SubscriptionBillingModeRequestCount:
+		if limit5h == 0 && limit1d == 0 {
+			return "", 0, 0, errors.New("request_count billing requires a 5h or 1d limit")
+		}
+		return mode, limit5h, limit1d, nil
+	default:
+		return "", 0, 0, errors.New("subscription_billing_mode must be usd or request_count")
+	}
 }
 
 func (g *Group) HasDailyLimit() bool {

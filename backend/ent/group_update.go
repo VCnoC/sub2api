@@ -237,6 +237,62 @@ func (_u *GroupUpdate) SetNillableSubscriptionType(v *string) *GroupUpdate {
 	return _u
 }
 
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (_u *GroupUpdate) SetSubscriptionBillingMode(v string) *GroupUpdate {
+	_u.mutation.SetSubscriptionBillingMode(v)
+	return _u
+}
+
+// SetNillableSubscriptionBillingMode sets the "subscription_billing_mode" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableSubscriptionBillingMode(v *string) *GroupUpdate {
+	if v != nil {
+		_u.SetSubscriptionBillingMode(*v)
+	}
+	return _u
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (_u *GroupUpdate) SetRequestLimit5h(v int) *GroupUpdate {
+	_u.mutation.ResetRequestLimit5h()
+	_u.mutation.SetRequestLimit5h(v)
+	return _u
+}
+
+// SetNillableRequestLimit5h sets the "request_limit_5h" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableRequestLimit5h(v *int) *GroupUpdate {
+	if v != nil {
+		_u.SetRequestLimit5h(*v)
+	}
+	return _u
+}
+
+// AddRequestLimit5h adds value to the "request_limit_5h" field.
+func (_u *GroupUpdate) AddRequestLimit5h(v int) *GroupUpdate {
+	_u.mutation.AddRequestLimit5h(v)
+	return _u
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (_u *GroupUpdate) SetRequestLimit1d(v int) *GroupUpdate {
+	_u.mutation.ResetRequestLimit1d()
+	_u.mutation.SetRequestLimit1d(v)
+	return _u
+}
+
+// SetNillableRequestLimit1d sets the "request_limit_1d" field if the given value is not nil.
+func (_u *GroupUpdate) SetNillableRequestLimit1d(v *int) *GroupUpdate {
+	if v != nil {
+		_u.SetRequestLimit1d(*v)
+	}
+	return _u
+}
+
+// AddRequestLimit1d adds value to the "request_limit_1d" field.
+func (_u *GroupUpdate) AddRequestLimit1d(v int) *GroupUpdate {
+	_u.mutation.AddRequestLimit1d(v)
+	return _u
+}
+
 // SetDailyLimitUsd sets the "daily_limit_usd" field.
 func (_u *GroupUpdate) SetDailyLimitUsd(v float64) *GroupUpdate {
 	_u.mutation.ResetDailyLimitUsd()
@@ -1259,6 +1315,21 @@ func (_u *GroupUpdate) check() error {
 			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SubscriptionBillingMode(); ok {
+		if err := group.SubscriptionBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "subscription_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_billing_mode": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestLimit5h(); ok {
+		if err := group.RequestLimit5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_5h", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_5h": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestLimit1d(); ok {
+		if err := group.RequestLimit1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_1d", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_1d": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.VideoBillingMode(); ok {
 		if err := group.VideoBillingModeValidator(v); err != nil {
 			return &ValidationError{Name: "video_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.video_billing_mode": %w`, err)}
@@ -1337,6 +1408,21 @@ func (_u *GroupUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.SubscriptionType(); ok {
 		_spec.SetField(group.FieldSubscriptionType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SubscriptionBillingMode(); ok {
+		_spec.SetField(group.FieldSubscriptionBillingMode, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RequestLimit5h(); ok {
+		_spec.SetField(group.FieldRequestLimit5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestLimit5h(); ok {
+		_spec.AddField(group.FieldRequestLimit5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestLimit1d(); ok {
+		_spec.SetField(group.FieldRequestLimit1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestLimit1d(); ok {
+		_spec.AddField(group.FieldRequestLimit1d, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.DailyLimitUsd(); ok {
 		_spec.SetField(group.FieldDailyLimitUsd, field.TypeFloat64, value)
@@ -2100,6 +2186,62 @@ func (_u *GroupUpdateOne) SetNillableSubscriptionType(v *string) *GroupUpdateOne
 	if v != nil {
 		_u.SetSubscriptionType(*v)
 	}
+	return _u
+}
+
+// SetSubscriptionBillingMode sets the "subscription_billing_mode" field.
+func (_u *GroupUpdateOne) SetSubscriptionBillingMode(v string) *GroupUpdateOne {
+	_u.mutation.SetSubscriptionBillingMode(v)
+	return _u
+}
+
+// SetNillableSubscriptionBillingMode sets the "subscription_billing_mode" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableSubscriptionBillingMode(v *string) *GroupUpdateOne {
+	if v != nil {
+		_u.SetSubscriptionBillingMode(*v)
+	}
+	return _u
+}
+
+// SetRequestLimit5h sets the "request_limit_5h" field.
+func (_u *GroupUpdateOne) SetRequestLimit5h(v int) *GroupUpdateOne {
+	_u.mutation.ResetRequestLimit5h()
+	_u.mutation.SetRequestLimit5h(v)
+	return _u
+}
+
+// SetNillableRequestLimit5h sets the "request_limit_5h" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableRequestLimit5h(v *int) *GroupUpdateOne {
+	if v != nil {
+		_u.SetRequestLimit5h(*v)
+	}
+	return _u
+}
+
+// AddRequestLimit5h adds value to the "request_limit_5h" field.
+func (_u *GroupUpdateOne) AddRequestLimit5h(v int) *GroupUpdateOne {
+	_u.mutation.AddRequestLimit5h(v)
+	return _u
+}
+
+// SetRequestLimit1d sets the "request_limit_1d" field.
+func (_u *GroupUpdateOne) SetRequestLimit1d(v int) *GroupUpdateOne {
+	_u.mutation.ResetRequestLimit1d()
+	_u.mutation.SetRequestLimit1d(v)
+	return _u
+}
+
+// SetNillableRequestLimit1d sets the "request_limit_1d" field if the given value is not nil.
+func (_u *GroupUpdateOne) SetNillableRequestLimit1d(v *int) *GroupUpdateOne {
+	if v != nil {
+		_u.SetRequestLimit1d(*v)
+	}
+	return _u
+}
+
+// AddRequestLimit1d adds value to the "request_limit_1d" field.
+func (_u *GroupUpdateOne) AddRequestLimit1d(v int) *GroupUpdateOne {
+	_u.mutation.AddRequestLimit1d(v)
 	return _u
 }
 
@@ -3138,6 +3280,21 @@ func (_u *GroupUpdateOne) check() error {
 			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SubscriptionBillingMode(); ok {
+		if err := group.SubscriptionBillingModeValidator(v); err != nil {
+			return &ValidationError{Name: "subscription_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_billing_mode": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestLimit5h(); ok {
+		if err := group.RequestLimit5hValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_5h", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_5h": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RequestLimit1d(); ok {
+		if err := group.RequestLimit1dValidator(v); err != nil {
+			return &ValidationError{Name: "request_limit_1d", err: fmt.Errorf(`ent: validator failed for field "Group.request_limit_1d": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.VideoBillingMode(); ok {
 		if err := group.VideoBillingModeValidator(v); err != nil {
 			return &ValidationError{Name: "video_billing_mode", err: fmt.Errorf(`ent: validator failed for field "Group.video_billing_mode": %w`, err)}
@@ -3233,6 +3390,21 @@ func (_u *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error)
 	}
 	if value, ok := _u.mutation.SubscriptionType(); ok {
 		_spec.SetField(group.FieldSubscriptionType, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SubscriptionBillingMode(); ok {
+		_spec.SetField(group.FieldSubscriptionBillingMode, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RequestLimit5h(); ok {
+		_spec.SetField(group.FieldRequestLimit5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestLimit5h(); ok {
+		_spec.AddField(group.FieldRequestLimit5h, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.RequestLimit1d(); ok {
+		_spec.SetField(group.FieldRequestLimit1d, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedRequestLimit1d(); ok {
+		_spec.AddField(group.FieldRequestLimit1d, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.DailyLimitUsd(); ok {
 		_spec.SetField(group.FieldDailyLimitUsd, field.TypeFloat64, value)
