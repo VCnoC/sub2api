@@ -31,7 +31,7 @@
         <!-- Logo -->
         <div class="flex items-center gap-3">
           <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-white/50 dark:bg-white/5 shadow-sm ring-1 ring-black/5 dark:ring-white/10 backdrop-blur-md">
-            <img :src="siteLogo || '/logo.png'" alt="Logo" class="h-6 w-6 object-contain" />
+            <img :src="siteLogo || '/logo.svg'" alt="Logo" class="h-6 w-6 object-contain" />
           </div>
           <span class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">{{ siteName }}</span>
         </div>

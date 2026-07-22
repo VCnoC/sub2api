@@ -37,5 +37,6 @@
 - 状态查询仍校验登录用户和分组权限，但不因创建扣费后余额归零而拒绝。
 
 ## 变更历史
+- [202607221830_upstream_0_1_163_merge](../../history/2026-07/202607221830_upstream_0_1_163_merge/) - 合并官方 Grok 受保护媒体代理与网关修复，同时保留独立 Video 路由和 worker。
 - [202607181652_upstream_0_1_160_merge](../../history/2026-07/202607181652_upstream_0_1_160_merge/) - 接入官方网关、Grok failover、提示词审计和异步图片更新，并保留独立 Video 平台。
 - [202607141328_upstream_0_1_153_merge](../../history/2026-07/202607141328_upstream_0_1_153_merge/) - 合并官方 Grok 视频能力并保留独立 Video 路由。

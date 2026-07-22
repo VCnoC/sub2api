@@ -32,6 +32,9 @@ function mountCard(
           buyAgain: () => 'Buy again',
           subscribeNow: () => 'Subscribe',
           days: () => ' days',
+          weeks: () => ' weeks',
+          months: () => ' months',
+          perMonth: () => 'month',
           planCard: {
             rate: () => 'Rate',
             quota: () => 'Quota',
@@ -97,5 +100,17 @@ describe('SubscriptionPlanCard', () => {
     expect(text).toContain('24-hour requests')
     expect(text).toContain('50')
     expect(text).not.toContain('Unlimited')
+  })
+
+  it('normalizes plural validity units saved by the admin form', () => {
+    expect(mountCard([], { validity_days: 1, validity_unit: 'months' }).text()).toContain('/ month')
+    expect(mountCard([], { validity_days: 3, validity_unit: 'months' }).text()).toContain('/ 3 months')
+    expect(mountCard([], { validity_days: 2, validity_unit: 'weeks' }).text()).toContain('/ 2 weeks')
+  })
+
+  it('uses the configured currency symbol and preserves legacy USD defaults', () => {
+    expect(mountCard([], { currency: 'CNY', original_price: 20 }).text()).toContain('¥10CNY')
+    expect(mountCard([], { currency: 'USD' }).text()).toContain('$10USD')
+    expect(mountCard([], { currency: '' }).text()).toContain('$10')
   })
 })

@@ -71,7 +71,16 @@
 - 账号重试复用同一占位，跨组前释放旧占位；同组多张权益按 `expires_at ASC, id ASC` 使用。
 - 5 小时和 24 小时窗口从首次成功请求开始；并发 pending 参与上限检查，防止超发。
 
+### 需求: OpenAI 推理强度策略
+**模块:** 分组与计费
+
+#### 场景: 分组约束 reasoning effort
+- 管理员可为 OpenAI 分组配置精确映射和最大推理强度，创建与编辑使用同一校验规则。
+- 请求先按 `reasoning_effort_mappings` 转换，再按 `max_reasoning_effort` 截断；未配置时保持客户端原值。
+- API Key 有序多分组切换后使用实际成功分组的策略，不把首组策略错误应用到后续分组。
+
 ## 变更历史
+- [202607221830_upstream_0_1_163_merge](../../history/2026-07/202607221830_upstream_0_1_163_merge/) - 接入官方分组推理强度策略并保留次数订阅与有序分组语义。
 - [202607202113_request_count_subscription](../../history/2026-07/202607202113_request_count_subscription/) - 纯次数订阅分组、PostgreSQL 请求占位与成功扣次。
 - [202607202023_api_key_group_rate_display](../../history/2026-07/202607202023_api_key_group_rate_display/) - 恢复 Key 分组下拉选项的倍率展示。
 - [202607181905_api_key_group_failover](../../history/2026-07/202607181905_api_key_group_failover/) - API Key 有序多分组、按优先级容灾与实际分组计费。

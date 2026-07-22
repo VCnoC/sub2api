@@ -11,6 +11,7 @@
 - `video_billing_mode`：`per_second` 或 `per_request`，默认 `per_second`。
 - 订阅分组的 `subscription_billing_mode` 为 `usd` 或 `request_count`；次数模式通过 `request_limit_5h`、`request_limit_1d` 设置成功文本请求上限，0 表示该窗口不限。
 - 视频平台只允许 `standard` 余额计费。
+- `max_reasoning_effort` 保存 OpenAI/Codex 推理强度上限；`reasoning_effort_mappings` 以 JSONB 保存精确映射，执行顺序为先映射、后限制上限。
 
 ### api_keys
 保存 Key 所有者、状态、配额、限速和 `group_id` 首组兼容镜像。新业务顺序以 `api_key_groups` 为准；旧的非空 `group_id` 在迁移 185 中回填为优先级 0。
@@ -43,6 +44,12 @@
 
 ### audit_logs
 追加保存管理面变更、敏感读取和认证事件的脱敏审计记录；按时间、操作者、动作和客户端 IP 建立查询索引。
+
+### ops_ingress_reject_aggregates
+按时间桶、客户端 IP、拒绝原因、路由族和协议聚合入口拒绝次数，并保存可选用户/API Key 归属；使用 migration 188 创建，避免记录高基数原始请求正文。
+
+### auth_cache_invalidation_outbox
+保存 API Key 与用户鉴权缓存失效事件、投递状态、重试次数和错误摘要；事务提交后由 worker 发布到 Redis，使用 migration 189 创建。
 
 ### prompt_audit_jobs / prompt_audit_events
 分别保存提示词审计任务与不可变审计结果。任务表保存脱敏预览和调度状态，事件表保存风险等级、处置动作、扫描证据及受控的完整提示词内容。

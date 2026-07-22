@@ -12,6 +12,9 @@
 - `POST /api/v1/admin/accounts/models/sync-upstream-preview`：使用未保存的凭证获取上游模型。
 - `POST /api/v1/admin/accounts/:id/models/sync-upstream`：获取已保存账号的上游模型。
 - `POST /api/v1/admin/groups`、`PUT /api/v1/admin/groups/:id`：维护分组与媒体价格；订阅分组支持 `subscription_billing_mode=usd|request_count`、`request_limit_5h` 和 `request_limit_1d`。
+- OpenAI 分组可通过 `max_reasoning_effort` 设置 `minimal/low/medium/high/xhigh/max` 上限，并通过 `reasoning_effort_mappings` 配置精确映射；服务端先映射再限制上限。
+- `GET /api/v1/admin/ops/ingress-rejections`、`GET /api/v1/admin/ops/ingress-rejections/health`：查询入口拒绝聚合与采集健康状态。
+- `GET /api/v1/admin/ops/auth-cache-invalidation/health`：查询跨实例鉴权缓存失效 outbox 健康状态。
 
 视频账号使用 `platform=video` 和 API Key 认证，凭证包含 `base_url` 与 `api_key`；只能绑定 `video` 分组。视频分组的 `video_billing_mode` 取值为 `per_second` 或 `per_request`，且只允许标准余额计费。
 

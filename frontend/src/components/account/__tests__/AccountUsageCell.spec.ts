@@ -216,6 +216,36 @@ describe('AccountUsageCell', () => {
     expect(wrapper.text()).toContain('admin.accounts.usageWindow.grokTokens|25')
   })
 
+  it('renders Grok weekly billing and the dynamic Free 24h token limit', () => {
+    const weekly = mountCell({
+      account: makeAccount({ platform: 'grok', type: 'oauth' }),
+      usageInfo: makeUsage({
+        grok_billing: {
+          period_type: 'weekly',
+          usage_percent: 42,
+          period_end: '2026-07-23T00:00:00Z'
+        }
+      })
+    })
+    expect(weekly.text()).toContain('7d|42|2026-07-23T00:00:00Z')
+
+    const free = mountCell({
+      account: makeAccount({ platform: 'grok', type: 'oauth' }),
+      usageInfo: makeUsage({
+        subscription_tier: 'FREE',
+        grok_free_token_limit: 1_000_000,
+        grok_local_usage_24h: {
+          requests: 2,
+          tokens: 250_000,
+          cost: 0,
+          standard_cost: 0,
+          user_cost: 0
+        }
+      })
+    })
+    expect(free.text()).toContain('24h|25')
+  })
+
   it('renders today stats for key accounts without a usage snapshot', () => {
     const wrapper = mountCell({
       account: makeAccount({ type: 'apikey' }),
