@@ -838,6 +838,10 @@ async function onCopy() {
   @apply text-primary-600 underline hover:text-primary-700;
   @apply dark:text-primary-400 dark:hover:text-primary-300;
 }
+.markdown-body :deep(img) {
+  @apply my-3 h-auto max-w-full rounded-lg border border-gray-200 bg-gray-50 object-contain;
+  @apply dark:border-dark-600 dark:bg-dark-800;
+}
 .markdown-body :deep(table) {
   @apply my-3 w-full border-collapse text-sm;
 }

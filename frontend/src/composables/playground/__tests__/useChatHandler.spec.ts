@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import {
   createLoadingAssistantMessage,
   createUserMessage,
+  imageResponseMarkdown,
   normalizePlaygroundVideoResponse,
   useChatHandler,
 } from '../useChatHandler'
@@ -66,6 +67,21 @@ describe('normalizePlaygroundVideoResponse', () => {
       progress,
       url,
     })
+  })
+})
+
+describe('imageResponseMarkdown', () => {
+  it('prefers base64 output over an upstream URL that may not load in the browser', () => {
+    expect(
+      imageResponseMarkdown({
+        data: [
+          {
+            url: 'https://upstream.example.com/temporary-image.png',
+            b64_json: 'aW1hZ2U=',
+          },
+        ],
+      })
+    ).toBe('![image-1](data:image/png;base64,aW1hZ2U=)')
   })
 })
 

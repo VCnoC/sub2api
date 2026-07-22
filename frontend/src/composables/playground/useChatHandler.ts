@@ -421,6 +421,13 @@ function createChatHandler(opts: UseChatHandlerOptions) {
     const images = (userMessage?.attachments || [])
       .filter((item) => item.kind === 'image' && item.dataUrl)
       .map((item) => item.dataUrl!)
+    // Prefer an inline image by default. Upstream URL results are commonly
+    // short-lived or reject browser hotlinking, which leaves a broken image in
+    // the conversation even though generation succeeded.
+    const responseFormat =
+      enabled.imageResponseFormat && cfg.imageResponseFormat
+        ? cfg.imageResponseFormat
+        : 'b64_json'
     const controller = new AbortController()
     imageAbortController = controller
     playgroundVideoGenerating.value = true
@@ -436,7 +443,7 @@ function createChatHandler(opts: UseChatHandlerOptions) {
           ...(images.length === 1 ? { image: images[0] } : {}),
           ...(images.length > 1 ? { image: images } : {}),
           ...(enabled.imageQuality && cfg.imageQuality ? { quality: cfg.imageQuality } : {}),
-          ...(enabled.imageResponseFormat && cfg.imageResponseFormat ? { response_format: cfg.imageResponseFormat } : {}),
+          response_format: responseFormat,
           ...(enabled.imageStyle && cfg.imageStyle ? { style: cfg.imageStyle } : {}),
           ...(enabled.imageBackground && cfg.imageBackground ? { background: cfg.imageBackground } : {}),
           ...(enabled.imageWatermark ? { watermark: cfg.imageWatermark } : {}),
@@ -518,10 +525,14 @@ function createChatHandler(opts: UseChatHandlerOptions) {
   }
 }
 
-function imageResponseMarkdown(response: PlaygroundImageResponse): string {
+export function imageResponseMarkdown(response: PlaygroundImageResponse): string {
   const items = response.data || []
   const lines = items.flatMap((item, index) => {
-    const src = item.url || (item.b64_json ? `data:image/png;base64,${item.b64_json}` : '')
+    // Some compatible upstreams include both fields. The base64 payload is the
+    // stable display source; URLs can expire or reject browser-side hotlinking.
+    const src = item.b64_json
+      ? `data:image/png;base64,${item.b64_json}`
+      : item.url || ''
     if (!src) return []
     const title = item.revised_prompt?.trim()
     return [

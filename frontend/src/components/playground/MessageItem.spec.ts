@@ -55,4 +55,27 @@ describe('MessageItem video progress', () => {
     expect(wrapper.get('.message-video-percent').text()).toBe('100%')
     expect(wrapper.get('video').attributes('src')).toBe('https://cdn.example.com/video.mp4')
   })
+
+  it('renders generated images returned as a data URL', () => {
+    const wrapper = mount(MessageItem, {
+      props: {
+        message: {
+          key: 'assistant-image',
+          from: 'assistant',
+          status: 'complete',
+          versions: [
+            {
+              id: 'v0',
+              content: '![image-1](data:image/png;base64,aW1hZ2U=)',
+            },
+          ],
+        },
+      },
+      global: { plugins: [createPinia()] },
+    })
+
+    expect(wrapper.get('.markdown-body img').attributes('src')).toBe(
+      'data:image/png;base64,aW1hZ2U='
+    )
+  })
 })
