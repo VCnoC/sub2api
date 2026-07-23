@@ -170,6 +170,20 @@ func (_c *RedeemCodeCreate) SetNillableValidityDays(v *int) *RedeemCodeCreate {
 	return _c
 }
 
+// SetPoolKey sets the "pool_key" field.
+func (_c *RedeemCodeCreate) SetPoolKey(v string) *RedeemCodeCreate {
+	_c.mutation.SetPoolKey(v)
+	return _c
+}
+
+// SetNillablePoolKey sets the "pool_key" field if the given value is not nil.
+func (_c *RedeemCodeCreate) SetNillablePoolKey(v *string) *RedeemCodeCreate {
+	if v != nil {
+		_c.SetPoolKey(*v)
+	}
+	return _c
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (_c *RedeemCodeCreate) SetUserID(id int64) *RedeemCodeCreate {
 	_c.mutation.SetUserID(id)
@@ -286,6 +300,11 @@ func (_c *RedeemCodeCreate) check() error {
 	if _, ok := _c.mutation.ValidityDays(); !ok {
 		return &ValidationError{Name: "validity_days", err: errors.New(`ent: missing required field "RedeemCode.validity_days"`)}
 	}
+	if v, ok := _c.mutation.PoolKey(); ok {
+		if err := redeemcode.PoolKeyValidator(v); err != nil {
+			return &ValidationError{Name: "pool_key", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.pool_key": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -348,6 +367,10 @@ func (_c *RedeemCodeCreate) createSpec() (*RedeemCode, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ValidityDays(); ok {
 		_spec.SetField(redeemcode.FieldValidityDays, field.TypeInt, value)
 		_node.ValidityDays = value
+	}
+	if value, ok := _c.mutation.PoolKey(); ok {
+		_spec.SetField(redeemcode.FieldPoolKey, field.TypeString, value)
+		_node.PoolKey = &value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -597,6 +620,24 @@ func (u *RedeemCodeUpsert) AddValidityDays(v int) *RedeemCodeUpsert {
 	return u
 }
 
+// SetPoolKey sets the "pool_key" field.
+func (u *RedeemCodeUpsert) SetPoolKey(v string) *RedeemCodeUpsert {
+	u.Set(redeemcode.FieldPoolKey, v)
+	return u
+}
+
+// UpdatePoolKey sets the "pool_key" field to the value that was provided on create.
+func (u *RedeemCodeUpsert) UpdatePoolKey() *RedeemCodeUpsert {
+	u.SetExcluded(redeemcode.FieldPoolKey)
+	return u
+}
+
+// ClearPoolKey clears the value of the "pool_key" field.
+func (u *RedeemCodeUpsert) ClearPoolKey() *RedeemCodeUpsert {
+	u.SetNull(redeemcode.FieldPoolKey)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -828,6 +869,27 @@ func (u *RedeemCodeUpsertOne) AddValidityDays(v int) *RedeemCodeUpsertOne {
 func (u *RedeemCodeUpsertOne) UpdateValidityDays() *RedeemCodeUpsertOne {
 	return u.Update(func(s *RedeemCodeUpsert) {
 		s.UpdateValidityDays()
+	})
+}
+
+// SetPoolKey sets the "pool_key" field.
+func (u *RedeemCodeUpsertOne) SetPoolKey(v string) *RedeemCodeUpsertOne {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.SetPoolKey(v)
+	})
+}
+
+// UpdatePoolKey sets the "pool_key" field to the value that was provided on create.
+func (u *RedeemCodeUpsertOne) UpdatePoolKey() *RedeemCodeUpsertOne {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.UpdatePoolKey()
+	})
+}
+
+// ClearPoolKey clears the value of the "pool_key" field.
+func (u *RedeemCodeUpsertOne) ClearPoolKey() *RedeemCodeUpsertOne {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.ClearPoolKey()
 	})
 }
 
@@ -1228,6 +1290,27 @@ func (u *RedeemCodeUpsertBulk) AddValidityDays(v int) *RedeemCodeUpsertBulk {
 func (u *RedeemCodeUpsertBulk) UpdateValidityDays() *RedeemCodeUpsertBulk {
 	return u.Update(func(s *RedeemCodeUpsert) {
 		s.UpdateValidityDays()
+	})
+}
+
+// SetPoolKey sets the "pool_key" field.
+func (u *RedeemCodeUpsertBulk) SetPoolKey(v string) *RedeemCodeUpsertBulk {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.SetPoolKey(v)
+	})
+}
+
+// UpdatePoolKey sets the "pool_key" field to the value that was provided on create.
+func (u *RedeemCodeUpsertBulk) UpdatePoolKey() *RedeemCodeUpsertBulk {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.UpdatePoolKey()
+	})
+}
+
+// ClearPoolKey clears the value of the "pool_key" field.
+func (u *RedeemCodeUpsertBulk) ClearPoolKey() *RedeemCodeUpsertBulk {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.ClearPoolKey()
 	})
 }
 

@@ -1,47 +1,163 @@
 <template>
   <AppLayout>
     <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('team.title') }}</h1>
+      <!-- Page Top Header -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-600 via-primary-500 to-indigo-600 p-6 text-white shadow-xl shadow-primary-500/10 sm:p-8 dark:from-primary-900/90 dark:via-primary-800/80 dark:to-indigo-950/90 dark:shadow-none">
+        <div class="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
+        <div class="absolute -bottom-10 right-20 h-48 w-48 rounded-full bg-indigo-400/20 blur-2xl"></div>
+
+        <div class="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white backdrop-blur-md dark:bg-white/10">
+              <Icon name="users" size="xs" />
+              <span>{{ t('team.title') }}</span>
+            </div>
+            <h1 class="mt-2 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              {{ team ? team.name : t('team.title') }}
+            </h1>
+            <p class="mt-1 max-w-2xl text-sm text-primary-100/90 dark:text-primary-200/80">
+              {{ t('team.description') }}
+            </p>
+          </div>
+
+          <!-- Quick status or action badge if in team -->
+          <div v-if="team" class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-3 rounded-2xl bg-white/10 p-3 backdrop-blur-md border border-white/15 dark:bg-dark-900/40 dark:border-white/10">
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-400/20 text-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-400">
+                <Icon name="creditCard" size="md" />
+              </div>
+              <div>
+                <div class="text-xs text-primary-100/80 dark:text-gray-400">{{ t('team.fund.balance') }}</div>
+                <div class="font-mono text-lg font-bold text-white">{{ formatCurrency(team.balance) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Loading -->
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
+      <!-- Loading State -->
+      <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+        <p class="mt-4 text-sm text-gray-500 dark:text-dark-400 animate-pulse">正在加载团队信息...</p>
       </div>
 
       <!-- Not in any team -->
       <template v-else-if="!team">
-        <div v-if="createApplication" class="card border-l-4 p-5" :class="createApplication.status === 'rejected' ? 'border-l-red-500' : 'border-l-amber-500'">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ t(`team.application.${createApplication.status}`) }}</p>
-              <p v-if="createApplication.review_reason" class="mt-1 text-sm text-gray-500 dark:text-dark-400">{{ createApplication.review_reason }}</p>
-            </div>
-            <span class="badge" :class="createApplication.status === 'rejected' ? 'badge-danger' : 'badge-warning'">{{ createApplication.team_name }}</span>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div class="card p-6">
-            <div class="flex items-center gap-3">
-              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-2xl dark:bg-blue-900/30">🏗️</div>
+        <!-- Application Status Alert -->
+        <div
+          v-if="createApplication"
+          class="relative overflow-hidden rounded-2xl border p-5 shadow-sm backdrop-blur-xl transition-all duration-300"
+          :class="createApplication.status === 'rejected'
+            ? 'border-red-200 bg-red-50/80 dark:border-red-900/40 dark:bg-red-950/30'
+            : 'border-amber-200 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/30'"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <div
+                class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+                :class="createApplication.status === 'rejected'
+                  ? 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400'
+                  : 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400'"
+              >
+                <Icon :name="createApplication.status === 'rejected' ? 'exclamationTriangle' : 'clock'" size="md" />
+              </div>
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('team.create.title') }}</h2>
-                <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('team.create.description') }}</p>
-				<p v-if="creationEligibility" class="mt-1 text-xs" :class="creationEligibility.eligible ? 'text-emerald-600' : 'text-amber-600'">{{ t('team.create.eligibility', { days: creationEligibility.registration_days, requiredDays: creationEligibility.settings.min_registration_days, recharge: formatCurrency(creationEligibility.effective_recharge), requiredRecharge: formatCurrency(creationEligibility.settings.min_total_recharge) }) }}</p>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-gray-900 dark:text-white">
+                    {{ t(`team.application.${createApplication.status}`) }}
+                  </h3>
+                  <span
+                    class="badge"
+                    :class="createApplication.status === 'rejected' ? 'badge-danger' : 'badge-warning'"
+                  >
+                    {{ createApplication.team_name }}
+                  </span>
+                </div>
+                <p v-if="createApplication.review_reason" class="mt-1 text-sm text-gray-600 dark:text-dark-300">
+                  {{ createApplication.review_reason }}
+                </p>
               </div>
             </div>
-            <div class="mt-4 space-y-3">
-              <input
-                v-model="createName"
-                type="text"
-                class="input w-full"
-                :placeholder="t('team.create.namePlaceholder')"
-                maxlength="100"
-              />
-              <textarea v-model="createReason" class="input min-h-20 w-full" :placeholder="t('team.create.reasonPlaceholder')" maxlength="2000"></textarea>
-              <textarea v-model="createAdditionalInfo" class="input min-h-20 w-full" :placeholder="t('team.create.additionalInfoPlaceholder')" maxlength="4000"></textarea>
-              <button class="btn btn-primary w-full" :disabled="creating" @click="handleCreate">
+          </div>
+        </div>
+
+        <!-- Create or Join Team Dual Column Cards -->
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- Create Team Card -->
+          <div class="card relative overflow-hidden p-6 transition-all duration-300 hover:shadow-lg dark:hover:shadow-primary-900/10">
+            <div class="absolute -right-12 -top-12 h-40 w-48 rounded-full bg-primary-500/5 blur-2xl"></div>
+
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white shadow-md shadow-primary-500/20">
+                <Icon name="sparkles" size="md" />
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ t('team.create.title') }}</h2>
+                <p class="text-xs text-gray-500 dark:text-dark-400">{{ t('team.create.description') }}</p>
+              </div>
+            </div>
+
+            <!-- Creation Eligibility Indicator Box -->
+            <div
+              v-if="creationEligibility"
+              class="mt-5 rounded-2xl border p-4 transition-colors"
+              :class="creationEligibility.eligible
+                ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                : 'border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20'"
+            >
+              <div class="flex items-center gap-2 text-xs font-semibold" :class="creationEligibility.eligible ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">
+                <Icon :name="creationEligibility.eligible ? 'checkCircle' : 'infoCircle'" size="sm" />
+                <span>{{ creationEligibility.eligible ? '已满足团队创建条件' : '暂未达到自助创建门槛' }}</span>
+              </div>
+              <p class="mt-1.5 text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                {{ t('team.create.eligibility', {
+                  days: creationEligibility.registration_days,
+                  requiredDays: creationEligibility.settings.min_registration_days,
+                  recharge: formatCurrency(creationEligibility.effective_recharge),
+                  requiredRecharge: formatCurrency(creationEligibility.settings.min_total_recharge)
+                }) }}
+              </p>
+            </div>
+
+            <!-- Form -->
+            <div class="mt-5 space-y-4">
+              <div>
+                <label class="input-label">{{ t('team.create.namePlaceholder') }} <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <Icon name="users" size="sm" />
+                  </div>
+                  <input
+                    v-model="createName"
+                    type="text"
+                    class="input w-full pl-10"
+                    :placeholder="t('team.create.namePlaceholder')"
+                    maxlength="100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="input-label">{{ t('team.create.reasonPlaceholder') }}</label>
+                <textarea
+                  v-model="createReason"
+                  class="input min-h-[80px] w-full resize-y py-2.5"
+                  :placeholder="t('team.create.reasonPlaceholder')"
+                  maxlength="2000"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="input-label">{{ t('team.create.additionalInfoPlaceholder') }}</label>
+                <textarea
+                  v-model="createAdditionalInfo"
+                  class="input min-h-[70px] w-full resize-y py-2.5"
+                  :placeholder="t('team.create.additionalInfoPlaceholder')"
+                  maxlength="4000"
+                ></textarea>
+              </div>
+
+              <button class="btn btn-primary w-full py-3 shadow-md" :disabled="creating" @click="handleCreate">
                 <Icon v-if="creating" name="refresh" size="sm" class="animate-spin" />
                 <Icon v-else name="plus" size="sm" />
                 <span>{{ creating ? t('team.create.creating') : t('team.create.button') }}</span>
@@ -49,23 +165,59 @@
             </div>
           </div>
 
-          <div class="card p-6">
-            <div class="flex items-center gap-3">
-              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-2xl dark:bg-emerald-900/30">🚪</div>
+          <!-- Join Team Card -->
+          <div class="card relative overflow-hidden p-6 transition-all duration-300 hover:shadow-lg dark:hover:shadow-emerald-900/10">
+            <div class="absolute -right-12 -top-12 h-40 w-48 rounded-full bg-emerald-500/5 blur-2xl"></div>
+
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
+                <Icon name="userPlus" size="md" />
+              </div>
               <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('team.join.title') }}</h2>
-                <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('team.join.description') }}</p>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ t('team.join.title') }}</h2>
+                <p class="text-xs text-gray-500 dark:text-dark-400">{{ t('team.join.description') }}</p>
               </div>
             </div>
-            <div class="mt-4 space-y-3">
-              <input
-                v-model="joinCode"
-                type="text"
-                class="input w-full"
-                :placeholder="t('team.join.codePlaceholder')"
-              />
-              <textarea v-model="joinMessage" class="input min-h-20 w-full" :placeholder="t('team.join.messagePlaceholder')" maxlength="1000"></textarea>
-              <button class="btn btn-primary w-full" :disabled="joining" @click="handleJoin">
+
+            <!-- Hint Box -->
+            <div class="mt-5 rounded-2xl border border-gray-200/80 bg-gray-50/60 p-4 dark:border-dark-700/80 dark:bg-dark-800/40">
+              <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                <Icon name="key" size="sm" class="text-emerald-500" />
+                <span>获取团队邀请码即可快捷申请</span>
+              </div>
+              <p class="mt-1 text-xs text-gray-500 dark:text-dark-400">
+                向团队发起人索取专属团队码，填入下方输入框提交加入申请，等待发起人确认审核通过。
+              </p>
+            </div>
+
+            <!-- Form -->
+            <div class="mt-5 space-y-4">
+              <div>
+                <label class="input-label">{{ t('team.join.codePlaceholder') }} <span class="text-red-500">*</span></label>
+                <div class="relative">
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <Icon name="key" size="sm" />
+                  </div>
+                  <input
+                    v-model="joinCode"
+                    type="text"
+                    class="input w-full pl-10 font-mono font-semibold tracking-wide uppercase placeholder:font-sans placeholder:normal-case"
+                    :placeholder="t('team.join.codePlaceholder')"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="input-label">{{ t('team.join.messagePlaceholder') }}</label>
+                <textarea
+                  v-model="joinMessage"
+                  class="input min-h-[162px] w-full resize-y py-2.5"
+                  :placeholder="t('team.join.messagePlaceholder')"
+                  maxlength="1000"
+                ></textarea>
+              </div>
+
+              <button class="btn btn-success w-full py-3 shadow-md" :disabled="joining" @click="handleJoin">
                 <Icon v-if="joining" name="refresh" size="sm" class="animate-spin" />
                 <Icon v-else name="arrowRight" size="sm" />
                 <span>{{ joining ? t('team.join.joining') : t('team.join.button') }}</span>
@@ -75,49 +227,78 @@
         </div>
       </template>
 
-      <!-- In a team -->
+      <!-- In a team Workspace -->
       <template v-else>
-        <!-- Team info card -->
-        <div class="card p-6">
-          <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ team.name }}</h2>
-                <span
-                  class="badge"
-                  :class="team.role === 'owner' ? 'badge-primary' : 'badge-gray'"
-                >
-                  {{ team.role === 'owner' ? t('team.role.owner') : t('team.role.member') }}
-                </span>
+        <!-- Team Header / Quick Bar Card -->
+        <div class="card overflow-hidden p-6 shadow-sm">
+          <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <!-- Left Info -->
+            <div class="flex items-start gap-4">
+              <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-2xl font-black text-white shadow-lg shadow-primary-500/20">
+                {{ team.name.charAt(0).toUpperCase() }}
               </div>
-              <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
-                {{ t('team.members.count', { count: filteredMembers.length }) }}
-              </p>
+              <div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <h2 class="text-xl font-extrabold text-gray-900 dark:text-white">{{ team.name }}</h2>
+                  <span
+                    class="badge"
+                    :class="team.role === 'owner' ? 'badge-primary' : 'badge-gray'"
+                  >
+                    <Icon :name="team.role === 'owner' ? 'badge' : 'user'" size="xs" />
+                    <span>{{ team.role === 'owner' ? t('team.role.owner') : t('team.role.member') }}</span>
+                  </span>
+                  <span class="badge badge-purple">
+                    <Icon name="sparkles" size="xs" />
+                    <span>Level {{ team.level }}</span>
+                  </span>
+                </div>
+                <div class="mt-2 flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-dark-400">
+                  <span class="inline-flex items-center gap-1">
+                    <Icon name="users" size="xs" />
+                    {{ t('team.members.count', { count: filteredMembers.length }) }} / {{ team.member_limit }}
+                  </span>
+                  <span v-if="team.created_at" class="inline-flex items-center gap-1">
+                    <Icon name="calendar" size="xs" />
+                    创建于 {{ formatDateTime(team.created_at) }}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div class="flex items-center gap-3">
-              <!-- 团队资金池：全员可见，独立于 owner 个人余额 -->
-              <div class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-800 dark:bg-emerald-900/20">
-                <span class="text-xs text-gray-500 dark:text-dark-400">{{ t('team.fund.balance') }}</span>
-                <span class="font-mono text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ formatCurrency(team.balance) }}</span>
+            <!-- Right Actions & Fund Pool -->
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Fund Pool Indicator -->
+              <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 dark:border-emerald-800/60 dark:bg-emerald-950/40">
+                <div>
+                  <div class="text-xs text-emerald-800/80 dark:text-emerald-300/80">{{ t('team.fund.balance') }}</div>
+                  <div class="font-mono text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                    {{ formatCurrency(team.balance) }}
+                  </div>
+                </div>
+                <button class="btn btn-success btn-sm ml-1" @click="openDeposit">
+                  <Icon name="creditCard" size="xs" />
+                  <span>{{ t('team.fund.depositButton') }}</span>
+                </button>
               </div>
-              <button class="btn btn-primary" @click="openDeposit">
-                <Icon name="creditCard" size="sm" />
-                <span>{{ t('team.fund.depositButton') }}</span>
-              </button>
+
+              <!-- Owner Invite Code Controls -->
               <template v-if="isOwner">
-                <div class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900">
-                  <code class="text-sm font-mono font-semibold text-gray-900 dark:text-white">{{ team.invite_code }}</code>
-                  <button class="btn btn-secondary btn-sm" @click="copyCode">
-                    <Icon name="copy" size="sm" />
+                <div class="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-800">
+                  <span class="text-xs text-gray-400 dark:text-dark-400">团队码:</span>
+                  <code class="font-mono text-sm font-bold text-gray-900 dark:text-white">{{ team.invite_code }}</code>
+                  <button class="btn btn-secondary btn-sm p-1.5" title="复制团队码" @click="copyCode">
+                    <Icon name="copy" size="xs" />
                   </button>
                 </div>
-                <button class="btn btn-secondary" :disabled="refreshing" @click="handleRefreshCode">
+
+                <button class="btn btn-secondary" :disabled="refreshing" title="重置团队邀请码" @click="handleRefreshCode">
                   <Icon v-if="refreshing" name="refresh" size="sm" class="animate-spin" />
                   <Icon v-else name="refresh" size="sm" />
-                  <span>{{ t('team.inviteCode.refresh') }}</span>
+                  <span class="hidden sm:inline">{{ t('team.inviteCode.refresh') }}</span>
                 </button>
               </template>
+
+              <!-- Leave Team Button for Member -->
               <button
                 v-else
                 class="btn btn-danger-outline"
@@ -125,50 +306,194 @@
                 @click="handleLeave"
               >
                 <Icon v-if="leaving" name="refresh" size="sm" class="animate-spin" />
+                <Icon v-else name="xCircle" size="sm" />
                 <span>{{ leaving ? t('team.leave.leaving') : t('team.leave.button') }}</span>
               </button>
             </div>
           </div>
         </div>
 
+        <!-- 4 Stats Cards Grid -->
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.level') }}</p><p class="mt-1 text-lg font-semibold">{{ team.level }}</p></div>
-          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.memberLimit') }}</p><p class="mt-1 text-lg font-semibold">{{ team.member_count }} / {{ team.member_limit }}</p></div>
-          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.recharge') }}</p><p class="mt-1 text-lg font-semibold">{{ formatCurrency(team.effective_recharge) }}</p></div>
-          <div class="card p-4"><p class="text-xs text-gray-500">{{ t('team.governance.spend7d') }}</p><p class="mt-1 text-lg font-semibold">{{ formatCurrency(team.spend_7d) }}</p></div>
-        </div>
-
-        <div v-if="isOwner" class="card p-6">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div><h3 class="font-semibold text-gray-900 dark:text-white">{{ t('team.governance.title') }}</h3><p v-if="team.review_required" class="mt-1 text-sm text-amber-600">{{ t('team.governance.reviewRequired') }}</p></div>
-            <button class="btn btn-primary" :disabled="upgrading || team.review_required" @click="handleUpgrade"><Icon v-if="upgrading" name="refresh" size="sm" class="animate-spin" /><Icon v-else name="arrowUp" size="sm" /><span>{{ t('team.governance.upgrade') }}</span></button>
+          <!-- Card 1: Level -->
+          <div class="stat-card transition-all duration-300 hover:-translate-y-0.5">
+            <div class="stat-icon bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+              <Icon name="badge" size="md" />
+            </div>
+            <div>
+              <div class="stat-label">{{ t('team.governance.level') }}</div>
+              <div class="stat-value text-purple-600 dark:text-purple-400">Lv. {{ team.level }}</div>
+              <div class="mt-1 text-xs text-gray-400">资源组共享等级</div>
+            </div>
           </div>
-          <div class="mt-4 grid gap-3 md:grid-cols-[160px_1fr_auto]">
-            <input v-model.number="expandForm.target_limit" type="number" min="41" class="input" :placeholder="t('team.governance.targetLimit')" />
-            <input v-model="expandForm.reason" class="input" :placeholder="t('team.governance.expandReason')" />
-            <button class="btn btn-secondary" :disabled="expanding || team.review_required" @click="handleExpansion">{{ t('team.governance.requestExpansion') }}</button>
-          </div>
-        </div>
 
-        <div v-if="isOwner && joinRequests.length" class="card p-6">
-          <h3 class="font-semibold text-gray-900 dark:text-white">{{ t('team.joinRequests.title') }}</h3>
-          <div class="mt-4 divide-y divide-gray-200 dark:divide-dark-700">
-            <div v-for="request in joinRequests" :key="request.id" class="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div><p class="font-medium">{{ request.applicant_email }}</p><p v-if="request.message" class="text-sm text-gray-500">{{ request.message }}</p></div>
-              <div class="flex gap-2"><button class="btn btn-secondary btn-sm" @click="handleJoinReview(request.id, false)">{{ t('common.reject') }}</button><button class="btn btn-primary btn-sm" @click="handleJoinReview(request.id, true)">{{ t('common.approve') }}</button></div>
+          <!-- Card 2: Members -->
+          <div class="stat-card transition-all duration-300 hover:-translate-y-0.5">
+            <div class="stat-icon bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <Icon name="users" size="md" />
+            </div>
+            <div class="w-full min-w-0">
+              <div class="stat-label">{{ t('team.governance.memberLimit') }}</div>
+              <div class="stat-value text-gray-900 dark:text-white">
+                {{ team.member_count }} <span class="text-sm font-normal text-gray-400">/ {{ team.member_limit }}</span>
+              </div>
+              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-dark-800">
+                <div
+                  class="h-full rounded-full bg-blue-500 transition-all duration-500"
+                  :style="{ width: Math.min(100, Math.round((team.member_count / (team.member_limit || 1)) * 100)) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Recharge -->
+          <div class="stat-card transition-all duration-300 hover:-translate-y-0.5">
+            <div class="stat-icon bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <Icon name="trendingUp" size="md" />
+            </div>
+            <div>
+              <div class="stat-label">{{ t('team.governance.recharge') }}</div>
+              <div class="stat-value text-emerald-600 dark:text-emerald-400">
+                {{ formatCurrency(team.effective_recharge) }}
+              </div>
+              <div class="mt-1 text-xs text-gray-400">团队累计有效充值</div>
+            </div>
+          </div>
+
+          <!-- Card 4: Spend 7d -->
+          <div class="stat-card transition-all duration-300 hover:-translate-y-0.5">
+            <div class="stat-icon bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+              <Icon name="chartBar" size="md" />
+            </div>
+            <div>
+              <div class="stat-label">{{ t('team.governance.spend7d') }}</div>
+              <div class="stat-value text-amber-600 dark:text-amber-400">
+                {{ formatCurrency(team.spend_7d) }}
+              </div>
+              <div class="mt-1 text-xs text-gray-400">近 7 天总 API 消费</div>
             </div>
           </div>
         </div>
 
-        <!-- Member list -->
-        <div class="card p-6">
+        <!-- Governance & Expansion Box (Owner only) -->
+        <div v-if="isOwner" class="card p-6 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4 dark:border-dark-800">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <Icon name="shield" size="md" />
+              </div>
+              <div>
+                <h3 class="font-bold text-gray-900 dark:text-white">{{ t('team.governance.title') }}</h3>
+                <p v-if="team.review_required" class="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+                  <Icon name="exclamationTriangle" size="xs" class="inline mr-1" />
+                  {{ t('team.governance.reviewRequired') }}
+                </p>
+                <p v-else class="mt-0.5 text-xs text-gray-500 dark:text-dark-400">按需申请提高团队上限或升级团队共享等级</p>
+              </div>
+            </div>
+
+            <button
+              class="btn btn-secondary"
+              :disabled="upgrading || team.review_required"
+              @click="handleUpgrade"
+            >
+              <Icon v-if="upgrading" name="refresh" size="sm" class="animate-spin" />
+              <Icon v-else name="arrowUp" size="sm" class="text-purple-500" />
+              <span>{{ t('team.governance.upgrade') }}</span>
+            </button>
+          </div>
+
+          <div class="mt-4 grid gap-3 md:grid-cols-[180px_1fr_auto]">
+            <div>
+              <label class="input-label text-xs">{{ t('team.governance.targetLimit') }}</label>
+              <input
+                v-model.number="expandForm.target_limit"
+                type="number"
+                min="41"
+                class="input"
+                :placeholder="t('team.governance.targetLimit')"
+              />
+            </div>
+            <div>
+              <label class="input-label text-xs">{{ t('team.governance.expandReason') }}</label>
+              <input
+                v-model="expandForm.reason"
+                class="input"
+                :placeholder="t('team.governance.expandReason')"
+              />
+            </div>
+            <div class="flex items-end">
+              <button
+                class="btn btn-primary w-full md:w-auto"
+                :disabled="expanding || team.review_required"
+                @click="handleExpansion"
+              >
+                <Icon v-if="expanding" name="refresh" size="sm" class="animate-spin" />
+                <Icon v-else name="plus" size="sm" />
+                <span>{{ t('team.governance.requestExpansion') }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Join Requests List (Owner only) -->
+        <div v-if="isOwner && joinRequests.length" class="card p-6 border-l-4 border-l-primary-500 shadow-sm">
+          <div class="flex items-center gap-2">
+            <div class="relative flex h-3 w-3">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75"></span>
+              <span class="relative inline-flex h-3 w-3 rounded-full bg-primary-500"></span>
+            </div>
+            <h3 class="font-bold text-gray-900 dark:text-white">{{ t('team.joinRequests.title') }}</h3>
+            <span class="badge badge-primary ml-1">{{ joinRequests.length }}</span>
+          </div>
+
+          <div class="mt-4 divide-y divide-gray-100 dark:divide-dark-800">
+            <div
+              v-for="request in joinRequests"
+              :key="request.id"
+              class="flex flex-wrap items-center justify-between gap-4 py-3.5 transition-colors hover:bg-gray-50/50 dark:hover:bg-dark-800/30"
+            >
+              <div class="flex items-center gap-3">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 font-bold text-gray-600 dark:bg-dark-800 dark:text-dark-300">
+                  {{ request.applicant_email.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-900 dark:text-white">{{ request.applicant_email }}</p>
+                  <p v-if="request.message" class="text-xs text-gray-500 dark:text-dark-400">申请说明: {{ request.message }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="btn btn-secondary btn-sm" @click="handleJoinReview(request.id, false)">
+                  <Icon name="x" size="xs" />
+                  <span>{{ t('common.reject') }}</span>
+                </button>
+                <button class="btn btn-primary btn-sm" @click="handleJoinReview(request.id, true)">
+                  <Icon name="check" size="xs" />
+                  <span>{{ t('common.approve') }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Member List Table Card -->
+        <div class="card p-6 shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
-              <span class="h-4 w-1 rounded-full bg-gradient-to-b from-primary-400 to-primary-600"></span>
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('team.members.title') }}</h3>
+            <div class="flex items-center gap-3">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                <Icon name="users" size="md" />
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ t('team.members.title') }}</h3>
+                <p class="text-xs text-gray-500 dark:text-dark-400">查看团队成员、管理分配额度及详细消费日志</p>
+              </div>
             </div>
-            <div class="relative max-w-xs">
-              <Icon name="search" size="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+            <!-- Member Search Input -->
+            <div class="relative w-full sm:w-64">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <Icon name="search" size="sm" />
+              </div>
               <input
                 v-model="memberSearch"
                 type="text"
@@ -178,65 +503,94 @@
             </div>
           </div>
 
-          <div v-if="membersLoading" class="flex justify-center py-8">
-            <div class="h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
+          <!-- Members Table Loading -->
+          <div v-if="membersLoading" class="flex justify-center py-12">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
           </div>
 
-          <div v-else-if="filteredMembers.length === 0" class="mt-4 rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
-            {{ t('team.members.empty') }}
+          <!-- Empty Members -->
+          <div
+            v-else-if="filteredMembers.length === 0"
+            class="mt-6 rounded-2xl border border-dashed border-gray-200 p-8 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400"
+          >
+            <Icon name="users" size="xl" class="mx-auto mb-2 text-gray-300 dark:text-dark-600" />
+            <p>{{ t('team.members.empty') }}</p>
           </div>
 
-          <div v-else class="mt-4 overflow-x-auto">
-            <table class="w-full min-w-[640px] text-left text-sm">
+          <!-- Members Table -->
+          <div v-else class="mt-6 overflow-x-auto rounded-2xl border border-gray-100 dark:border-dark-800">
+            <table class="w-full min-w-[680px] text-left text-sm">
               <thead>
-                <tr class="border-b border-gray-200 text-gray-500 dark:border-dark-700 dark:text-dark-400">
-                  <th class="px-3 py-2 font-medium">{{ t('team.members.columns.user') }}</th>
-                  <th class="px-3 py-2 font-medium text-right">{{ t('team.members.columns.balance') }}</th>
-                  <th class="px-3 py-2 font-medium text-right">{{ t('team.members.columns.usage') }}</th>
-                  <th v-if="isOwner" class="px-3 py-2 font-medium text-right">{{ t('team.members.columns.actions') }}</th>
+                <tr class="border-b border-gray-100 bg-gray-50/80 text-xs font-semibold text-gray-500 dark:border-dark-800 dark:bg-dark-800/50 dark:text-dark-400">
+                  <th class="px-4 py-3.5">{{ t('team.members.columns.user') }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ t('team.members.columns.balance') }}</th>
+                  <th class="px-4 py-3.5 text-right">{{ t('team.members.columns.usage') }}</th>
+                  <th v-if="isOwner" class="px-4 py-3.5 text-right">{{ t('team.members.columns.actions') }}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="divide-y divide-gray-100 dark:divide-dark-800">
                 <template v-for="member in filteredMembers" :key="member.id">
                   <tr
-                    class="cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-900/50"
-                    :class="expandedMemberId === member.id ? 'bg-gray-50 dark:bg-dark-900/50' : ''"
+                    class="group cursor-pointer transition-colors hover:bg-gray-50/80 dark:hover:bg-dark-800/40"
+                    :class="expandedMemberId === member.id ? 'bg-primary-50/30 dark:bg-primary-950/10' : ''"
                     @click="toggleMember(member)"
                   >
-                    <td class="px-3 py-3">
-                      <div class="flex items-center gap-2">
-                        <Icon
-                          name="chevronRight"
-                          size="sm"
-                          class="text-gray-400 transition-transform"
-                          :class="expandedMemberId === member.id ? 'rotate-90' : ''"
-                        />
+                    <!-- User Email & Role -->
+                    <td class="px-4 py-4">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-gray-400 transition-transform duration-200 group-hover:text-primary-500"
+                          :class="expandedMemberId === member.id ? 'rotate-90 text-primary-500' : ''"
+                        >
+                          <Icon name="chevronRight" size="sm" />
+                        </div>
+                        <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary-100 font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                          {{ member.email.charAt(0).toUpperCase() }}
+                        </div>
                         <div>
-                          <div class="text-base font-semibold text-gray-900 dark:text-white">{{ member.email }}</div>
-                          <span class="badge badge-gray mt-1">{{ member.role === 'owner' ? t('team.role.owner') : t('team.role.member') }}</span>
+                          <div class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <span>{{ member.email }}</span>
+                            <span v-if="member.id === currentUserId" class="text-xs font-normal text-primary-500">(我自己)</span>
+                          </div>
+                          <span
+                            class="badge mt-1"
+                            :class="member.role === 'owner' ? 'badge-primary' : 'badge-gray'"
+                          >
+                            {{ member.role === 'owner' ? t('team.role.owner') : t('team.role.member') }}
+                          </span>
                         </div>
                       </div>
                     </td>
-                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-900 dark:text-white">
+
+                    <!-- Balance -->
+                    <td class="px-4 py-4 text-right font-mono text-sm font-semibold tabular-nums text-gray-900 dark:text-white">
                       {{ member.balance === null ? t('team.members.balanceHidden') : formatCurrency(member.balance) }}
                     </td>
-                    <td class="px-3 py-3 text-right font-mono tabular-nums text-gray-700 dark:text-gray-300">
+
+                    <!-- Total Usage -->
+                    <td class="px-4 py-4 text-right font-mono text-sm tabular-nums text-gray-600 dark:text-gray-300">
                       {{ member.total_usage === null ? t('team.members.usageHidden') : formatCurrency(member.total_usage) }}
                     </td>
-                    <td v-if="isOwner" class="px-3 py-3 text-right">
-                      <div class="flex justify-end gap-2" @click.stop>
+
+                    <!-- Owner Actions -->
+                    <td v-if="isOwner" class="px-4 py-4 text-right">
+                      <div class="flex items-center justify-end gap-2" @click.stop>
                         <button class="btn btn-secondary btn-sm" @click="openAllocate(member)">
-                          <Icon name="creditCard" size="sm" />
+                          <Icon name="creditCard" size="xs" />
                           <span>{{ t('team.fund.allocateButton') }}</span>
                         </button>
                         <template v-if="member.id !== currentUserId">
-                          <button class="btn btn-primary btn-sm" @click="openTransfer(member)">
-                            <Icon name="creditCard" size="sm" />
+                          <button class="btn btn-secondary btn-sm" @click="openTransfer(member)">
+                            <Icon name="swap" size="xs" />
                             <span>{{ t('team.transfer.button') }}</span>
                           </button>
-                          <button class="btn btn-danger-outline btn-sm" :disabled="removingId === member.id" @click="handleRemove(member)">
-                            <Icon v-if="removingId === member.id" name="refresh" size="sm" class="animate-spin" />
-                            <Icon v-else name="trash" size="sm" />
+                          <button
+                            class="btn btn-danger-outline btn-sm"
+                            :disabled="removingId === member.id"
+                            @click="handleRemove(member)"
+                          >
+                            <Icon v-if="removingId === member.id" name="refresh" size="xs" class="animate-spin" />
+                            <Icon v-else name="trash" size="xs" />
                             <span>{{ t('team.members.remove') }}</span>
                           </button>
                         </template>
@@ -244,15 +598,18 @@
                     </td>
                   </tr>
 
-                  <!-- Expanded usage panel -->
-                  <tr v-if="expandedMemberId === member.id" class="border-b border-gray-100 dark:border-dark-800">
-                    <td :colspan="isOwner ? 4 : 3" class="bg-gray-50/50 px-3 py-4 dark:bg-dark-900/30">
-                      <div v-if="!canViewUsage(member)" class="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
+                  <!-- Expanded Usage Details Panel -->
+                  <tr v-if="expandedMemberId === member.id" class="bg-gray-50/70 dark:bg-dark-900/60">
+                    <td :colspan="isOwner ? 4 : 3" class="p-4 sm:p-6">
+                      <div v-if="!canViewUsage(member)" class="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
+                        <Icon name="lock" size="md" class="mx-auto mb-2 text-gray-400" />
                         {{ t('team.members.usage.noPermission') }}
                       </div>
+
                       <div v-else class="space-y-4">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
-                          <div class="flex flex-wrap gap-2">
+                        <!-- Date Selector Bar -->
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                          <div class="flex flex-wrap gap-1.5">
                             <button
                               v-for="preset in datePresets"
                               :key="preset.value"
@@ -263,109 +620,112 @@
                               {{ t(preset.labelKey) }}
                             </button>
                           </div>
-                          <div class="flex items-end gap-2">
+
+                          <div class="flex flex-wrap items-end gap-2">
                             <div>
-                              <label class="input-label">{{ t('team.members.usage.startDate') }}</label>
-                              <input v-model="usageStartDate" type="date" class="input" />
+                              <label class="input-label text-xs mb-1">{{ t('team.members.usage.startDate') }}</label>
+                              <input v-model="usageStartDate" type="date" class="input py-1.5 text-xs" />
                             </div>
                             <div>
-                              <label class="input-label">{{ t('team.members.usage.endDate') }}</label>
-                              <input v-model="usageEndDate" type="date" class="input" />
+                              <label class="input-label text-xs mb-1">{{ t('team.members.usage.endDate') }}</label>
+                              <input v-model="usageEndDate" type="date" class="input py-1.5 text-xs" />
                             </div>
                             <button
-                              class="btn btn-secondary"
+                              class="btn btn-secondary btn-sm h-[38px]"
                               :disabled="usageLoading[member.id]"
                               @click="loadMemberUsage(member)"
                             >
-                              <Icon v-if="usageLoading[member.id]" name="refresh" size="sm" class="animate-spin" />
-                              <Icon v-else name="search" size="sm" />
+                              <Icon v-if="usageLoading[member.id]" name="refresh" size="xs" class="animate-spin" />
+                              <Icon v-else name="search" size="xs" />
                               <span>{{ t('team.members.usage.query') }}</span>
                             </button>
                           </div>
                         </div>
 
-                        <div v-if="usageLoading[member.id]" class="flex justify-center py-6">
+                        <!-- Usage Table Loading -->
+                        <div v-if="usageLoading[member.id]" class="flex justify-center py-8">
                           <div class="h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
                         </div>
 
-                        <div v-else-if="memberUsage[member.id]?.length === 0" class="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-dark-700 dark:text-dark-400">
+                        <!-- Empty Logs -->
+                        <div v-else-if="memberUsage[member.id]?.length === 0" class="rounded-xl border border-dashed border-gray-200 p-6 text-center text-xs text-gray-500 dark:border-dark-700 dark:text-dark-400">
                           {{ t('team.members.usage.empty') }}
                         </div>
 
-                        <div v-else-if="memberUsage[member.id]?.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-dark-700">
+                        <!-- Usage Logs Table -->
+                        <div v-else-if="memberUsage[member.id]?.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-800">
                           <table class="w-full min-w-[900px] text-left text-xs">
                             <thead>
-                              <tr class="border-b border-gray-200 bg-gray-100 dark:border-dark-700 dark:bg-dark-800">
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.time') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.model') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.type') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.tokens') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.cost') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('usage.firstToken') }}</th>
-                                <th class="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">{{ t('team.members.usage.duration') }}</th>
+                              <tr class="border-b border-gray-200 bg-gray-100/80 font-medium text-gray-700 dark:border-dark-700 dark:bg-dark-700/60 dark:text-gray-300">
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.time') }}</th>
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.model') }}</th>
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.type') }}</th>
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.tokens') }}</th>
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.cost') }}</th>
+                                <th class="px-3 py-2.5">首字耗时</th>
+                                <th class="px-3 py-2.5">{{ t('team.members.usage.duration') }}</th>
                               </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100 dark:divide-dark-800">
                               <tr
                                 v-for="log in memberUsage[member.id]"
                                 :key="log.id"
-                                class="border-b border-gray-100 last:border-b-0 dark:border-dark-800"
+                                class="transition-colors hover:bg-gray-50/50 dark:hover:bg-dark-700/30"
                               >
-                                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ formatDateTime(log.created_at) }}</td>
-                                <td class="px-3 py-2 font-medium text-gray-900 dark:text-white">{{ log.model }}</td>
-                                <td class="px-3 py-2">
+                                <td class="px-3 py-2.5 text-gray-500 dark:text-gray-400 font-mono">{{ formatDateTime(log.created_at) }}</td>
+                                <td class="px-3 py-2.5 font-semibold text-gray-900 dark:text-white">{{ log.model }}</td>
+                                <td class="px-3 py-2.5">
                                   <span
-                                    class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
+                                    class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium"
                                     :class="getRequestTypeBadgeClass(log)"
                                   >
                                     {{ getRequestTypeLabel(log) }}
                                   </span>
                                 </td>
-                                <td class="px-3 py-2">
-                                  <div class="space-y-1">
+                                <td class="px-3 py-2.5">
+                                  <div class="space-y-0.5 font-mono">
                                     <div class="flex items-center gap-2">
-                                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                      <span class="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
                                         <Icon name="arrowDown" size="xs" />
                                         <span class="tabular-nums">{{ log.input_tokens.toLocaleString() }}</span>
                                       </span>
-                                      <span class="inline-flex items-center gap-1 text-violet-600 dark:text-violet-400">
+                                      <span class="inline-flex items-center gap-0.5 text-violet-600 dark:text-violet-400">
                                         <Icon name="arrowUp" size="xs" />
                                         <span class="tabular-nums">{{ log.output_tokens.toLocaleString() }}</span>
                                       </span>
                                     </div>
                                     <div v-if="log.cache_read_tokens > 0 || log.cache_creation_tokens > 0" class="flex items-center gap-2">
-                                      <span v-if="log.cache_read_tokens > 0" class="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400">
+                                      <span v-if="log.cache_read_tokens > 0" class="inline-flex items-center gap-0.5 text-sky-600 dark:text-sky-400">
                                         <Icon name="inbox" size="xs" />
                                         <span class="tabular-nums">{{ formatCacheTokens(log.cache_read_tokens) }}</span>
                                       </span>
-                                      <span v-if="log.cache_creation_tokens > 0" class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                      <span v-if="log.cache_creation_tokens > 0" class="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400">
                                         <Icon name="edit" size="xs" />
                                         <span class="tabular-nums">{{ formatCacheTokens(log.cache_creation_tokens) }}</span>
                                       </span>
                                     </div>
-                                    <div v-if="log.image_count > 0" class="flex items-center gap-1 text-pink-600 dark:text-pink-400">
-                                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                      <span class="tabular-nums">{{ log.image_count }}{{ t('usage.imageUnit') }}</span>
-                                    </div>
                                   </div>
                                 </td>
-                                <td class="px-3 py-2 tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                                <td class="px-3 py-2.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                   ${{ (log.actual_cost ?? 0).toFixed(6) }}
                                 </td>
-                                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ log.first_token_ms != null ? formatDuration(log.first_token_ms) : '-' }}</td>
-                                <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ formatDuration(log.duration_ms) }}</td>
+                                <td class="px-3 py-2.5 font-mono text-gray-500">{{ log.first_token_ms != null ? formatDuration(log.first_token_ms) : '-' }}</td>
+                                <td class="px-3 py-2.5 font-mono text-gray-500">{{ formatDuration(log.duration_ms) }}</td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
 
-                        <Pagination
-                          v-if="usagePagination[member.id]?.total > 0"
-                          :page="usagePagination[member.id].page"
-                          :total="usagePagination[member.id].total"
-                          :page-size="usagePagination[member.id].page_size"
-                          @update:page="(page: number) => loadMemberUsage(member, page)"
-                        />
+                        <!-- Pagination -->
+                        <div class="pt-2">
+                          <Pagination
+                            v-if="usagePagination[member.id]?.total > 0"
+                            :page="usagePagination[member.id].page"
+                            :total="usagePagination[member.id].total"
+                            :page-size="usagePagination[member.id].page_size"
+                            @update:page="(page: number) => loadMemberUsage(member, page)"
+                          />
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -377,45 +737,64 @@
       </template>
     </div>
 
-    <!-- Transfer modal -->
+    <!-- Modal 1: Balance Transfer Modal -->
     <Teleport to="body">
       <div
         v-if="transferTarget"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="modal-overlay"
         @click.self="closeTransfer"
       >
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-dark-800">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ t('team.transfer.title') }}
-          </h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
-            {{ t('team.transfer.to', { email: transferTarget.email }) }}
-          </p>
-
-          <div class="mt-4 space-y-4">
-            <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.transfer.amount') }}</label>
-              <input
-                v-model.number="transferAmount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                class="input w-full"
-                :placeholder="t('team.transfer.amountPlaceholder')"
-              />
+        <div class="modal-content max-w-md">
+          <div class="modal-header">
+            <div class="flex items-center gap-2">
+              <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-400">
+                <Icon name="swap" size="sm" />
+              </div>
+              <h3 class="modal-title">{{ t('team.transfer.title') }}</h3>
             </div>
+            <button class="btn btn-ghost btn-icon" @click="closeTransfer">
+              <Icon name="x" size="sm" />
+            </button>
+          </div>
+
+          <div class="modal-body space-y-4">
+            <div class="rounded-xl border border-gray-200/80 bg-gray-50/80 p-3.5 dark:border-dark-700/80 dark:bg-dark-900/50">
+              <p class="text-xs text-gray-500 dark:text-dark-400">接收用户:</p>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ transferTarget.email }}</p>
+            </div>
+
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.transfer.password') }}</label>
-              <input
-                v-model="transferPassword"
-                type="password"
-                class="input w-full"
-                :placeholder="t('team.transfer.passwordPlaceholder')"
-              />
+              <label class="input-label">{{ t('team.transfer.amount') }} <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 font-bold">$</div>
+                <input
+                  v-model.number="transferAmount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="input w-full pl-8 font-mono"
+                  :placeholder="t('team.transfer.amountPlaceholder')"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="input-label">{{ t('team.transfer.password') }} <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <Icon name="lock" size="sm" />
+                </div>
+                <input
+                  v-model="transferPassword"
+                  type="password"
+                  class="input w-full pl-9"
+                  :placeholder="t('team.transfer.passwordPlaceholder')"
+                />
+              </div>
             </div>
           </div>
 
-          <div class="mt-6 flex justify-end gap-2">
+          <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeTransfer">{{ t('common.cancel') }}</button>
             <button class="btn btn-primary" :disabled="transferring" @click="handleTransfer">
               <Icon v-if="transferring" name="refresh" size="sm" class="animate-spin" />
@@ -426,53 +805,77 @@
       </div>
     </Teleport>
 
-    <!-- Team fund modal (deposit / allocate) -->
+    <!-- Modal 2: Team Fund Deposit/Allocate Modal -->
     <Teleport to="body">
       <div
         v-if="fundModalOpen"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        class="modal-overlay"
         @click.self="closeFund"
       >
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-dark-800">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ fundMode === 'deposit' ? t('team.fund.depositTitle') : t('team.fund.allocateTitle') }}
-          </h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-dark-400">
-            <template v-if="fundMode === 'allocate' && fundTarget">
-              {{ t('team.fund.allocateTo', { email: fundTarget.email }) }}
-            </template>
-            <template v-else>
-              {{ t('team.fund.depositHint') }}
-              <span v-if="team" class="mt-1 block font-medium text-emerald-600">{{ t('team.fund.transferable', { amount: formatCurrency(team.transferable_balance) }) }}</span>
-            </template>
-          </p>
-
-          <div class="mt-4 space-y-4">
-            <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.fund.amount') }}</label>
-              <input
-                v-model.number="fundAmount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                class="input w-full"
-                :placeholder="t('team.fund.amountPlaceholder')"
-              />
+        <div class="modal-content max-w-md">
+          <div class="modal-header">
+            <div class="flex items-center gap-2">
+              <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+                <Icon name="creditCard" size="sm" />
+              </div>
+              <h3 class="modal-title">
+                {{ fundMode === 'deposit' ? t('team.fund.depositTitle') : t('team.fund.allocateTitle') }}
+              </h3>
             </div>
+            <button class="btn btn-ghost btn-icon" @click="closeFund">
+              <Icon name="x" size="sm" />
+            </button>
+          </div>
+
+          <div class="modal-body space-y-4">
+            <div class="rounded-xl border border-emerald-200/80 bg-emerald-50/80 p-3.5 dark:border-emerald-800/60 dark:bg-emerald-950/40">
+              <p class="text-xs text-gray-600 dark:text-dark-300">
+                <template v-if="fundMode === 'allocate' && fundTarget">
+                  {{ t('team.fund.allocateTo', { email: fundTarget.email }) }}
+                </template>
+                <template v-else>
+                  {{ t('team.fund.depositHint') }}
+                </template>
+              </p>
+              <p v-if="team && fundMode === 'deposit'" class="mt-1 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                {{ t('team.fund.transferable', { amount: formatCurrency(team.transferable_balance) }) }}
+              </p>
+            </div>
+
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('team.fund.password') }}</label>
-              <input
-                v-model="fundPassword"
-                type="password"
-                class="input w-full"
-                :placeholder="t('team.fund.passwordPlaceholder')"
-              />
+              <label class="input-label">{{ t('team.fund.amount') }} <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 font-bold">$</div>
+                <input
+                  v-model.number="fundAmount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="input w-full pl-8 font-mono"
+                  :placeholder="t('team.fund.amountPlaceholder')"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="input-label">{{ t('team.fund.password') }} <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                  <Icon name="lock" size="sm" />
+                </div>
+                <input
+                  v-model="fundPassword"
+                  type="password"
+                  class="input w-full pl-9"
+                  :placeholder="t('team.fund.passwordPlaceholder')"
+                />
+              </div>
             </div>
           </div>
 
-          <div class="mt-6 flex justify-end gap-2">
+          <div class="modal-footer">
             <button class="btn btn-secondary" @click="closeFund">{{ t('common.cancel') }}</button>
-            <button class="btn btn-primary" :disabled="fundSubmitting" @click="handleFundSubmit">
+            <button class="btn btn-success" :disabled="fundSubmitting" @click="handleFundSubmit">
               <Icon v-if="fundSubmitting" name="refresh" size="sm" class="animate-spin" />
               <span>{{ fundSubmitting ? t('team.fund.submitting') : t('team.fund.confirm') }}</span>
             </button>
@@ -499,7 +902,7 @@ import { resolveUsageRequestType } from '@/utils/usageRequestType'
 import {
   createTeam,
   getMyCreateApplication,
-	getCreationEligibility,
+  getCreationEligibility,
   getMyTeam,
   joinTeam,
   listJoinRequests,
@@ -633,9 +1036,9 @@ async function loadTeam() {
       await loadMembers()
       if (team.value.role === 'owner') joinRequests.value = await listJoinRequests()
     } else {
-	  const [application, eligibility] = await Promise.all([getMyCreateApplication(), getCreationEligibility()])
-	  createApplication.value = application
-	  creationEligibility.value = eligibility
+      const [application, eligibility] = await Promise.all([getMyCreateApplication(), getCreationEligibility()])
+      createApplication.value = application
+      creationEligibility.value = eligibility
     }
   } catch (err) {
     appStore.showError(extractApiErrorMessage(err, t('team.loadError')))
@@ -705,11 +1108,11 @@ function getRequestTypeLabel(log: UsageLog): string {
 
 function getRequestTypeBadgeClass(log: UsageLog): string {
   const requestType = resolveUsageRequestType(log)
-  if (requestType === 'cyber') return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-  if (requestType === 'ws_v2') return 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
-  if (requestType === 'stream') return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-  if (requestType === 'sync') return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-  return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+  if (requestType === 'cyber') return 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200'
+  if (requestType === 'ws_v2') return 'bg-violet-100 text-violet-800 dark:bg-violet-900/60 dark:text-violet-200'
+  if (requestType === 'stream') return 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200'
+  if (requestType === 'sync') return 'bg-gray-100 text-gray-800 dark:bg-gray-700/60 dark:text-gray-200'
+  return 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200'
 }
 
 async function handleCreate() {

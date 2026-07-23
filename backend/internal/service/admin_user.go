@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -1247,6 +1248,16 @@ func (s *adminServiceImpl) GenerateRedeemCodes(ctx context.Context, input *Gener
 		}
 	}
 
+	// 抽奖次数类型：必须指定奖池，且 value 为正整数次数
+	if input.Type == RedeemTypeLotteryChance {
+		if input.PoolKey == nil || (*input.PoolKey != LotteryPoolNormal && *input.PoolKey != LotteryPoolLuxury) {
+			return nil, errors.New("pool_key is required for lottery_chance type (normal or luxury)")
+		}
+		if input.Value < 1 || input.Value != math.Trunc(input.Value) {
+			return nil, errors.New("value must be a positive integer for lottery_chance type")
+		}
+	}
+
 	codes := make([]RedeemCode, 0, input.Count)
 	for i := 0; i < input.Count; i++ {
 		codeValue, err := GenerateRedeemCode()
@@ -1267,6 +1278,9 @@ func (s *adminServiceImpl) GenerateRedeemCodes(ctx context.Context, input *Gener
 			if code.ValidityDays <= 0 {
 				code.ValidityDays = 30 // 默认30天
 			}
+		}
+		if input.Type == RedeemTypeLotteryChance {
+			code.PoolKey = input.PoolKey
 		}
 		if err := s.redeemCodeRepo.Create(ctx, &code); err != nil {
 			return nil, err

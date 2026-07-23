@@ -507,6 +507,13 @@ export default {
         hideCcsImportButton: '隐藏 CCS 导入按钮',
         hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮'
       },
+      dashboardNotice: {
+        title: '仪表盘醒目提醒',
+        description: '在用户仪表盘顶部展示一条醒目提醒，内容为空时不显示',
+        content: '提醒内容',
+        placeholder: '例如：系统维护通知、活动公告、重要使用须知…',
+        hint: '支持多行纯文本。填写后将显示在用户仪表盘最上方；留空则不显示该区域。'
+      },
       purchase: {
         title: '充值/订阅页面',
         description: '在侧边栏展示“充值/订阅”入口，并在页面内通过 iframe 打开指定链接',

@@ -397,6 +397,7 @@ type RedeemCode struct {
 
 	GroupID      *int64 `json:"group_id"`
 	ValidityDays int    `json:"validity_days"`
+	PoolKey      *string `json:"pool_key,omitempty"` // 抽奖次数码专用
 
 	// Notes is only populated for admin_balance/admin_concurrency types
 	// so users can see why they were charged or credited

@@ -1,6 +1,30 @@
 <template>
   <AppLayout>
     <div class="space-y-6">
+      <!-- 与用户仪表盘同步的醒目提醒预览（通用设置 → dashboard_notice） -->
+      <div
+        v-if="dashboardNotice"
+        class="relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 p-4 shadow-sm dark:border-amber-800/50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-950/40 sm:p-5"
+      >
+        <div class="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-amber-300/20 blur-2xl dark:bg-amber-500/10"></div>
+        <div class="relative z-10 flex items-start gap-3">
+          <div class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400">
+            <Icon name="exclamationTriangle" size="md" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-xs font-semibold uppercase tracking-wide text-amber-700/80 dark:text-amber-400/90">
+                {{ t('dashboard.noticeLabel') }}
+              </p>
+              <span class="badge badge-warning">{{ t('admin.dashboard.noticePreviewBadge') }}</span>
+            </div>
+            <p class="mt-1 whitespace-pre-wrap text-sm font-medium leading-relaxed text-amber-950 dark:text-amber-100">
+              {{ dashboardNotice }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <LoadingSpinner />
@@ -388,6 +412,7 @@ ChartJS.register(
 )
 
 const appStore = useAppStore()
+const dashboardNotice = computed(() => (appStore.cachedPublicSettings?.dashboard_notice || '').trim())
 const router = useRouter()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 const stats = ref<DashboardStats | null>(null)
@@ -749,6 +774,9 @@ const loadChartData = async () => {
 }
 
 onMounted(() => {
+  if (!appStore.publicSettingsLoaded) {
+    void appStore.fetchPublicSettings()
+  }
   void refreshBatchImageAccess()
   loadDashboardStats()
 })

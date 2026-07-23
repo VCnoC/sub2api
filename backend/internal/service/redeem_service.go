@@ -431,6 +431,14 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 		if redeemCode.GroupID == nil {
 			return nil, infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid subscription redeem code: missing group_id")
 		}
+	case RedeemTypeLotteryChance:
+		if redeemCode.PoolKey == nil || (*redeemCode.PoolKey != LotteryPoolNormal && *redeemCode.PoolKey != LotteryPoolLuxury) {
+			return nil, infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance redeem code: missing pool_key")
+		}
+		chances := int64(redeemCode.Value)
+		if chances < 1 || float64(chances) != redeemCode.Value {
+			return nil, infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance redeem code: value must be a positive integer")
+		}
 	default:
 		return nil, unsupportedRedeemTypeError(redeemCode.Type)
 	}
@@ -454,7 +462,10 @@ func (s *RedeemService) Redeem(ctx context.Context, userID int64, code string) (
 	if err := s.redeemCodeInTx(txCtx, userID, redeemCode); err != nil {
 		return nil, err
 	}
-	if s.lotteryChanceService != nil && ctx.Value(ctxKeySkipRedeemAffiliate{}) == nil {
+	// 抽奖次数码本身即发放次数，不触发「首次兑换给邀请人加次数」
+	if s.lotteryChanceService != nil &&
+		ctx.Value(ctxKeySkipRedeemAffiliate{}) == nil &&
+		redeemCode.Type != RedeemTypeLotteryChance {
 		if err := s.lotteryChanceService.GrantFirstRedeem(txCtx, userID, redeemCode.ID, false); err != nil {
 			return nil, fmt.Errorf("grant lottery redeem chance: %w", err)
 		}
@@ -571,6 +582,20 @@ func (s *RedeemService) redeemCodeInTx(ctx context.Context, userID int64, redeem
 			Notes:        fmt.Sprintf("通过兑换码 %s 兑换", redeemCode.Code),
 		}); err != nil {
 			return fmt.Errorf("issue subscription: %w", err)
+		}
+	case RedeemTypeLotteryChance:
+		if s.lotteryChanceService == nil {
+			return errors.New("lottery chance service not configured")
+		}
+		if redeemCode.PoolKey == nil || (*redeemCode.PoolKey != LotteryPoolNormal && *redeemCode.PoolKey != LotteryPoolLuxury) {
+			return infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance redeem code")
+		}
+		chances := int64(redeemCode.Value)
+		if chances < 1 || float64(chances) != redeemCode.Value {
+			return infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance redeem code")
+		}
+		if err := s.lotteryChanceService.GrantRedeemLotteryChance(ctx, userID, redeemCode.ID, *redeemCode.PoolKey, chances); err != nil {
+			return fmt.Errorf("grant lottery chance: %w", err)
 		}
 	default:
 		return unsupportedRedeemTypeError(redeemCode.Type)

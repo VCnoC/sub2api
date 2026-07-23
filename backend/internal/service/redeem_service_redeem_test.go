@@ -100,3 +100,49 @@ func TestRedeemRejectsInvitationCodeBeforeTransaction(t *testing.T) {
 	require.Equal(t, StatusUnused, redeemRepo.code.Status)
 	require.Nil(t, redeemRepo.code.UsedBy)
 }
+
+func TestRedeemRejectsLotteryChanceMissingPoolKey(t *testing.T) {
+	ctx := context.Background()
+	redeemRepo := &redeemRejectRepo{
+		code: RedeemCode{
+			ID:     2,
+			Code:   "LOTTO-001",
+			Type:   RedeemTypeLotteryChance,
+			Value:  3,
+			Status: StatusUnused,
+		},
+	}
+	redeemService := NewRedeemService(redeemRepo, nil, nil, nil, nil, nil, nil, nil)
+
+	got, err := redeemService.Redeem(ctx, 2, redeemRepo.code.Code)
+
+	require.Nil(t, got)
+	require.Error(t, err)
+	require.True(t, infraerrors.IsBadRequest(err))
+	require.Equal(t, "REDEEM_CODE_INVALID", infraerrors.Reason(err))
+	require.False(t, redeemRepo.useCalled)
+}
+
+func TestRedeemRejectsLotteryChanceNonIntegerValue(t *testing.T) {
+	ctx := context.Background()
+	pool := LotteryPoolNormal
+	redeemRepo := &redeemRejectRepo{
+		code: RedeemCode{
+			ID:      3,
+			Code:    "LOTTO-002",
+			Type:    RedeemTypeLotteryChance,
+			Value:   1.5,
+			Status:  StatusUnused,
+			PoolKey: &pool,
+		},
+	}
+	redeemService := NewRedeemService(redeemRepo, nil, nil, nil, nil, nil, nil, nil)
+
+	got, err := redeemService.Redeem(ctx, 2, redeemRepo.code.Code)
+
+	require.Nil(t, got)
+	require.Error(t, err)
+	require.True(t, infraerrors.IsBadRequest(err))
+	require.Equal(t, "REDEEM_CODE_INVALID", infraerrors.Reason(err))
+	require.False(t, redeemRepo.useCalled)
+}

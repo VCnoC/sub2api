@@ -62,6 +62,7 @@ export async function getById(id: number): Promise<RedeemCode> {
  * @param groupId - Group ID (required for subscription type)
  * @param validityDays - Validity days (for subscription type)
  * @param expiresInDays - Days before the code itself expires
+ * @param poolKey - Lottery pool key (required for lottery_chance type)
  * @returns Array of generated redeem codes
  */
 export async function generate(
@@ -70,7 +71,8 @@ export async function generate(
   value: number,
   groupId?: number | null,
   validityDays?: number,
-  expiresInDays?: number | null
+  expiresInDays?: number | null,
+  poolKey?: 'normal' | 'luxury' | null
 ): Promise<RedeemCode[]> {
   const payload: GenerateRedeemCodesRequest = {
     count,
@@ -84,6 +86,9 @@ export async function generate(
     if (validityDays && validityDays > 0) {
       payload.validity_days = validityDays
     }
+  }
+  if (type === 'lottery_chance' && poolKey) {
+    payload.pool_key = poolKey
   }
   if (expiresInDays && expiresInDays > 0) {
     payload.expires_in_days = expiresInDays

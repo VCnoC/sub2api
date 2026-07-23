@@ -130,3 +130,28 @@ func TestLotteryChanceRefundOnlyReversesGrantFromRefundedSingleOrder(t *testing.
 	require.Len(t, repo.reversals, 1)
 	require.True(t, strings.HasPrefix(repo.reversals[0], "reverse:"))
 }
+
+func TestGrantRedeemLotteryChanceWritesIdempotentExtraGrant(t *testing.T) {
+	repo := &lotteryChanceRepoStub{}
+	service := NewLotteryChanceService(repo)
+
+	require.NoError(t, service.GrantRedeemLotteryChance(context.Background(), 20, 91, LotteryPoolLuxury, 3))
+	require.Len(t, repo.grants, 1)
+	require.Equal(t, int64(20), repo.grants[0].UserID)
+	require.Equal(t, LotteryPoolLuxury, repo.grants[0].PoolKey)
+	require.EqualValues(t, 3, repo.grants[0].Chances)
+	require.Equal(t, int64(0), repo.grants[0].RuleID)
+	require.Equal(t, "redeem_code", repo.grants[0].SourceType)
+	require.Equal(t, "91", repo.grants[0].SourceID)
+	require.Equal(t, "redeem_code:91:luxury", repo.grants[0].DedupeKey)
+
+	require.NoError(t, service.GrantRedeemLotteryChance(context.Background(), 20, 91, LotteryPoolLuxury, 3))
+	require.Len(t, repo.grants, 1, "相同 dedupe_key 不应重复发放")
+}
+
+func TestGrantRedeemLotteryChanceRejectsInvalidPool(t *testing.T) {
+	repo := &lotteryChanceRepoStub{}
+	err := NewLotteryChanceService(repo).GrantRedeemLotteryChance(context.Background(), 20, 91, "invalid", 1)
+	require.Error(t, err)
+	require.Empty(t, repo.grants)
+}

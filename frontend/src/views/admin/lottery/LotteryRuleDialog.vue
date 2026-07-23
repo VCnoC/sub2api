@@ -1,57 +1,92 @@
 <template>
   <BaseDialog :show="show" :title="rule ? t('lotteryAdmin.editRule') : t('lotteryAdmin.addRule')" width="wide" @close="emit('cancel')">
-    <div class="lottery_rule_dialog">
-      <label>
-        <span>{{ t('lotteryAdmin.name') }}</span>
-        <input v-model.trim="form.name" class="input" maxlength="120" />
-      </label>
-      <div class="lottery_rule_dialog__grid">
-        <label>
-          <span>{{ t('lotteryAdmin.event') }}</span>
-          <select v-model="form.event_type" class="input">
-            <option value="signup">{{ t('lotteryAdmin.signup') }}</option>
-            <option value="redeem">{{ t('lotteryAdmin.redeem') }}</option>
-            <option value="recharge">{{ t('lotteryAdmin.recharge') }}</option>
-          </select>
+    <div class="space-y-5 py-2">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          {{ t('lotteryAdmin.name') }}
         </label>
-        <label>
-          <span>{{ t('lotteryAdmin.beneficiary') }}</span>
-          <select v-model="form.beneficiary" class="input" :disabled="form.event_type !== 'signup'">
-            <option value="inviter">{{ t('lotteryAdmin.inviter') }}</option>
-            <option value="invitee">{{ t('lotteryAdmin.invitee') }}</option>
-          </select>
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.normalChances') }}</span>
-          <input v-model.number="form.normal_chances" class="input" type="number" min="0" max="100000" />
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.luxuryChances') }}</span>
-          <input v-model.number="form.luxury_chances" class="input" type="number" min="0" max="100000" />
-        </label>
+        <input v-model.trim="form.name" class="input w-full" maxlength="120" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.event') }}
+          </label>
+          <Select
+            v-model="form.event_type"
+            :options="[
+              { value: 'signup', label: t('lotteryAdmin.signup') },
+              { value: 'redeem', label: t('lotteryAdmin.redeem') },
+              { value: 'recharge', label: t('lotteryAdmin.recharge') }
+            ]"
+            class="w-full"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.beneficiary') }}
+          </label>
+          <Select
+            v-model="form.beneficiary"
+            :options="[
+              { value: 'inviter', label: t('lotteryAdmin.inviter') },
+              { value: 'invitee', label: t('lotteryAdmin.invitee') }
+            ]"
+            :disabled="form.event_type !== 'signup'"
+            class="w-full"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.normalChances') }}
+          </label>
+          <input v-model.number="form.normal_chances" class="input w-full" type="number" min="0" max="100000" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.luxuryChances') }}
+          </label>
+          <input v-model.number="form.luxury_chances" class="input w-full" type="number" min="0" max="100000" />
+        </div>
+
         <template v-if="form.event_type === 'recharge'">
-          <label>
-            <span>{{ t('lotteryAdmin.rechargeMode') }}</span>
-            <select v-model="form.recharge_mode" class="input">
-              <option value="single">{{ t('lotteryAdmin.single') }}</option>
-              <option value="cumulative">{{ t('lotteryAdmin.cumulative') }}</option>
-            </select>
-          </label>
-          <label>
-            <span>{{ t('lotteryAdmin.threshold') }}</span>
-            <input v-model.number="form.recharge_threshold" class="input" type="number" min="0.00000001" step="0.01" />
-          </label>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ t('lotteryAdmin.rechargeMode') }}
+            </label>
+            <Select
+              v-model="form.recharge_mode"
+              :options="[
+                { value: 'single', label: t('lotteryAdmin.single') },
+                { value: 'cumulative', label: t('lotteryAdmin.cumulative') }
+              ]"
+              class="w-full"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ t('lotteryAdmin.threshold') }}
+            </label>
+            <input v-model.number="form.recharge_threshold" class="input w-full" type="number" min="0.00000001" step="0.01" />
+          </div>
         </template>
       </div>
-      <div class="lottery_rule_dialog__toggles">
-        <label>
-          <input v-model="form.enabled" type="checkbox" />
-          <span>{{ t('lotteryAdmin.enabled') }}</span>
-        </label>
-        <label v-if="form.event_type === 'recharge'">
-          <input v-model="form.repeatable" type="checkbox" />
-          <span>{{ t('lotteryAdmin.repeatable') }}</span>
-        </label>
+
+      <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-dark-700">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('lotteryAdmin.enabled') }}</span>
+          <Toggle v-model="form.enabled" />
+        </div>
+
+        <div v-if="form.event_type === 'recharge'" class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('lotteryAdmin.repeatable') }}</span>
+          <Toggle v-model="form.repeatable" />
+        </div>
       </div>
     </div>
 
@@ -59,7 +94,7 @@
       <div class="flex justify-end gap-3">
         <button type="button" class="btn btn-secondary" @click="emit('cancel')">{{ t('common.cancel') }}</button>
         <button type="button" class="btn btn-primary" :disabled="saving || !canSave" @click="save">
-          <Icon :name="saving ? 'refresh' : 'check'" size="sm" :class="{ 'animate-spin': saving }" />
+          <Icon :name="saving ? 'refresh' : 'check'" size="sm" :class="{ 'animate-spin': saving }" class="mr-1.5" />
           <span>{{ t('lotteryAdmin.save') }}</span>
         </button>
       </div>
@@ -71,6 +106,8 @@
 import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
+import Select from '@/components/common/Select.vue'
+import Toggle from '@/components/common/Toggle.vue'
 import Icon from '@/components/icons/Icon.vue'
 import type { LotteryEventType, LotteryRule, LotteryRuleInput } from '@/types/lottery'
 
@@ -143,54 +180,3 @@ function save(): void {
   })
 }
 </script>
-
-<style scoped>
-.lottery_rule_dialog {
-  display: grid;
-  gap: 16px;
-}
-
-.lottery_rule_dialog > label,
-.lottery_rule_dialog__grid label {
-  display: grid;
-  gap: 6px;
-}
-
-.lottery_rule_dialog label > span {
-  color: rgb(75 85 99);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.lottery_rule_dialog__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.lottery_rule_dialog__toggles,
-.lottery_rule_dialog__toggles label {
-  display: flex;
-  align-items: center;
-}
-
-.lottery_rule_dialog__toggles {
-  flex-wrap: wrap;
-  gap: 18px;
-}
-
-.lottery_rule_dialog__toggles label {
-  gap: 8px;
-  font-size: 13px;
-}
-
-:global(.dark) .lottery_rule_dialog label > span {
-  color: rgb(161 161 170);
-}
-
-@media (max-width: 640px) {
-  .lottery_rule_dialog__grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

@@ -72,6 +72,11 @@ func (RedeemCode) Fields() []ent.Field {
 			Nillable(),
 		field.Int("validity_days").
 			Default(30),
+		// 抽奖次数兑换码专用：normal / luxury；其他类型为 NULL
+		field.String("pool_key").
+			Optional().
+			Nillable().
+			MaxLen(16),
 	}
 }
 

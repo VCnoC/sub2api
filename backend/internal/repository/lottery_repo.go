@@ -475,12 +475,17 @@ UPDATE lottery_user_chances SET extra_remaining=$3, updated_at=NOW() WHERE user_
 		if input.SourceUserID > 0 {
 			sourceUser = input.SourceUserID
 		}
+		// 兑换码等非规则发放不绑定 lottery_rules，rule_id 写入 NULL
+		var ruleID any
+		if input.RuleID > 0 {
+			ruleID = input.RuleID
+		}
 		if _, err := client.ExecContext(txCtx, `
 INSERT INTO lottery_chance_ledger (
     user_id,pool_id,action,extra_delta,rule_id,source_type,source_id,
     source_user_id,tier_no,dedupe_key,balance_after,metadata
 ) VALUES ($1,$2,'grant',$3,$4,$5,$6,$7,$8,$9,$10,$11)`, input.UserID, pool.ID,
-			input.Chances, input.RuleID, input.SourceType, input.SourceID, sourceUser, input.TierNo,
+			input.Chances, ruleID, input.SourceType, input.SourceID, sourceUser, input.TierNo,
 			input.DedupeKey, balance, metadata); err != nil {
 			return err
 		}
@@ -817,8 +822,9 @@ func (r *lotteryRepository) HasPriorRedeem(ctx context.Context, userID, excludin
 	SELECT EXISTS (
 	    SELECT 1 FROM redeem_codes
 	    WHERE used_by=$1 AND id<>$2 AND status='used'
-	      AND COALESCE(notes, '') NOT LIKE $3
-	)`, userID, excludingCodeID, service.LotterySystemRedeemNotePrefix+"%")
+	      AND type <> $3
+	      AND COALESCE(notes, '') NOT LIKE $4
+	)`, userID, excludingCodeID, service.RedeemTypeLotteryChance, service.LotterySystemRedeemNotePrefix+"%")
 	if err != nil {
 		return false, err
 	}

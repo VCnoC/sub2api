@@ -67,6 +67,12 @@
 
 主要业务错误为 `TICKET_NOT_FOUND`、`TICKET_INVALID_INPUT`、`TICKET_ATTACHMENT_INVALID`、`TICKET_OPEN_LIMIT_REACHED`、`TICKET_DAILY_LIMIT_REACHED`、`TICKET_ASSIGNEE_INVALID` 和 `TICKET_ATTACHMENT_NOT_FOUND`。用户越权读取统一使用不存在错误，避免泄露资源是否存在。
 
+## 兑换码与公开设置 API
+
+- `POST /api/v1/admin/redeem-codes/generate`：当 `type=lottery_chance` 时，`value` 必须为正整数，`pool_key` 必须为 `normal` 或 `luxury`；列表和详情响应返回 `pool_key`。
+- `POST /api/v1/redeem`：兑换抽奖次数码时，在同一事务内向指定奖池发放长期额外次数；以兑换码 ID 保证幂等，且不触发首次兑换邀请奖励。
+- `GET /api/v1/settings/public`：公开设置响应包含纯文本 `dashboard_notice`；空字符串表示不展示仪表盘公告。
+
 ## 邀请抽奖 API
 
 用户接口使用登录 JWT：

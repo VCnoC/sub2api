@@ -214,6 +214,26 @@ func (_u *RedeemCodeUpdate) AddValidityDays(v int) *RedeemCodeUpdate {
 	return _u
 }
 
+// SetPoolKey sets the "pool_key" field.
+func (_u *RedeemCodeUpdate) SetPoolKey(v string) *RedeemCodeUpdate {
+	_u.mutation.SetPoolKey(v)
+	return _u
+}
+
+// SetNillablePoolKey sets the "pool_key" field if the given value is not nil.
+func (_u *RedeemCodeUpdate) SetNillablePoolKey(v *string) *RedeemCodeUpdate {
+	if v != nil {
+		_u.SetPoolKey(*v)
+	}
+	return _u
+}
+
+// ClearPoolKey clears the value of the "pool_key" field.
+func (_u *RedeemCodeUpdate) ClearPoolKey() *RedeemCodeUpdate {
+	_u.mutation.ClearPoolKey()
+	return _u
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (_u *RedeemCodeUpdate) SetUserID(id int64) *RedeemCodeUpdate {
 	_u.mutation.SetUserID(id)
@@ -299,6 +319,11 @@ func (_u *RedeemCodeUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PoolKey(); ok {
+		if err := redeemcode.PoolKeyValidator(v); err != nil {
+			return &ValidationError{Name: "pool_key", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.pool_key": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -352,6 +377,12 @@ func (_u *RedeemCodeUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.AddedValidityDays(); ok {
 		_spec.AddField(redeemcode.FieldValidityDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.PoolKey(); ok {
+		_spec.SetField(redeemcode.FieldPoolKey, field.TypeString, value)
+	}
+	if _u.mutation.PoolKeyCleared() {
+		_spec.ClearField(redeemcode.FieldPoolKey, field.TypeString)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -615,6 +646,26 @@ func (_u *RedeemCodeUpdateOne) AddValidityDays(v int) *RedeemCodeUpdateOne {
 	return _u
 }
 
+// SetPoolKey sets the "pool_key" field.
+func (_u *RedeemCodeUpdateOne) SetPoolKey(v string) *RedeemCodeUpdateOne {
+	_u.mutation.SetPoolKey(v)
+	return _u
+}
+
+// SetNillablePoolKey sets the "pool_key" field if the given value is not nil.
+func (_u *RedeemCodeUpdateOne) SetNillablePoolKey(v *string) *RedeemCodeUpdateOne {
+	if v != nil {
+		_u.SetPoolKey(*v)
+	}
+	return _u
+}
+
+// ClearPoolKey clears the value of the "pool_key" field.
+func (_u *RedeemCodeUpdateOne) ClearPoolKey() *RedeemCodeUpdateOne {
+	_u.mutation.ClearPoolKey()
+	return _u
+}
+
 // SetUserID sets the "user" edge to the User entity by ID.
 func (_u *RedeemCodeUpdateOne) SetUserID(id int64) *RedeemCodeUpdateOne {
 	_u.mutation.SetUserID(id)
@@ -713,6 +764,11 @@ func (_u *RedeemCodeUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PoolKey(); ok {
+		if err := redeemcode.PoolKeyValidator(v); err != nil {
+			return &ValidationError{Name: "pool_key", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.pool_key": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -783,6 +839,12 @@ func (_u *RedeemCodeUpdateOne) sqlSave(ctx context.Context) (_node *RedeemCode, 
 	}
 	if value, ok := _u.mutation.AddedValidityDays(); ok {
 		_spec.AddField(redeemcode.FieldValidityDays, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.PoolKey(); ok {
+		_spec.SetField(redeemcode.FieldPoolKey, field.TypeString, value)
+	}
+	if _u.mutation.PoolKeyCleared() {
+		_spec.ClearField(redeemcode.FieldPoolKey, field.TypeString)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

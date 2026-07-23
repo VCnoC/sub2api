@@ -170,3 +170,49 @@ func TestResolveRedeemCodeExpiresAt_RejectsConflictingInputs(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, expiresAt)
 }
+
+func postGenerateValidation(t *testing.T, handler *RedeemHandler, body any) int {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	jsonBytes, err := json.Marshal(body)
+	require.NoError(t, err)
+	c.Request, _ = http.NewRequest(http.MethodPost, "/api/v1/admin/redeem-codes/generate", bytes.NewReader(jsonBytes))
+	c.Request.Header.Set("Content-Type", "application/json")
+	handler.Generate(c)
+	return w.Code
+}
+
+func TestGenerate_LotteryChanceRequiresPoolKey(t *testing.T) {
+	h := &RedeemHandler{adminService: newStubAdminService()}
+	code := postGenerateValidation(t, h, map[string]any{
+		"count": 1,
+		"type":  "lottery_chance",
+		"value": 3,
+	})
+	assert.Equal(t, http.StatusBadRequest, code)
+}
+
+func TestGenerate_LotteryChanceRequiresPositiveIntegerValue(t *testing.T) {
+	h := &RedeemHandler{adminService: newStubAdminService()}
+	code := postGenerateValidation(t, h, map[string]any{
+		"count":    1,
+		"type":     "lottery_chance",
+		"value":    1.5,
+		"pool_key": "normal",
+	})
+	assert.Equal(t, http.StatusBadRequest, code)
+}
+
+func TestCreateAndRedeem_LotteryChanceRequiresPoolKey(t *testing.T) {
+	h := newCreateAndRedeemHandler()
+	code := postCreateAndRedeemValidation(t, h, map[string]any{
+		"code":    "lotto-no-pool",
+		"type":    "lottery_chance",
+		"value":   2,
+		"user_id": 1,
+	})
+	assert.Equal(t, http.StatusBadRequest, code)
+}

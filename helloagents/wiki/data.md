@@ -84,6 +84,9 @@
 ### support_ticket_reads
 以 `(ticket_id, user_id)` 唯一记录每位用户或管理员的最后已读消息 ID。用户游标只推进到公开消息，管理员游标包含内部消息和管理员事件。
 
+### redeem_codes
+兑换码除余额、并发、订阅和邀请类型外，支持 `lottery_chance` 抽奖次数类型。迁移 191 增加可空 `pool_key`，仅允许 `normal` 或 `luxury`；该类型的 `value` 保存正整数次数。
+
 ### lottery_pools
 保存固定 `normal`、`luxury` 双奖池的名称、启停、每日/每周周期次数及可选活动时间；迁移默认创建两条停用配置。
 

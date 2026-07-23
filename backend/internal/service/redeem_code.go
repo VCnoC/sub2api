@@ -20,6 +20,7 @@ type RedeemCode struct {
 
 	GroupID      *int64
 	ValidityDays int
+	PoolKey      *string // 抽奖次数码专用：normal / luxury
 
 	User  *User
 	Group *Group

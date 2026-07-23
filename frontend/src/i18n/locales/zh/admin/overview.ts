@@ -3,6 +3,7 @@ export default {
     dashboard: {
       title: '管理控制台',
       description: '系统概览与统计数据',
+      noticePreviewBadge: '用户端预览',
       apiKeys: 'API 密钥',
       totalApiKeys: 'API 密钥总数',
       activeApiKeys: '活跃密钥',

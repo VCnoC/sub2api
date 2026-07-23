@@ -137,6 +137,12 @@
                   >({{ row.group.name }})</span
                 >
               </template>
+              <template v-else-if="row.type === 'lottery_chance'">
+                {{ value }}
+                <span v-if="row.pool_key" class="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                  ({{ t('admin.redeem.pools.' + row.pool_key) }})
+                </span>
+              </template>
               <template v-else>{{ value }}</template>
             </span>
           </template>
@@ -287,13 +293,19 @@
               <label class="input-label">{{ t('admin.redeem.codeType') }}</label>
               <Select v-model="generateForm.type" :options="typeOptions" />
             </div>
-            <!-- 余额/并发类型：显示数值输入 -->
-            <div v-if="generateForm.type !== 'subscription' && generateForm.type !== 'invitation'">
+            <!-- 余额/并发/抽奖次数：显示数值输入 -->
+            <div
+              v-if="
+                generateForm.type !== 'subscription' && generateForm.type !== 'invitation'
+              "
+            >
               <label class="input-label">
                 {{
                   generateForm.type === 'balance'
                     ? t('admin.redeem.amount')
-                    : t('admin.redeem.columns.value')
+                    : generateForm.type === 'lottery_chance'
+                      ? t('admin.redeem.lotteryChances')
+                      : t('admin.redeem.columns.value')
                 }}
               </label>
               <input
@@ -310,6 +322,11 @@
               <p class="text-sm text-blue-700 dark:text-blue-300">
                 {{ t('admin.redeem.invitationHint') }}
               </p>
+            </div>
+            <!-- 抽奖次数：选择奖池 -->
+            <div v-if="generateForm.type === 'lottery_chance'">
+              <label class="input-label">{{ t('admin.redeem.lotteryPool') }}</label>
+              <Select v-model="generateForm.pool_key" :options="lotteryPoolOptions" />
             </div>
             <!-- 订阅类型：显示分组选择和有效天数 -->
             <template v-if="generateForm.type === 'subscription'">
@@ -735,7 +752,8 @@ const typeOptions = computed(() => [
   { value: 'balance', label: t('admin.redeem.balance') },
   { value: 'concurrency', label: t('admin.redeem.concurrency') },
   { value: 'subscription', label: t('admin.redeem.subscription') },
-  { value: 'invitation', label: t('admin.redeem.invitation') }
+  { value: 'invitation', label: t('admin.redeem.invitation') },
+  { value: 'lottery_chance', label: t('admin.redeem.lotteryChance') }
 ])
 
 const filterTypeOptions = computed(() => [
@@ -743,7 +761,13 @@ const filterTypeOptions = computed(() => [
   { value: 'balance', label: t('admin.redeem.balance') },
   { value: 'concurrency', label: t('admin.redeem.concurrency') },
   { value: 'subscription', label: t('admin.redeem.subscription') },
-  { value: 'invitation', label: t('admin.redeem.invitation') }
+  { value: 'invitation', label: t('admin.redeem.invitation') },
+  { value: 'lottery_chance', label: t('admin.redeem.lotteryChance') }
+])
+
+const lotteryPoolOptions = computed(() => [
+  { value: 'normal', label: t('admin.redeem.pools.normal') },
+  { value: 'luxury', label: t('admin.redeem.pools.luxury') }
 ])
 
 const filterStatusOptions = computed(() => [
@@ -833,6 +857,7 @@ const generateForm = reactive({
   count: 1,
   group_id: null as number | null,
   validity_days: 30,
+  pool_key: 'normal' as 'normal' | 'luxury',
   expiry_option: 'never' as RedeemCodeExpiryOption,
   custom_expiry_days: 7
 })
@@ -844,7 +869,7 @@ watch(
     if (newType === 'invitation') {
       generateForm.value = 0
     } else if (generateForm.value === 0) {
-      generateForm.value = 10
+      generateForm.value = newType === 'lottery_chance' ? 1 : 10
     }
   }
 )
@@ -1023,6 +1048,10 @@ const handleGenerateCodes = async () => {
     appStore.showError(t('admin.redeem.groupRequired'))
     return
   }
+  if (generateForm.type === 'lottery_chance' && !generateForm.pool_key) {
+    appStore.showError(t('admin.redeem.poolRequired'))
+    return
+  }
 
   const expiresInDays = getRedeemCodeExpiresInDays()
   if (expiresInDays === null) {
@@ -1038,7 +1067,8 @@ const handleGenerateCodes = async () => {
       generateForm.value,
       generateForm.type === 'subscription' ? generateForm.group_id : undefined,
       generateForm.type === 'subscription' ? generateForm.validity_days : undefined,
-      expiresInDays
+      expiresInDays,
+      generateForm.type === 'lottery_chance' ? generateForm.pool_key : undefined
     )
     showGenerateDialog.value = false
     generatedCodes.value = result
@@ -1046,6 +1076,7 @@ const handleGenerateCodes = async () => {
     // 重置表单
     generateForm.group_id = null
     generateForm.validity_days = 30
+    generateForm.pool_key = 'normal'
     generateForm.expiry_option = 'never'
     generateForm.custom_expiry_days = 7
     loadCodes()

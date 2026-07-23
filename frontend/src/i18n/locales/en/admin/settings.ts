@@ -512,6 +512,13 @@ export default {
         hideCcsImportButton: 'Hide CCS Import Button',
         hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page'
       },
+      dashboardNotice: {
+        title: 'Dashboard Notice',
+        description: 'Show a prominent notice at the top of the user dashboard. Leave empty to hide it.',
+        content: 'Notice Content',
+        placeholder: 'e.g. maintenance notice, campaign announcement, important tips…',
+        hint: 'Plain text, multi-line supported. Shown at the top of the user dashboard when set; leave empty to hide.'
+      },
       purchase: {
         title: 'Recharge / Subscription Page',
         description: 'Show a "Recharge / Subscription" entry in the sidebar and open the configured URL in an iframe',

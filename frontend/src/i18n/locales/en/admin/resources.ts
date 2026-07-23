@@ -250,6 +250,14 @@ export default {
       concurrency: 'Concurrency',
       subscription: 'Subscription',
       invitation: 'Invitation',
+      lotteryChance: 'Lottery Chances',
+      lotteryChances: 'Chances',
+      lotteryPool: 'Prize Pool',
+      poolRequired: 'Please select a prize pool',
+      pools: {
+        normal: 'Normal Pool',
+        luxury: 'Luxury Pool'
+      },
       invitationHint: 'Invitation codes are used to restrict user registration. They are automatically marked as used after use.',
       unused: 'Unused',
       used: 'Used',
@@ -316,6 +324,7 @@ export default {
         concurrency: 'Concurrency',
         subscription: 'Subscription',
         invitation: 'Invitation',
+        lottery_chance: 'Lottery Chances',
         // Admin adjustment types (created when admin modifies user balance/concurrency)
         admin_balance: 'Balance (Admin)',
         admin_concurrency: 'Concurrency (Admin)'

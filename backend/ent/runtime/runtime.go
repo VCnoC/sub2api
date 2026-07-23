@@ -1727,6 +1727,10 @@ func init() {
 	redeemcodeDescValidityDays := redeemcodeFields[10].Descriptor()
 	// redeemcode.DefaultValidityDays holds the default value on creation for the validity_days field.
 	redeemcode.DefaultValidityDays = redeemcodeDescValidityDays.Default.(int)
+	// redeemcodeDescPoolKey is the schema descriptor for pool_key field.
+	redeemcodeDescPoolKey := redeemcodeFields[11].Descriptor()
+	// redeemcode.PoolKeyValidator is a validator for the "pool_key" field. It is called by the builders before save.
+	redeemcode.PoolKeyValidator = redeemcodeDescPoolKey.Validators[0].(func(string) error)
 	securitysecretMixin := schema.SecuritySecret{}.Mixin()
 	securitysecretMixinFields0 := securitysecretMixin[0].Fields()
 	_ = securitysecretMixinFields0

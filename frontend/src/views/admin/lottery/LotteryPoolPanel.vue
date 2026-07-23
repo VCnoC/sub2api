@@ -1,50 +1,139 @@
 <template>
-  <div class="lottery_pool_panel">
-    <section v-for="pool in forms" :key="pool.key" class="lottery_pool_panel__section">
-      <header>
-        <div>
-          <h2>{{ pool.key === 'normal' ? t('lottery.normal') : t('lottery.luxury') }}</h2>
-          <span>{{ pool.key }}</span>
+  <div class="space-y-6">
+    <div
+      v-for="pool in forms"
+      :key="pool.key"
+      class="card p-6 bg-white dark:bg-dark-800 rounded-2xl border border-gray-200 dark:border-dark-700 shadow-sm"
+    >
+      <!-- Card Header -->
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-gray-100 dark:border-dark-700/80">
+        <div class="flex items-center gap-3">
+          <div
+            :class="[
+              'flex h-10 w-10 items-center justify-center rounded-xl shadow-sm',
+              pool.key === 'normal'
+                ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+            ]"
+          >
+            <Icon :name="pool.key === 'normal' ? 'gift' : 'sparkles'" size="md" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+                {{ pool.key === 'normal' ? t('lottery.normal') : t('lottery.luxury') }}
+              </h2>
+              <span
+                class="rounded-md bg-gray-100 dark:bg-dark-700 px-2 py-0.5 text-xs font-mono font-medium text-gray-500 dark:text-gray-400"
+              >
+                {{ pool.key }}
+              </span>
+            </div>
+          </div>
         </div>
-        <label class="lottery_pool_panel__toggle">
-          <input v-model="pool.enabled" type="checkbox" />
-          <span>{{ t('lotteryAdmin.enabled') }}</span>
-        </label>
-      </header>
 
-      <div class="lottery_pool_panel__grid">
-        <label>
-          <span>{{ t('lotteryAdmin.name') }}</span>
-          <input v-model.trim="pool.name" class="input" maxlength="80" />
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.cycle') }}</span>
-          <select v-model="pool.cycle_type" class="input">
-            <option value="daily">{{ t('lottery.daily') }}</option>
-            <option value="weekly">{{ t('lottery.weekly') }}</option>
-          </select>
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.cycleChances') }}</span>
-          <input v-model.number="pool.cycle_chances" class="input" type="number" min="0" max="100" />
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.startsAt') }}</span>
-          <input v-model="pool.starts_at" class="input" type="datetime-local" />
-        </label>
-        <label>
-          <span>{{ t('lotteryAdmin.endsAt') }}</span>
-          <input v-model="pool.ends_at" class="input" type="datetime-local" />
-        </label>
+        <div class="flex items-center gap-3">
+          <span
+            :class="[
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+              pool.enabled
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-dark-700 dark:text-dark-300'
+            ]"
+          >
+            <span
+              :class="[
+                'h-1.5 w-1.5 rounded-full',
+                pool.enabled ? 'bg-emerald-500' : 'bg-gray-400'
+              ]"
+            ></span>
+            {{ pool.enabled ? t('common.enabled') : t('common.disabled') }}
+          </span>
+          <Toggle v-model="pool.enabled" />
+        </div>
       </div>
 
-      <footer>
-        <button type="button" class="btn btn-primary" :disabled="savingKey === pool.key" @click="save(pool)">
-          <Icon :name="savingKey === pool.key ? 'refresh' : 'check'" size="sm" :class="{ 'animate-spin': savingKey === pool.key }" />
+      <!-- Card Form Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pt-5">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.name') }}
+          </label>
+          <input
+            v-model.trim="pool.name"
+            class="input w-full"
+            maxlength="80"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.cycle') }}
+          </label>
+          <Select
+            v-model="pool.cycle_type"
+            :options="[
+              { value: 'daily', label: t('lottery.daily') },
+              { value: 'weekly', label: t('lottery.weekly') }
+            ]"
+            class="w-full"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.cycleChances') }}
+          </label>
+          <input
+            v-model.number="pool.cycle_chances"
+            class="input w-full"
+            type="number"
+            min="0"
+            max="100"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.startsAt') }}
+          </label>
+          <input
+            v-model="pool.starts_at"
+            class="input w-full text-xs"
+            type="datetime-local"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            {{ t('lotteryAdmin.endsAt') }}
+          </label>
+          <input
+            v-model="pool.ends_at"
+            class="input w-full text-xs"
+            type="datetime-local"
+          />
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="mt-6 flex justify-end border-t border-gray-100 dark:border-dark-700/80 pt-4">
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="savingKey === pool.key"
+          @click="save(pool)"
+        >
+          <Icon
+            :name="savingKey === pool.key ? 'refresh' : 'check'"
+            size="sm"
+            :class="{ 'animate-spin': savingKey === pool.key }"
+            class="mr-1.5"
+          />
           <span>{{ t('lotteryAdmin.save') }}</span>
         </button>
-      </footer>
-    </section>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -52,6 +141,8 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
+import Toggle from '@/components/common/Toggle.vue'
+import Select from '@/components/common/Select.vue'
 import type { LotteryPool, LotteryPoolInput, LotteryPoolKey } from '@/types/lottery'
 
 interface PoolForm {
@@ -103,95 +194,3 @@ function save(form: PoolForm): void {
   })
 }
 </script>
-
-<style scoped>
-.lottery_pool_panel {
-  display: grid;
-  gap: 20px;
-}
-
-.lottery_pool_panel__section {
-  border-top: 3px solid rgb(232 93 74);
-  border-bottom: 1px solid rgb(229 231 235);
-  padding: 18px 0 20px;
-}
-
-.lottery_pool_panel__section:nth-child(2) {
-  border-top-color: rgb(73 92 125);
-}
-
-.lottery_pool_panel__section header,
-.lottery_pool_panel__section footer,
-.lottery_pool_panel__toggle {
-  display: flex;
-  align-items: center;
-}
-
-.lottery_pool_panel__section header {
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.lottery_pool_panel__section h2 {
-  color: rgb(17 24 39);
-  font-size: 17px;
-  font-weight: 680;
-}
-
-.lottery_pool_panel__section header span {
-  color: rgb(107 114 128);
-  font-size: 11px;
-}
-
-.lottery_pool_panel__toggle {
-  gap: 8px;
-  font-size: 13px;
-}
-
-.lottery_pool_panel__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 18px;
-}
-
-.lottery_pool_panel__grid label {
-  display: grid;
-  gap: 6px;
-}
-
-.lottery_pool_panel__grid label > span {
-  color: rgb(75 85 99);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.lottery_pool_panel__section footer {
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-:global(.dark) .lottery_pool_panel__section {
-  border-bottom-color: rgb(63 63 70);
-}
-
-:global(.dark) .lottery_pool_panel__section h2 {
-  color: rgb(244 244 245);
-}
-
-:global(.dark) .lottery_pool_panel__grid label > span {
-  color: rgb(161 161 170);
-}
-
-@media (max-width: 860px) {
-  .lottery_pool_panel__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .lottery_pool_panel__grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

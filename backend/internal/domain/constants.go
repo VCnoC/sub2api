@@ -48,6 +48,7 @@ const (
 	RedeemTypeConcurrency      = "concurrency"
 	RedeemTypeSubscription     = "subscription"
 	RedeemTypeInvitation       = "invitation"
+	RedeemTypeLotteryChance    = "lottery_chance"
 	RedeemTypeTeamTransferOut  = "team_transfer_out"
 	RedeemTypeTeamTransferIn   = "team_transfer_in"
 	RedeemTypeTeamFundDeposit  = "team_fund_deposit"

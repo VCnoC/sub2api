@@ -257,6 +257,7 @@ export default {
         concurrency: '并发数',
         subscription: '订阅',
         invitation: '邀请码',
+        lottery_chance: '抽奖次数',
         // 管理员在用户管理页面调整余额/并发时产生的记录
         admin_balance: '余额（管理员）',
         admin_concurrency: '并发数（管理员）'
@@ -266,6 +267,14 @@ export default {
       concurrency: '并发数',
       subscription: '订阅',
       invitation: '邀请码',
+      lotteryChance: '抽奖次数',
+      lotteryChances: '次数',
+      lotteryPool: '奖池',
+      poolRequired: '请选择奖池',
+      pools: {
+        normal: '普通奖池',
+        luxury: '豪华奖池'
+      },
       invitationHint: '邀请码用于限制用户注册，使用后自动标记为已使用。',
       allTypes: '全部类型',
       allStatus: '全部状态',

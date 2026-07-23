@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 )
 
 type LotteryChanceService struct {
@@ -58,6 +60,38 @@ func (s *LotteryChanceService) GrantFirstRedeem(ctx context.Context, inviteeID, 
 		if err := s.grantRuleWithDedupeSource(ctx, rule, *inviterID, inviteeID, LotteryEventRedeem, sourceID, dedupeSourceID, 0); err != nil {
 			return fmt.Errorf("grant first redeem chance for code %d: %w", codeID, err)
 		}
+	}
+	return nil
+}
+
+// GrantRedeemLotteryChance 将兑换码面值次数发放到指定奖池（写入 extra，rule_id 为空）。
+func (s *LotteryChanceService) GrantRedeemLotteryChance(ctx context.Context, userID, codeID int64, poolKey string, chances int64) error {
+	if s == nil || s.repo == nil {
+		return fmt.Errorf("lottery chance service not configured")
+	}
+	if userID <= 0 || codeID <= 0 || chances <= 0 {
+		return infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance redeem code")
+	}
+	if poolKey != LotteryPoolNormal && poolKey != LotteryPoolLuxury {
+		return infraerrors.BadRequest("REDEEM_CODE_INVALID", "invalid lottery chance pool_key")
+	}
+	sourceID := strconv.FormatInt(codeID, 10)
+	dedupe := fmt.Sprintf("redeem_code:%d:%s", codeID, poolKey)
+	_, err := s.repo.GrantExtraChance(ctx, LotteryChanceGrant{
+		UserID:     userID,
+		PoolKey:    poolKey,
+		Chances:    chances,
+		RuleID:     0,
+		SourceType: "redeem_code",
+		SourceID:   sourceID,
+		DedupeKey:  dedupe,
+		Metadata: map[string]any{
+			"redeem_code_id": codeID,
+			"pool_key":       poolKey,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("grant redeem lottery chance for code %d: %w", codeID, err)
 	}
 	return nil
 }

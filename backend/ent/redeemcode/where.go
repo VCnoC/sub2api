@@ -110,6 +110,11 @@ func ValidityDays(v int) predicate.RedeemCode {
 	return predicate.RedeemCode(sql.FieldEQ(FieldValidityDays, v))
 }
 
+// PoolKey applies equality check predicate on the "pool_key" field. It's identical to PoolKeyEQ.
+func PoolKey(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldEQ(FieldPoolKey, v))
+}
+
 // CodeEQ applies the EQ predicate on the "code" field.
 func CodeEQ(v string) predicate.RedeemCode {
 	return predicate.RedeemCode(sql.FieldEQ(FieldCode, v))
@@ -658,6 +663,81 @@ func ValidityDaysLT(v int) predicate.RedeemCode {
 // ValidityDaysLTE applies the LTE predicate on the "validity_days" field.
 func ValidityDaysLTE(v int) predicate.RedeemCode {
 	return predicate.RedeemCode(sql.FieldLTE(FieldValidityDays, v))
+}
+
+// PoolKeyEQ applies the EQ predicate on the "pool_key" field.
+func PoolKeyEQ(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldEQ(FieldPoolKey, v))
+}
+
+// PoolKeyNEQ applies the NEQ predicate on the "pool_key" field.
+func PoolKeyNEQ(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldNEQ(FieldPoolKey, v))
+}
+
+// PoolKeyIn applies the In predicate on the "pool_key" field.
+func PoolKeyIn(vs ...string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldIn(FieldPoolKey, vs...))
+}
+
+// PoolKeyNotIn applies the NotIn predicate on the "pool_key" field.
+func PoolKeyNotIn(vs ...string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldNotIn(FieldPoolKey, vs...))
+}
+
+// PoolKeyGT applies the GT predicate on the "pool_key" field.
+func PoolKeyGT(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldGT(FieldPoolKey, v))
+}
+
+// PoolKeyGTE applies the GTE predicate on the "pool_key" field.
+func PoolKeyGTE(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldGTE(FieldPoolKey, v))
+}
+
+// PoolKeyLT applies the LT predicate on the "pool_key" field.
+func PoolKeyLT(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldLT(FieldPoolKey, v))
+}
+
+// PoolKeyLTE applies the LTE predicate on the "pool_key" field.
+func PoolKeyLTE(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldLTE(FieldPoolKey, v))
+}
+
+// PoolKeyContains applies the Contains predicate on the "pool_key" field.
+func PoolKeyContains(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldContains(FieldPoolKey, v))
+}
+
+// PoolKeyHasPrefix applies the HasPrefix predicate on the "pool_key" field.
+func PoolKeyHasPrefix(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldHasPrefix(FieldPoolKey, v))
+}
+
+// PoolKeyHasSuffix applies the HasSuffix predicate on the "pool_key" field.
+func PoolKeyHasSuffix(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldHasSuffix(FieldPoolKey, v))
+}
+
+// PoolKeyIsNil applies the IsNil predicate on the "pool_key" field.
+func PoolKeyIsNil() predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldIsNull(FieldPoolKey))
+}
+
+// PoolKeyNotNil applies the NotNil predicate on the "pool_key" field.
+func PoolKeyNotNil() predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldNotNull(FieldPoolKey))
+}
+
+// PoolKeyEqualFold applies the EqualFold predicate on the "pool_key" field.
+func PoolKeyEqualFold(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldEqualFold(FieldPoolKey, v))
+}
+
+// PoolKeyContainsFold applies the ContainsFold predicate on the "pool_key" field.
+func PoolKeyContainsFold(v string) predicate.RedeemCode {
+	return predicate.RedeemCode(sql.FieldContainsFold(FieldPoolKey, v))
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.
